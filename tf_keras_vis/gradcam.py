@@ -5,21 +5,10 @@ from tensorflow.keras import backend as K
 from tensorflow.python.keras.layers.convolutional import Conv
 
 from tf_keras_vis import ModelVisualization
-from tf_keras_vis.utils import listify
+from tf_keras_vis.utils import find_layer, listify
 
 
 class Gradcam(ModelVisualization):
-    def __init__(self, model, model_modifier=None):
-        """Create an GradCAM.
-
-        # Arguments
-            model: The `tf.keras.Model` instance. This model will be cloned by
-                `tf.keras.models.clone_model` function and then will be modified by `model_modifier`
-                according to need. Therefore the model will be NOT modified.
-            model_modifier: A function that modify `model` instance.
-        """
-        super().__init__(model, model_modifier=model_modifier)
-
     def __call__(self,
                  loss,
                  seed_input,
@@ -66,10 +55,10 @@ class Gradcam(ModelVisualization):
         cam = np.asarray([np.sum(o * w, axis=-1) for o, w in zip(penultimate_outputs, weights)])
         if activation_modifier is not None:
             cam = activation_modifier(cam)
-        input_dims_list = [X.shape[1:-1] for X in seed_inputs]
+        input_dims_list = (X.shape[1:-1] for X in seed_inputs)
         output_dims = penultimate_outputs.shape[1:-1]
-        zoom_factors = [[i / (j * 1.0) for i, j in iter(zip(input_dims, output_dims))]
-                        for input_dims in input_dims_list]
+        zoom_factors = ([i / (j * 1.0) for i, j in iter(zip(input_dims, output_dims))]
+                        for input_dims in input_dims_list)
         cams = [np.asarray([zoom(v, factor) for v in cam]) for factor in zoom_factors]
         if len(self.model.inputs) == 1 and not isinstance(seed_input, list):
             cams = cams[0]
@@ -79,17 +68,13 @@ class Gradcam(ModelVisualization):
         if not isinstance(layer, tf.keras.layers.Layer):
             if layer is None:
                 layer = -1
-            try:
+            if isinstance(layer, int):
                 layer = model.layers[int(layer)]
-            except ValueError:
-                layer = model.get_layer(layer)
-        if not isinstance(layer, Conv):
-            for l in reversed(model.layers):
-                if layer is None and isinstance(l, Conv):
-                    layer = l
-                    break
-                if l is layer:
-                    layer = None
+            elif isinstance(layer, str):
+                layer = find_layer(model, lambda l: l.name == layer)
+            else:
+                raise ValueError('Invalid argument. `layer`=', layer)
+        layer = find_layer(model, lambda l: isinstance(l, Conv), offset=layer)
         if layer is None:
             raise ValueError('Unable to determine penultimate `Conv` layer.')
         return layer.output

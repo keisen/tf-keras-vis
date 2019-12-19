@@ -4,29 +4,19 @@ from tensorflow.keras import backend as K
 
 from tf_keras_vis import ModelVisualization
 from tf_keras_vis.utils import listify
+from tf_keras_vis.utils.input_modifiers import Jitter, Rotate
+from tf_keras_vis.utils.regularizers import L2Norm, TotalVariation
 
 
 class ActivationMaximization(ModelVisualization):
-    def __init__(self, model, model_modifier=None):
-        """Create an activation maximization that generate the model inputs that maximize the model outputs.
-
-        # Arguments
-            model: The `tf.keras.Model` instance. This model will be cloned by
-                `tf.keras.models.clone_model` function and then will be modified by `model_modifier`
-                according to need. Therefore the model will be NOT modified.
-            model_modifier: A function that modify `model` instance. Normally, this function is
-                used to replace the softmax function that was applied to the model outputs.
-        """
-        super().__init__(model, model_modifier=model_modifier)
-
     def __call__(self,
                  loss,
                  seed_input=None,
                  input_range=(0, 255),
-                 input_modifiers=None,
-                 regularizers=None,
+                 input_modifiers=[Jitter(2), Rotate(2)],
+                 regularizers=[TotalVariation(10.), L2Norm(10.)],
                  steps=200,
-                 optimizer=tf.optimizers.Adam(.1),
+                 optimizer=tf.optimizers.RMSprop(1., 0.95),
                  normalize_gradient=True,
                  gradient_modifier=None,
                  callbacks=None):
@@ -63,9 +53,11 @@ class ActivationMaximization(ModelVisualization):
                 large gradients and ensures a smooth gradient descent process.
             gradient_modifier: A function to modify gradients. This function is executed before
                 normalizing gradients.
-            callbacks: A `tf_keras_vis.callbacks.Callback` instance or a list of them.
+            callbacks: A `tf_keras_vis.callbacks.OptimizerCallback` instance or a list of them.
         # Returns
-            A list of Numpy arrays that the model inputs that maximize the out of `loss`.
+            An Numpy arrays when the model has a single input and `seed_input` is None or An N-dim
+            Numpy Array, Or a list of Numpy arrays when otherwise. The Numpy is that the model
+            inputs that maximize the out of `loss`.
         # Raises
             ValueError: In case of invalid arguments for `loss`, `input_range`, `input_modifiers`
                 or `regularizers`.
@@ -84,8 +76,8 @@ class ActivationMaximization(ModelVisualization):
         regularizers = self._prepare_regularizer_dictionary(regularizers)
 
         callbacks = listify(callbacks)
-        for c in callbacks:
-            c.on_begin()
+        for callback in callbacks:
+            callback.on_begin()
 
         for i in range(steps):
             # Apply input modifiers
@@ -94,20 +86,18 @@ class ActivationMaximization(ModelVisualization):
                     seed_inputs[j] = modifier(seed_inputs[j])
             seed_inputs = [tf.Variable(X) for X in seed_inputs]
 
-            # Calculate regularization values
-            regularization_values = [
-                sum([regularizer(seed_inputs) for regularizer in regularizers[output_layer.name]])
-                for output_layer in self.model.outputs
-            ]
-
             # Calculate gradients
             with tf.GradientTape() as tape:
                 tape.watch(seed_inputs)
                 outputs = self.model(seed_inputs)
                 outputs = listify(outputs)
                 loss_values = [loss(output) for output, loss in zip(outputs, losses)]
+                # Calculate regularization values
+                regularization_values = [[(regularizer.name, regularizer(seed_inputs))
+                                          for regularizer in regularizers[output_layer.name]]
+                                         for output_layer in self.model.outputs]
                 ys = [
-                    (-1. * loss_value) + regularization_value
+                    (-1. * loss_value) + sum([rv for (_, rv) in regularization_value])
                     for loss_value, regularization_value in zip(loss_values, regularization_values)
                 ]
             grads = tape.gradient(ys, seed_inputs)
@@ -127,14 +117,14 @@ class ActivationMaximization(ModelVisualization):
                          regularizations=regularization_values,
                          overall_loss=ys)
 
-        for c in callbacks:
-            c.on_end()
+        for callback in callbacks:
+            callback.on_end()
 
-        images = self._apply_clip(seed_inputs, input_ranges)
+        cliped_value = self._apply_clip(seed_inputs, input_ranges)
         if len(self.model.inputs) == 1 and (seed_input is None or not isinstance(seed_input, list)):
-            images = images[0]
+            cliped_value = cliped_value[0]
 
-        return images
+        return cliped_value
 
     def _prepare_input_ranges(self, input_range):
         model_inputs_length = len(self.model.inputs)
@@ -152,24 +142,27 @@ class ActivationMaximization(ModelVisualization):
         return input_ranges
 
     def _get_seed_inputs(self, seed_inputs, input_ranges):
+        # Prepare input_ranges
+        input_ranges = ((low, 1.) if high is None else (low, high) for (low, high) in input_ranges)
+        input_ranges = ((0., high) if low is None else (low, high) for (low, high) in input_ranges)
+        input_ranges = ((low, high, (high - low) * 0.1) for (low, high) in input_ranges)
+        # Prepare input_shape
+        input_shapes = (input_tensor.shape[1:] for input_tensor in self.model.inputs)
+        # Prepare seed_inputs
         if seed_inputs is None or len(seed_inputs) == 0:
             seed_inputs = [None] * len(self.model.inputs)
+            seed_inputs = (tf.random.uniform(shape, low + margin, high - margin)
+                           for X, (low, high,
+                                   margin), shape in zip(seed_inputs, input_ranges, input_shapes))
         else:
             seed_inputs = listify(seed_inputs)
-        seed_inputs = [
-            tf.random.normal(input_tensor.shape[1:], (high - low) / 2.,
-                             (high - low) * 0.05) if X is None else X
-            for X, (low, high), input_tensor in zip(seed_inputs, input_ranges, self.model.inputs)
-        ]
-        seed_inputs = [
-            tf.Variable(X, dtype=input_tensor.dtype) if not tf.is_tensor(X) else X
-            for X, input_tensor in zip(seed_inputs, self.model.inputs)
-        ]
-        seed_inputs = [
-            tf.expand_dims(X, axis=0) if len(X.shape) < len(input_tensor.shape) else X
-            for X, input_tensor in zip(seed_inputs, self.model.inputs)
-        ]
-        return seed_inputs
+        # replace numpy array to tf-tensor
+        seed_inputs = (X if tf.is_tensor(X) else tf.Variable(X, dtype=input_tensor.dtype)
+                       for X, input_tensor in zip(seed_inputs, self.model.inputs))
+        # add dimension when tensor doesn't have the dim for samples
+        seed_inputs = (tf.expand_dims(X, axis=0) if len(X.shape) < len(input_tensor.shape) else X
+                       for X, input_tensor in zip(seed_inputs, self.model.inputs))
+        return list(seed_inputs)
 
     def _prepare_inputmodifier_dictionary(self, input_modifier):
         input_modifiers = self._prepare_dictionary(input_modifier,
