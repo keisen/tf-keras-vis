@@ -105,3 +105,7 @@ venv.bak/
 
 # Add by keisen
 *.swp
+examples/**/*.gif
+examples/core*
+examples/sandbox.ipynb
+.node-version
