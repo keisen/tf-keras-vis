@@ -47,7 +47,7 @@ $ python setup.py install
 
 T.B.D.
 
-For now, Please see `examples/activation_maximization.ipynb` and `examples/saliency.ipynb`.
+For now, Please see [examples/activation_maximization.ipynb](https://github.com/keisen/tf-keras-vis/blob/master/examples/activation_maximization.ipynb) and [examples/attention.ipynb](https://github.com/keisen/tf-keras-vis/blob/master/examples/attention.ipynb).
 When you want to run jupyter notebook, we recommend that install tf-keras-vis such as follow:
 
 ```bash
