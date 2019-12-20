@@ -6,7 +6,6 @@ The features of tf-keras-vis are based on [keras-vis](https://github.com/raghako
 - Support processing multipul images at a time as a batch
 - Support tf.keras.Model that has multipul inputs (and, of course, multipul outpus too)
 - Allow use optimizers that embeded in tf.keras
-- Allow more clear, sharp and stable visualizing in ActivationMaximization
 
 And then we will add some algorisms such as below.
 
