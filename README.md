@@ -65,3 +65,4 @@ T.B.D
 
 * With InceptionV3 ActivationMaximization doesn't work well, that's, it might generate meanninglessly bulr image.
 * With cascading model gradcam doesn't work well, that's, it might occur some error.
+* Unsupport `channels-first` models and datas.
