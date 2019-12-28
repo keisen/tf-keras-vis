@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name="tf-keras-vis",
-    version="0.1.0",
+    version="0.2.0-dev",
     author="keisen",
     author_email="k.keisen@gmail.com",
     description="Neural network visualization toolkit for tf.keras",
@@ -18,11 +18,11 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    python_requires='>=3.6',
+    python_requires='>=3.5',
     install_requires=['numpy', 'scipy', 'imageio', 'pillow'],
     extras_require={
-        'cpu': ['tensorflow >= 2.0'],
-        'gpu': ['tensorflow-gpu >= 2.0'],
+        'cpu': ['tensorflow>=2.0'],
+        'gpu': ['tensorflow-gpu>=2.0'],
         'development': [
             'flake8', 'isort==4.3.*', 'yapf==0.28.*', 'pytest', 'pytest-pep8', 'pytest-xdist',
             'pytest-cov'
