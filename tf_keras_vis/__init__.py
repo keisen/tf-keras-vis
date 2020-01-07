@@ -69,7 +69,10 @@ class ModelVisualization(ABC):
         if isinstance(values, dict):
             values = defaultdict(default_value, values)
         else:
-            values = defaultdict(default_value, {keys[0]: values})
+            _values = defaultdict(default_value)
+            for k in keys:
+                _values[k] = values
+            values = _values
         for key in values.keys():
             values[key] = listify(values[key],
                                   empty_list_if_none=empty_list_if_none,

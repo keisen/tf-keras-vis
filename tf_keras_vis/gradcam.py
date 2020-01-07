@@ -38,6 +38,12 @@ class Gradcam(ModelVisualization):
         """
         losses = self._prepare_losses(loss)
         seed_inputs = [x if tf.is_tensor(x) else tf.constant(x) for x in listify(seed_input)]
+        seed_inputs = [
+            tf.expand_dims(seed_input, axis=0) if X.shape == input_tensor.shape[1:] else X
+            for X, input_tensor in zip(seed_inputs, self.model.inputs)
+        ]
+        if len(seed_inputs) != len(self.model.inputs):
+            raise ValueError('')
 
         penultimate_output_tensor = self._find_penultimate_output(self.model, penultimate_layer)
         model = tf.keras.Model(inputs=self.model.inputs,
@@ -68,13 +74,14 @@ class Gradcam(ModelVisualization):
         if not isinstance(layer, tf.keras.layers.Layer):
             if layer is None:
                 layer = -1
-            if isinstance(layer, int):
+            if isinstance(layer, int) and layer < len(model.layers):
                 layer = model.layers[int(layer)]
             elif isinstance(layer, str):
                 layer = find_layer(model, lambda l: l.name == layer)
             else:
                 raise ValueError('Invalid argument. `layer`=', layer)
-        layer = find_layer(model, lambda l: isinstance(l, Conv), offset=layer)
+        if layer is not None:
+            layer = find_layer(model, lambda l: isinstance(l, Conv), offset=layer)
         if layer is None:
             raise ValueError('Unable to determine penultimate `Conv` layer.')
         return layer.output

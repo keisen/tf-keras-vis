@@ -15,7 +15,7 @@ class Loss(ABC):
         raise NotImplementedError()
 
 
-class SmoothingLoss(Loss):
+class SmoothedLoss(Loss):
     def __init__(self, indices, epsilon=0.05):
         super().__init__('SmoothingLoss')
         self.indices = listify(indices)

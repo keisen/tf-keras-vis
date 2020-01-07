@@ -131,8 +131,10 @@ class ActivationMaximization(ModelVisualization):
         input_ranges = listify(input_range, empty_list_if_none=False, convert_tuple_to_list=False)
         if len(input_ranges) == 1 and model_inputs_length > 1:
             input_ranges = input_ranges * model_inputs_length
+        """
         if len(input_ranges) < model_inputs_length:
             input_ranges = input_ranges + [None] * model_inputs_length - len(input_ranges)
+        """
         input_ranges = [(None, None) if r is None else r for r in input_ranges]
         for i, r in enumerate(input_ranges):
             if len(r) != 2:
@@ -165,9 +167,10 @@ class ActivationMaximization(ModelVisualization):
         return list(seed_inputs)
 
     def _prepare_inputmodifier_dictionary(self, input_modifier):
-        input_modifiers = self._prepare_dictionary(input_modifier,
+        input_modifiers = listify(input_modifier)
+        input_modifiers = self._prepare_dictionary(input_modifiers,
                                                    [l.name for l in self.model.inputs])
-        if len(input_modifiers) != len(self.model.inputs):
+        if len(input_modifiers) != 0 and len(input_modifiers) != len(self.model.inputs):
             raise ValueError('The model has {} inputs, but you passed {} as input_modifiers. '
                              'When the model has multipul inputs, '
                              'you must pass a dictionary as input_modifiers.'.format(
