@@ -1,12 +1,14 @@
-dist: trusty
+dist: xenial
 language: python
 python:
     - "3.5"
     - "3.6"
+    - "3.7"
+env:
+    - TF_VERSION=2.0.0
 install:
     - pip install -U pip
-    - pip install -U -e .[cpu,develop,examples]
+    - pip install -U --force-reinstall -e .[development,examples] tensorflow==$TF_VERSION
 script:
     - PYTHONPATH=$PWD:$PYTHONPATH py.test
-    - jupyter-nbconvert --ExecutePreprocessor.timeout=86400 --to notebook --execute --stdout examples/attention.ipynb > /dev/null
-    - jupyter-nbconvert --ExecutePreprocessor.timeout=86400 --to notebook --execute --stdout examples/activation_maximization.ipynb > /dev/null
+    - jupyter-nbconvert --ExecutePreprocessor.timeout=86400 --to notebook --execute examples/attention.ipynb

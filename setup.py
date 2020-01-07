@@ -18,7 +18,7 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    python_requires='>=3.5',
+    python_requires='>=3.5, <3.8',
     install_requires=['numpy', 'scipy', 'imageio', 'pillow'],
     extras_require={
         'cpu': ['tensorflow>=2.0'],
