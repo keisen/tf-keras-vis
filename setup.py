@@ -19,10 +19,8 @@ setup(
         "Operating System :: OS Independent",
     ],
     python_requires='>=3.5, <3.8',
-    install_requires=['numpy', 'scipy', 'imageio', 'pillow'],
+    install_requires=['tensorflow', 'numpy', 'scipy', 'imageio', 'pillow'],
     extras_require={
-        'cpu': ['tensorflow>=2.0'],
-        'gpu': ['tensorflow-gpu>=2.0'],
         'development': [
             'flake8', 'isort==4.3.*', 'yapf==0.28.*', 'pytest', 'pytest-pep8', 'pytest-xdist',
             'pytest-cov'

@@ -6,6 +6,7 @@ python:
     - "3.7"
 env:
     - TF_VERSION=2.0.0
+    - TF_VERSION=2.1.0
 install:
     - pip install -U pip
     - pip install -U --force-reinstall -e .[development,examples] tensorflow==$TF_VERSION

@@ -9,7 +9,7 @@ from tf_keras_vis.utils import listify
 class ModelVisualization(ABC):
     """Visualization class for Keras models.
     """
-    def __init__(self, model, model_modifier=None):
+    def __init__(self, model, model_modifier=None, clone=True):
         """Create Visualization class instance that analize the model for debugging.
 
         # Arguments
@@ -19,9 +19,13 @@ class ModelVisualization(ABC):
             model_modifier: A function that modify `model` instance. For example, in
                 ActivationMaximization normally, this function is used to replace the softmax
                 function that was applied to the model outputs.
+            clone: A bool. If you won't model to be copied, you can set this option to False.
         """
-        self.model = tf.keras.models.clone_model(model)
-        self.model.set_weights(model.get_weights())
+        if clone:
+            self.model = tf.keras.models.clone_model(model)
+            self.model.set_weights(model.get_weights())
+        else:
+            self.model = model
         if model_modifier is not None:
             new_model = model_modifier(self.model)
             if new_model is not None:

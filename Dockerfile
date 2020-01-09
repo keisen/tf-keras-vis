@@ -1,23 +1,25 @@
 FROM ubuntu
 
-# Settings
+# Default Settings
 ENV DEBIAN_FRONTEND noninteractive
+ENV PYTHON_VERSION 3.6.10
+ENV TF_VERSION 2.1.0
+ENV TF_KERAS_VIS_VERSION 0.1.0
 
 # Install essential libraries
-RUN apt update
-RUN apt upgrade -y
-RUN apt install -y --no-install-recommends \
-      bash-completion curl ca-certificates
-RUN apt install -y --no-install-recommends \
-      git build-essential \
-      libffi-dev libssl-dev zlib1g-dev \
-      libbz2-dev libreadline-dev libsqlite3-dev
-RUN apt clean -y
+RUN apt update                                           \
+    && apt upgrade -y                                    \
+    && apt install -y --no-install-recommends            \
+          bash-completion curl ca-certificates           \
+    && apt install -y --no-install-recommends            \
+          git build-essential                            \
+          libffi-dev libssl-dev zlib1g-dev               \
+          libbz2-dev libreadline-dev libsqlite3-dev      \
+    && apt autoremove -y                                 \
+    && rm -rf /var/lib/apt/lists/*
 
 # Install pyenv
 RUN curl -L https://pyenv.run | /bin/bash
-
-ENV PYTHON_VERSION 3.6.10
 ENV PYENV_ROOT /root/.pyenv
 ENV PATH $PYENV_ROOT/bin:$PATH
 
@@ -37,7 +39,7 @@ RUN echo 'c.NotebookApp.token = ""' >> /root/.jupyter/jupyter_notebook_config.py
 # Install essential python libraries
 RUN pip install --no-cache-dir --upgrade pip setuptools
 RUN pip install --no-cache-dir \
-      tf-keras-vis==0.1.0 \
-      tensorflow-cpu>=2.0.* \
+      tf-keras-vis==$TF_KERAS_VIS_VERSION \
+      tensorflow==$TF_VERSION \
       numpy scipy imageio pillow \
       jupyterlab matplotlib

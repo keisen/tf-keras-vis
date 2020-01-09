@@ -4,7 +4,7 @@
 [![Test Coverage](https://api.codeclimate.com/v1/badges/4c9aa58cc5571aedac69/test_coverage)](https://codeclimate.com/github/keisen/tf-keras-vis/test_coverage)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-tf-keras-vis is a visualization toolkit for debugging Keras models with Tensorflow 2.0, but not original Keras.
+tf-keras-vis is a visualization toolkit for debugging Keras models with Tensorflow2, but not original Keras.
 
 The features of tf-keras-vis are based on [keras-vis](https://github.com/raghakot/keras-vis), but tf-keras-vis's APIs doesn't have compatibility with keras-vis's because, instead of getting it, we prioritized to get following features.
 
@@ -22,7 +22,7 @@ And then we will add some algorisms such as below.
 ## Requirements
 
 * Python 3.5, 3.6 or 3.7
-* tensorflow(or tensorflow-gpu)==2.0.0
+* tensorflow>=2.0.0
 
 
 ## Installation
@@ -30,7 +30,7 @@ And then we will add some algorisms such as below.
 * PyPI
 
 ```bash
-$ pip install tf-keras-vis tensorflow
+$ pip install tf-keras-vis
 ```
 
 * Docker
