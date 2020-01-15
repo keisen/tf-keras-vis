@@ -1,4 +1,5 @@
 # tf-keras-vis
+[![PyPI version](https://badge.fury.io/py/tf-keras-vis.svg)](https://badge.fury.io/py/tf-keras-vis)
 [![Build Status](https://travis-ci.org/keisen/tf-keras-vis.svg?branch=master)](https://travis-ci.org/keisen/tf-keras-vis)
 [![Maintainability](https://api.codeclimate.com/v1/badges/4c9aa58cc5571aedac69/maintainability)](https://codeclimate.com/github/keisen/tf-keras-vis/maintainability)
 [![Test Coverage](https://api.codeclimate.com/v1/badges/4c9aa58cc5571aedac69/test_coverage)](https://codeclimate.com/github/keisen/tf-keras-vis/test_coverage)
