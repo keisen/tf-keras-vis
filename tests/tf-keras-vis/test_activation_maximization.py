@@ -1,11 +1,12 @@
 import numpy as np
 import pytest
-from tensorflow.keras.layers import Conv2D, Dense, Flatten, Concatenate, Input
-from tensorflow.keras.models import Sequential, Model
+from tensorflow.keras.layers import Concatenate, Conv2D, Dense, Flatten, Input
+from tensorflow.keras.models import Model, Sequential
 
 from tf_keras_vis.activation_maximization import ActivationMaximization
-from tf_keras_vis.utils.losses import SmoothedLoss
 from tf_keras_vis.utils.callbacks import OptimizerCallback
+from tf_keras_vis.utils.losses import SmoothedLoss
+from tf_keras_vis.utils.regularizers import L2Norm, TotalVariation
 
 
 class MockCallback(OptimizerCallback):
@@ -30,6 +31,16 @@ def multiple_inputs_model():
     x = Concatenate()([x1, x2, x3])
     x = Dense(3)(x)
     return Model([a, b, c], [x])
+
+
+@pytest.fixture(scope="function", autouse=True)
+def multiple_outputs_model():
+    x = i = Input(shape=(8, 8, 3))
+    x = Conv2D(5, 3, activation='relu')(x)
+    x = Flatten()(x)
+    a = Dense(3, name='output_a')(x)
+    b = Dense(2, name='output_b')(x)
+    return Model([i], [a, b])
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -96,3 +107,34 @@ def test__call__with_mutiple_inputs_model(multiple_inputs_model):
     result = activation_maximization(SmoothedLoss(1), steps=1, input_modifiers=None)
     assert result[0].shape == (1, 8, 8, 3)
     assert result[1].shape == (1, 8, 8, 3)
+
+
+def test__call__with_mutiple_outputs_model(multiple_outputs_model):
+    activation_maximization = ActivationMaximization(multiple_outputs_model)
+    result = activation_maximization(SmoothedLoss(1), steps=1, input_modifiers=None)
+    assert result.shape == (1, 8, 8, 3)
+    activation_maximization = ActivationMaximization(multiple_outputs_model)
+    result = activation_maximization([SmoothedLoss(1), SmoothedLoss(1)],
+                                     steps=1,
+                                     input_modifiers=None)
+    assert result.shape == (1, 8, 8, 3)
+    activation_maximization = ActivationMaximization(multiple_outputs_model)
+    result = activation_maximization([SmoothedLoss(1), SmoothedLoss(1)],
+                                     steps=1,
+                                     input_modifiers=None,
+                                     regularizers={
+                                         'output_a': [],
+                                         'output_b': [TotalVariation(10.),
+                                                      L2Norm(10.)]
+                                     })
+    assert result.shape == (1, 8, 8, 3)
+
+
+def test__call__with_mutiple_outputs_model_but_losses_is_too_many(multiple_outputs_model):
+    activation_maximization = ActivationMaximization(multiple_outputs_model)
+    try:
+        activation_maximization(
+            [SmoothedLoss(1), SmoothedLoss(1), SmoothedLoss(1)], steps=1, input_modifiers=None)
+        assert False
+    except ValueError:
+        assert True

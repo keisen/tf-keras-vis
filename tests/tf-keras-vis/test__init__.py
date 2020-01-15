@@ -26,6 +26,9 @@ def test__init__(model):
     assert mock.model != model
     assert np.array_equal(mock.model.get_weights()[0], model.get_weights()[0])
 
+    mock = MockVisualizer(model, clone=False)
+    assert mock.model == model
+
     mock = MockVisualizer(model, change_activation)
     assert mock.model != model
     assert mock.model.layers[-1].activation == tf.keras.activations.linear

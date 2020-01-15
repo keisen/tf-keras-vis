@@ -54,14 +54,11 @@ class ModelVisualization(ABC):
                       list_length_if_created,
                       empty_list_if_none=True,
                       convert_tuple_to_list=True):
-        if isinstance(value, list):
-            values = value
-        else:
-            values = listify(value,
-                             empty_list_if_none=empty_list_if_none,
-                             convert_tuple_to_list=convert_tuple_to_list)
-            if len(values) != 0 and list_length_if_created > 1:
-                values = values * (list_length_if_created - 1)
+        values = listify(value,
+                         empty_list_if_none=empty_list_if_none,
+                         convert_tuple_to_list=convert_tuple_to_list)
+        if len(values) == 1 and list_length_if_created > 1:
+            values = values * list_length_if_created
         return values
 
     def _prepare_dictionary(self,

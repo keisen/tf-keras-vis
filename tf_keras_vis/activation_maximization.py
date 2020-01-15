@@ -42,7 +42,7 @@ class ActivationMaximization(ModelVisualization):
                 'input_b': input_modifier_b, ... }`.
             regularizers: A regularization function or a list of regularization functions. You can
                 also use a instance of `tf_keras-vis.regularizers.Regularizer`'s subclass,
-                instead of a function. If the model has multipul outputs, you have to pass
+                instead of a function. If the model has multipul outputs, you can use
                 a dictionary of regularization functions or instances on each model outputs:
                 such as `regularizers={'output_a': [ regularizer_a_1, regularizer_a_2 ],
                 'output_b': regularizer_b, ... }`. A regularization value will be calculated with
