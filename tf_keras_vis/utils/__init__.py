@@ -1,6 +1,33 @@
+import os
+
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras import backend as K
+
+MAX_STEPS = 'TF_KERAS_VIS_MAX_STEPS'
+
+
+def check_steps(steps):
+    """
+    Load max-steps value that is for avoiding timeout on travis-ci when testing Notebook.
+    """
+    max_steps = int(os.environ[MAX_STEPS]) if MAX_STEPS in os.environ else steps
+    return min(steps, max_steps)
+
+
+def print_gpus():
+    if tf.__version__.startswith('2.0.'):
+        list_physical_devices = tf.config.experimental.list_physical_devices
+        list_logical_devices = tf.config.experimental.list_logical_devices
+    else:
+        list_physical_devices = tf.config.list_physical_devices
+        list_logical_devices = tf.config.list_logical_devices
+    gpus = list_physical_devices('GPU')
+    if gpus:
+        logical_gpus = list_logical_devices('GPU')
+        print(len(gpus), "Physical GPUs,", len(logical_gpus), "Logical GPU")
+    else:
+        print("0 GPUs")
 
 
 def listify(value, empty_list_if_none=True, convert_tuple_to_list=True):

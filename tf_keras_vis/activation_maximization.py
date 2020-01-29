@@ -3,7 +3,7 @@ import tensorflow as tf
 from tensorflow.keras import backend as K
 
 from tf_keras_vis import ModelVisualization
-from tf_keras_vis.utils import listify
+from tf_keras_vis.utils import check_steps, listify
 from tf_keras_vis.utils.input_modifiers import Jitter, Rotate
 from tf_keras_vis.utils.regularizers import L2Norm, TotalVariation
 
@@ -42,7 +42,7 @@ class ActivationMaximization(ModelVisualization):
                 'input_b': input_modifier_b, ... }`.
             regularizers: A regularization function or a list of regularization functions. You can
                 also use a instance of `tf_keras-vis.regularizers.Regularizer`'s subclass,
-                instead of a function. If the model has multipul outputs, you have to pass
+                instead of a function. If the model has multipul outputs, you can use
                 a dictionary of regularization functions or instances on each model outputs:
                 such as `regularizers={'output_a': [ regularizer_a_1, regularizer_a_2 ],
                 'output_b': regularizer_b, ... }`. A regularization value will be calculated with
@@ -79,7 +79,7 @@ class ActivationMaximization(ModelVisualization):
         for callback in callbacks:
             callback.on_begin()
 
-        for i in range(steps):
+        for i in range(check_steps(steps)):
             # Apply input modifiers
             for j, input_layer in enumerate(self.model.inputs):
                 for modifier in input_modifiers[input_layer.name]:
@@ -131,8 +131,10 @@ class ActivationMaximization(ModelVisualization):
         input_ranges = listify(input_range, empty_list_if_none=False, convert_tuple_to_list=False)
         if len(input_ranges) == 1 and model_inputs_length > 1:
             input_ranges = input_ranges * model_inputs_length
+        """
         if len(input_ranges) < model_inputs_length:
             input_ranges = input_ranges + [None] * model_inputs_length - len(input_ranges)
+        """
         input_ranges = [(None, None) if r is None else r for r in input_ranges]
         for i, r in enumerate(input_ranges):
             if len(r) != 2:
@@ -165,9 +167,10 @@ class ActivationMaximization(ModelVisualization):
         return list(seed_inputs)
 
     def _prepare_inputmodifier_dictionary(self, input_modifier):
-        input_modifiers = self._prepare_dictionary(input_modifier,
+        input_modifiers = listify(input_modifier)
+        input_modifiers = self._prepare_dictionary(input_modifiers,
                                                    [l.name for l in self.model.inputs])
-        if len(input_modifiers) != len(self.model.inputs):
+        if len(input_modifiers) != 0 and len(input_modifiers) != len(self.model.inputs):
             raise ValueError('The model has {} inputs, but you passed {} as input_modifiers. '
                              'When the model has multipul inputs, '
                              'you must pass a dictionary as input_modifiers.'.format(

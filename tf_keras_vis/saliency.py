@@ -3,7 +3,7 @@ import tensorflow as tf
 import tensorflow.keras.backend as K
 
 from tf_keras_vis import ModelVisualization
-from tf_keras_vis.utils import listify
+from tf_keras_vis.utils import check_steps, listify
 
 
 class Saliency(ModelVisualization):
@@ -34,10 +34,16 @@ class Saliency(ModelVisualization):
             towards maximizing the loss value, Or a list of their images.
             A list of Numpy arrays that the model inputs that maximize the out of `loss`.
         # Raises
-            ValueError: In case of invalid arguments for `loss`.
+            ValueError: In case of invalid arguments for `loss`, or `seed_input`.
         """
         losses = self._prepare_losses(loss)
         seed_inputs = [X if tf.is_tensor(X) else tf.constant(X) for X in listify(seed_input)]
+        seed_inputs = [
+            tf.expand_dims(seed_input, axis=0) if X.shape == input_tensor.shape[1:] else X
+            for X, input_tensor in zip(seed_inputs, self.model.inputs)
+        ]
+        if len(seed_inputs) != len(self.model.inputs):
+            raise ValueError('')
 
         if smooth_samples > 0:
             axes = [tuple(range(1, len(X.shape))) for X in seed_inputs]
@@ -46,7 +52,7 @@ class Saliency(ModelVisualization):
                 for X, axis in zip(seed_inputs, axes)
             ]
             total_gradients = (np.zeros_like(X) for X in seed_inputs)
-            for i in range(smooth_samples):
+            for i in range(check_steps(smooth_samples)):
                 seed_inputs_plus_noise = [
                     tf.constant(
                         np.concatenate([
