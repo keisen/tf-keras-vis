@@ -1,15 +1,21 @@
 dist: xenial
+branches:
+  except:
+    - gh-pages
 language: python
 python:
-    - "3.5"
-    - "3.6"
-    - "3.7"
+  - "3.5"
+  - "3.6"
+  - "3.7"
 env:
-    - TF_VERSION=2.0.0
-    - TF_VERSION=2.1.0
+  - TF_VERSION=2.0.0 TF_KERAS_VIS_MAX_STEPS=3
+  - TF_VERSION=2.0.1 TF_KERAS_VIS_MAX_STEPS=3
+  - TF_VERSION=2.1.0 TF_KERAS_VIS_MAX_STEPS=3
 install:
-    - pip install -U pip
-    - pip install -U --force-reinstall -e .[development,examples] tensorflow==$TF_VERSION
+  - pip install -U pip
+  - pip install -U --force-reinstall -e .[development,examples] tensorflow==$TF_VERSION
 script:
-    - PYTHONPATH=$PWD:$PYTHONPATH py.test
-    - jupyter-nbconvert --ExecutePreprocessor.timeout=86400 --to notebook --execute examples/attention.ipynb
+  - PYTHONPATH=$PWD:$PYTHONPATH py.test
+  - jupyter-nbconvert --ExecutePreprocessor.timeout=600 --to notebook --execute examples/attentions.ipynb
+  - jupyter-nbconvert --ExecutePreprocessor.timeout=600 --to notebook --execute examples/visualize_dense_layer.ipynb
+  - jupyter-nbconvert --ExecutePreprocessor.timeout=600 --to notebook --execute examples/visualize_conv_filters.ipynb

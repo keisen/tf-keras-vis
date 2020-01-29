@@ -3,7 +3,7 @@ import tensorflow as tf
 from tensorflow.keras import backend as K
 
 from tf_keras_vis import ModelVisualization
-from tf_keras_vis.utils import listify
+from tf_keras_vis.utils import check_steps, listify
 from tf_keras_vis.utils.input_modifiers import Jitter, Rotate
 from tf_keras_vis.utils.regularizers import L2Norm, TotalVariation
 
@@ -79,7 +79,7 @@ class ActivationMaximization(ModelVisualization):
         for callback in callbacks:
             callback.on_begin()
 
-        for i in range(steps):
+        for i in range(check_steps(steps)):
             # Apply input modifiers
             for j, input_layer in enumerate(self.model.inputs):
                 for modifier in input_modifiers[input_layer.name]:

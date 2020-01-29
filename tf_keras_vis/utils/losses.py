@@ -17,7 +17,7 @@ class Loss(ABC):
 
 class SmoothedLoss(Loss):
     def __init__(self, indices, epsilon=0.05):
-        super().__init__('SmoothingLoss')
+        super().__init__('SmoothedLoss')
         self.indices = listify(indices)
         self.epsilon = epsilon
 

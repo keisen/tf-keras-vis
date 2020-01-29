@@ -3,7 +3,7 @@ import tensorflow as tf
 import tensorflow.keras.backend as K
 
 from tf_keras_vis import ModelVisualization
-from tf_keras_vis.utils import listify
+from tf_keras_vis.utils import check_steps, listify
 
 
 class Saliency(ModelVisualization):
@@ -52,7 +52,7 @@ class Saliency(ModelVisualization):
                 for X, axis in zip(seed_inputs, axes)
             ]
             total_gradients = (np.zeros_like(X) for X in seed_inputs)
-            for i in range(smooth_samples):
+            for i in range(check_steps(smooth_samples)):
                 seed_inputs_plus_noise = [
                     tf.constant(
                         np.concatenate([
