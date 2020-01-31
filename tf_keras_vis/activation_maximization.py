@@ -131,10 +131,6 @@ class ActivationMaximization(ModelVisualization):
         input_ranges = listify(input_range, empty_list_if_none=False, convert_tuple_to_list=False)
         if len(input_ranges) == 1 and model_inputs_length > 1:
             input_ranges = input_ranges * model_inputs_length
-        """
-        if len(input_ranges) < model_inputs_length:
-            input_ranges = input_ranges + [None] * model_inputs_length - len(input_ranges)
-        """
         input_ranges = [(None, None) if r is None else r for r in input_ranges]
         for i, r in enumerate(input_ranges):
             if len(r) != 2:
@@ -158,10 +154,10 @@ class ActivationMaximization(ModelVisualization):
                                    margin), shape in zip(seed_inputs, input_ranges, input_shapes))
         else:
             seed_inputs = listify(seed_inputs)
-        # replace numpy array to tf-tensor
+        # Convert numpy to tf-tensor
         seed_inputs = (X if tf.is_tensor(X) else tf.Variable(X, dtype=input_tensor.dtype)
                        for X, input_tensor in zip(seed_inputs, self.model.inputs))
-        # add dimension when tensor doesn't have the dim for samples
+        # Do expand_dims when tensor doesn't have the dim for samples
         seed_inputs = (tf.expand_dims(X, axis=0) if len(X.shape) < len(input_tensor.shape) else X
                        for X, input_tensor in zip(seed_inputs, self.model.inputs))
         return list(seed_inputs)
