@@ -35,20 +35,34 @@ $ pip install tf-keras-vis tensorflow
 
 * Docker
 
+```bash
+$ docker pull keisen/tf-keras-vis:0.2.0
 ```
-$ docker pull keisen/tf-keras-vis
-```
+
+> You can find other images (that's nvidia-docker images) at [dockerhub](https://hub.docker.com/repository/docker/keisen/tf-keras-vis/tags).
+
 
 ## Usage
 
-For now, Please see [examples/attentions.ipynb](https://github.com/keisen/tf-keras-vis/blob/master/examples/attentions.ipynb), [examples/visualize_dense_layer.ipynb](https://github.com/keisen/tf-keras-vis/blob/master/examples/visualize_dense_layer.ipynb) and [examples/visualize_conv_filters.ipynb](https://github.com/keisen/tf-keras-vis/blob/master/examples/visualize_conv_filters.ipynb).
+Please see [examples/attentions.ipynb](https://github.com/keisen/tf-keras-vis/blob/master/examples/attentions.ipynb), [examples/visualize_dense_layer.ipynb](https://github.com/keisen/tf-keras-vis/blob/master/examples/visualize_dense_layer.ipynb) and [examples/visualize_conv_filters.ipynb](https://github.com/keisen/tf-keras-vis/blob/master/examples/visualize_conv_filters.ipynb).
 
-T.B.D.
+
+* Run Jupyter notebooks on Docker
+
+```bash
+$ docker run -it -v /PATH/TO/tf-keras-vis:/tf-keras-vis -p 8888:8888 keisen/tf-keras-vis:0.2.0 jupyter lab
+```
+
+Or, if you have GPU processors,
+
+```bash
+$ docker run -it --runtime=nvidia -v /PATH/TO/tf-keras-vis:/tf-keras-vis -p 8888:8888 keisen/tf-keras-vis:0.2.0-gpu jupyter lab
+```
 
 
 ## API Documentation
 
-T.B.D
+T.B.D.
 
 
 ## Known Issues
