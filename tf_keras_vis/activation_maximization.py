@@ -135,7 +135,7 @@ class ActivationMaximization(ModelVisualization):
         for i, r in enumerate(input_ranges):
             if len(r) != 2:
                 raise ValueError(
-                    'the length of input rage tuple must be 2 (Or it is just `None`, not tuple), '
+                    'the length of input range tuple must be 2 (Or it is just `None`, not tuple), '
                     'but you passed {} as `input_ranges[{}]`.'.format(r, i))
         return input_ranges
 
