@@ -13,6 +13,7 @@ class Gradcam(ModelVisualization):
                  loss,
                  seed_input,
                  penultimate_layer=-1,
+                 seek_penultimate_layer=True,
                  activation_modifier=lambda cam: K.relu(cam),
                  normalize_gradient=True):
         """Generate a gradient based class activation map (CAM) by using positive gradient of
@@ -45,7 +46,8 @@ class Gradcam(ModelVisualization):
         if len(seed_inputs) != len(self.model.inputs):
             raise ValueError('')
 
-        penultimate_output_tensor = self._find_penultimate_output(self.model, penultimate_layer)
+        penultimate_output_tensor = self._find_penultimate_output(self.model, penultimate_layer,
+                                                                  seek_penultimate_layer)
         model = tf.keras.Model(inputs=self.model.inputs,
                                outputs=self.model.outputs + [penultimate_output_tensor])
         with tf.GradientTape() as tape:
@@ -70,7 +72,7 @@ class Gradcam(ModelVisualization):
             cams = cams[0]
         return cams
 
-    def _find_penultimate_output(self, model, layer):
+    def _find_penultimate_output(self, model, layer, seek):
         if not isinstance(layer, tf.keras.layers.Layer):
             if layer is None:
                 layer = -1
@@ -80,7 +82,7 @@ class Gradcam(ModelVisualization):
                 layer = find_layer(model, lambda l: l.name == layer)
             else:
                 raise ValueError('Invalid argument. `layer`=', layer)
-        if layer is not None:
+        if layer is not None and seek:
             layer = find_layer(model, lambda l: isinstance(l, Conv), offset=layer)
         if layer is None:
             raise ValueError('Unable to determine penultimate `Conv` layer.')
