@@ -50,13 +50,13 @@ Please see [examples/attentions.ipynb](https://github.com/keisen/tf-keras-vis/bl
 * Run Jupyter notebooks on Docker
 
 ```bash
-$ docker run -it -v /PATH/TO/tf-keras-vis:/tf-keras-vis -p 8888:8888 keisen/tf-keras-vis:0.2.0 jupyter lab
+$ docker run -itd -v /PATH/TO/tf-keras-vis:/tf-keras-vis -p 8888:8888 keisen/tf-keras-vis:0.2.0
 ```
 
 Or, if you have GPU processors,
 
 ```bash
-$ docker run -it --runtime=nvidia -v /PATH/TO/tf-keras-vis:/tf-keras-vis -p 8888:8888 keisen/tf-keras-vis:0.2.0-gpu jupyter lab
+$ docker run -itd --runtime=nvidia -v /PATH/TO/tf-keras-vis:/tf-keras-vis -p 8888:8888 keisen/tf-keras-vis:0.2.0-gpu
 ```
 
 
