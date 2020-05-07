@@ -21,7 +21,7 @@ And then we will add some algorisms such as below.
 
 ## Requirements
 
-* Python 3.5, 3.6 or 3.8
+* Python 3.5, 3.6, 3.7 or 3.8
 * tensorflow>=2.0.0
 
 
@@ -36,7 +36,7 @@ $ pip install tf-keras-vis tensorflow
 * Docker
 
 ```bash
-$ docker pull keisen/tf-keras-vis:0.2.0
+$ docker pull keisen/tf-keras-vis:0.3.0
 ```
 
 > You can find other images (that's nvidia-docker images) at [dockerhub](https://hub.docker.com/repository/docker/keisen/tf-keras-vis/tags).
@@ -50,13 +50,13 @@ Please see [examples/attentions.ipynb](https://github.com/keisen/tf-keras-vis/bl
 * Run Jupyter notebooks on Docker
 
 ```bash
-$ docker run -itd -v /PATH/TO/tf-keras-vis:/tf-keras-vis -p 8888:8888 keisen/tf-keras-vis:0.2.0
+$ docker run -itd -v /PATH/TO/tf-keras-vis:/tf-keras-vis -p 8888:8888 keisen/tf-keras-vis:0.3.0
 ```
 
 Or, if you have GPU processors,
 
 ```bash
-$ docker run -itd --runtime=nvidia -v /PATH/TO/tf-keras-vis:/tf-keras-vis -p 8888:8888 keisen/tf-keras-vis:0.2.0-gpu
+$ docker run -itd --runtime=nvidia -v /PATH/TO/tf-keras-vis:/tf-keras-vis -p 8888:8888 keisen/tf-keras-vis:0.3.0-gpu
 ```
 
 
