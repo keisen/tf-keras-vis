@@ -75,3 +75,14 @@ def test__call__if_penultimate_layer_is_noexist_name(cnn_model):
         assert False
     except ValueError:
         assert True
+
+
+def test__call__if_model_has_only_dense_layer(dense_model):
+    gradcam = Gradcam(dense_model)
+    result = gradcam(SmoothedLoss(1), np.random.sample((1, 8, 8, 3)), seek_penultimate_layer=False)
+    assert result.shape == (1, 8, 8)
+    try:
+        gradcam(SmoothedLoss(1), np.random.sample((1, 8, 8, 3)))
+        assert False
+    except ValueError:
+        assert True
