@@ -21,7 +21,7 @@ And then we will add some algorisms such as below.
 
 ## Requirements
 
-* Python 3.5, 3.6 or 3.7
+* Python 3.5, 3.6 or 3.8
 * tensorflow>=2.0.0
 
 
