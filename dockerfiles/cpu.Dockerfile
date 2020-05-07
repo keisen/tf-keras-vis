@@ -1,7 +1,7 @@
-FROM tensorflow/tensorflow:2.1.0-py3
+FROM tensorflow/tensorflow:2.2.0-py3
 
 # Default ENV Settings
-ARG TF_KERAS_VIS_VERSION=0.2.0
+ARG TF_KERAS_VIS_VERSION=0.2.3
 ARG JUPYTER_ALLOW_IP="0.0.0.0"
 ARG JUPYTER_TOKEN=""
 
