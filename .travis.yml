@@ -12,6 +12,10 @@ env:
   - TF_VERSION=2.0.1 TF_KERAS_VIS_MAX_STEPS=3
   - TF_VERSION=2.1.0 TF_KERAS_VIS_MAX_STEPS=3
   - TF_VERSION=2.2.0 TF_KERAS_VIS_MAX_STEPS=3
+jobs:
+  include:
+    - python: 3.8
+      env: TF_VERSION=2.2.0 TF_KERAS_VIS_MAX_STEPS=3
 install:
   - pip install -U pip
   - pip install -U --force-reinstall -e .[development,examples] tensorflow==$TF_VERSION
