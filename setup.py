@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name="tf-keras-vis",
-    version="0.2.2",
+    version="0.2.4",
     author="keisen",
     author_email="k.keisen@gmail.com",
     description="Neural network visualization toolkit for tf.keras",
@@ -18,7 +18,7 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    python_requires='>=3.5, <3.8',
+    python_requires='>=3.5, <=3.8',
     install_requires=['numpy', 'scipy', 'imageio', 'pillow'],
     extras_require={
         'development':
