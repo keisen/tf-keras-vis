@@ -29,6 +29,9 @@ class Gradcam(ModelVisualization):
             seed_input: An N-dim Numpy array. If the model has multipul inputs,
                 you have to pass a list of N-dim Numpy arrays.
             penultimate_layer: A number of integer or a tf.keras.layers.Layer object.
+            seek_penultimate_layer: True to seek the penultimate layter that is a subtype of
+                `keras.layers.convolutional.Conv` class.
+                If False, the penultimate layer is that was elected by penultimate_layer index.
             normalize_gradient: True to normalize gradients.
             activation_modifier: A function to modify gradients.
         # Returns
