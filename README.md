@@ -33,16 +33,16 @@ And then we will add some algorisms such as below.
 $ pip install tf-keras-vis tensorflow
 ```
 
-* Docker
+* Docker (container that run Jupyter Notebook)
 
 ```bash
-$ docker run -itd -v /PATH/TO/tf-keras-vis:/tf-keras-vis -p 8888:8888 keisen/tf-keras-vis:0.2.4
+$ docker run -itd -p 8888:8888 keisen/tf-keras-vis:0.2.4
 ```
 
 If you have GPU processors,
 
 ```bash
-$ docker run -itd --runtime=nvidia -v /PATH/TO/tf-keras-vis:/tf-keras-vis -p 8888:8888 keisen/tf-keras-vis:0.2.4-gpu
+$ docker run -itd --runtime=nvidia -p 8888:8888 keisen/tf-keras-vis:0.2.4-gpu
 ```
 
 > You can find other images at [Docker Hub](https://hub.docker.com/repository/docker/keisen/tf-keras-vis/tags).
@@ -50,7 +50,7 @@ $ docker run -itd --runtime=nvidia -v /PATH/TO/tf-keras-vis:/tf-keras-vis -p 888
 
 ## Usage
 
-Please see [examples/attentions.ipynb](https://github.com/keisen/tf-keras-vis/blob/master/examples/attentions.ipynb), [examples/visualize_dense_layer.ipynb](https://github.com/keisen/tf-keras-vis/blob/master/examples/visualize_dense_layer.ipynb) and [examples/visualize_conv_filters.ipynb](https://github.com/keisen/tf-keras-vis/blob/master/examples/visualize_conv_filters.ipynb).
+Please see [examples/attentions.ipynb](https://github.com/keisen/tf-keras-vis/blob/master/examples/attentions.ipynb), [examples/visualize_dense_layer.ipynb](https://github.com/keisen/tf-keras-vis/blob/master/examples/visualize_dense_layer.ipynb) and [examples/visualize_conv_filters.ipynb](https://github.com/keisen/tf-keras-vis/blob/master/examples/visualize_conv_filters.ipynb) for details.
 
 
 ## Known Issues
