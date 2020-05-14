@@ -12,11 +12,19 @@ The features of tf-keras-vis are based on [keras-vis](https://github.com/raghako
 - Support tf.keras.Model that has multipul inputs (and, of course, multipul outpus too)
 - Allow to use optimizers that embeded in tf.keras
 
-And then we will add some algorisms such as below.
+## Features
 
-- [SmoothGrad: removing noise by adding noise](https://arxiv.org/pdf/1706.03825.pdf) (DONE)
-- Deep Dream
-- Style transfer
+### Visualize Dense Layer
+
+<img src='https://github.com/keisen/tf-keras-vis/raw/master/examples/images/visualize-dense-layer.png' width='600px' />
+
+### Visualize Convolutional Filer
+
+<img src='https://github.com/keisen/tf-keras-vis/raw/master/examples/images/visualize-filters.png' width='800px' />
+
+### Gradcam and Saliency
+
+<img src='https://github.com/keisen/tf-keras-vis/raw/master/examples/images/gradcam.png' width='400px' />
 
 
 ## Requirements
@@ -58,3 +66,12 @@ Please see [examples/attentions.ipynb](https://github.com/keisen/tf-keras-vis/bl
 * With InceptionV3, ActivationMaximization doesn't work well, that's, it might generate meanninglessly bulr image.
 * With cascading model, Gradcam doesn't work well, that's, it might occur some error.
 * Unsupported `channels-first` models and datas.
+
+
+## ToDo
+* API documentations
+* We're going to add some algorisms such as below.
+   - [SmoothGrad: removing noise by adding noise](https://arxiv.org/pdf/1706.03825.pdf) (DONE)
+   - Deep Dream
+   - Style transfer
+
