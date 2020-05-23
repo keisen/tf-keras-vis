@@ -1,4 +1,5 @@
 import numpy as np
+from collections import defaultdict
 import tensorflow as tf
 from tensorflow.keras import backend as K
 
@@ -42,10 +43,7 @@ class ActivationMaximization(ModelVisualization):
                 'input_b': input_modifier_b, ... }`.
             regularizers: A regularization function or a list of regularization functions. You can
                 also use a instance of `tf_keras-vis.regularizers.Regularizer`'s subclass,
-                instead of a function. If the model has multipul outputs, you can use
-                a dictionary of regularization functions or instances on each model outputs:
-                such as `regularizers={'output_a': [ regularizer_a_1, regularizer_a_2 ],
-                'output_b': regularizer_b, ... }`. A regularization value will be calculated with
+                instead of a function. A regularization value will be calculated with
                 a corresponding model input will add to the loss value.
             steps: The number of gradient descent iterations.
             optimizer: A `tf.optimizers.Optimizer` instance.
@@ -63,17 +61,17 @@ class ActivationMaximization(ModelVisualization):
                 or `regularizers`.
         """
         # losses
-        losses = self._prepare_losses(loss)
+        losses = self._get_losses_for_multiple_outputs(loss)
 
         # Get initial seed-inputs
-        input_ranges = self._prepare_input_ranges(input_range)
-        seed_inputs = self._get_seed_inputs(seed_input, input_ranges)
+        input_ranges = self._get_input_ranges(input_range)
+        seed_inputs, input_ranges = self._get_seed_inputs(seed_input, input_ranges)
 
         # input_modifiers
-        input_modifiers = self._prepare_inputmodifier_dictionary(input_modifiers)
+        input_modifiers = self._get_input_modifiers(input_modifiers)
 
         # regularizers
-        regularizers = self._prepare_regularizer_dictionary(regularizers)
+        regularizers = self._get_regularizers(regularizers)
 
         callbacks = listify(callbacks)
         for callback in callbacks:
@@ -81,11 +79,11 @@ class ActivationMaximization(ModelVisualization):
 
         for i in range(check_steps(steps)):
             # Apply input modifiers
-            for j, input_layer in enumerate(self.model.inputs):
-                for modifier in input_modifiers[input_layer.name]:
+            for j, name in enumerate(self.model.input_names):
+                for modifier in input_modifiers[name]:
                     seed_inputs[j] = modifier(seed_inputs[j])
-            seed_inputs = [tf.Variable(X) for X in seed_inputs]
 
+            seed_inputs = [tf.Variable(X) for X in seed_inputs]
             # Calculate gradients
             with tf.GradientTape() as tape:
                 tape.watch(seed_inputs)
@@ -93,13 +91,10 @@ class ActivationMaximization(ModelVisualization):
                 outputs = listify(outputs)
                 loss_values = [loss(output) for output, loss in zip(outputs, losses)]
                 # Calculate regularization values
-                regularization_values = [[(regularizer.name, regularizer(seed_inputs))
-                                          for regularizer in regularizers[output_layer.name]]
-                                         for output_layer in self.model.outputs]
-                ys = [
-                    (-1. * loss_value) + sum([rv for (_, rv) in regularization_value])
-                    for loss_value, regularization_value in zip(loss_values, regularization_values)
-                ]
+                regularization_values = [(regularizer.name, regularizer(seed_inputs))
+                                         for regularizer in regularizers]
+                ys = [(-1. * loss_value) + sum([rv for (_, rv) in regularization_values])
+                      for loss_value in loss_values]
             grads = tape.gradient(ys, seed_inputs)
             grads = listify(grads)
             if gradient_modifier is not None:
@@ -126,32 +121,37 @@ class ActivationMaximization(ModelVisualization):
 
         return cliped_value
 
-    def _prepare_input_ranges(self, input_range):
-        model_inputs_length = len(self.model.inputs)
-        input_ranges = listify(input_range, empty_list_if_none=False, convert_tuple_to_list=False)
-        if len(input_ranges) == 1 and model_inputs_length > 1:
-            input_ranges = input_ranges * model_inputs_length
+    def _get_input_ranges(self, input_range):
+        input_ranges = listify(input_range,
+                               return_empty_list_if_none=False,
+                               convert_tuple_to_list=False)
+        if len(input_ranges) == 1 and len(self.model.inputs) > 1:
+            input_ranges = input_ranges * len(self.model.inputs)
         input_ranges = [(None, None) if r is None else r for r in input_ranges]
         for i, r in enumerate(input_ranges):
             if len(r) != 2:
                 raise ValueError(
-                    'the length of input range tuple must be 2 (Or it is just `None`, not tuple), '
+                    'The length of input range tuple must be 2 (Or it is just `None`, not tuple), '
                     'but you passed {} as `input_ranges[{}]`.'.format(r, i))
         return input_ranges
 
     def _get_seed_inputs(self, seed_inputs, input_ranges):
-        # Prepare input_ranges
-        input_ranges = ((low, 1.) if high is None else (low, high) for (low, high) in input_ranges)
-        input_ranges = ((0., high) if low is None else (low, high) for (low, high) in input_ranges)
-        input_ranges = ((low, high, (high - low) * 0.1) for (low, high) in input_ranges)
-        # Prepare input_shape
-        input_shapes = (input_tensor.shape[1:] for input_tensor in self.model.inputs)
         # Prepare seed_inputs
         if seed_inputs is None or len(seed_inputs) == 0:
-            seed_inputs = [None] * len(self.model.inputs)
-            seed_inputs = (tf.random.uniform(shape, low + margin, high - margin)
-                           for X, (low, high,
-                                   margin), shape in zip(seed_inputs, input_ranges, input_shapes))
+            # Replace None to 0.0-1.0 or any properly value
+            input_ranges = ((0., 1.) if low is None and high is None else (low, high)
+                            for (low, high) in input_ranges)
+            input_ranges = ((high - np.abs(high / 2.0), high) if low is None else (low, high)
+                            for (low, high) in input_ranges)
+            input_ranges = ((low, low + np.abs(low * 2.0)) if high is None else (low, high)
+                            for (low, high) in input_ranges)
+            input_ranges = list(input_ranges)
+            # Prepare input_shape
+            input_shapes = (input_tensor.shape[1:] for input_tensor in self.model.inputs)
+            # Generae seed-inputs
+            seed_inputs = (None, ) * len(self.model.inputs)
+            seed_inputs = (tf.random.uniform(shape, low, high)
+                           for (low, high), shape in zip(input_ranges, input_shapes))
         else:
             seed_inputs = listify(seed_inputs)
         # Convert numpy to tf-tensor
@@ -160,27 +160,32 @@ class ActivationMaximization(ModelVisualization):
         # Do expand_dims when tensor doesn't have the dim for samples
         seed_inputs = (tf.expand_dims(X, axis=0) if len(X.shape) < len(input_tensor.shape) else X
                        for X, input_tensor in zip(seed_inputs, self.model.inputs))
-        return list(seed_inputs)
+        return list(seed_inputs), input_ranges
 
-    def _prepare_inputmodifier_dictionary(self, input_modifier):
-        input_modifiers = listify(input_modifier)
-        input_modifiers = self._prepare_dictionary(input_modifiers,
-                                                   [l.name for l in self.model.inputs])
-        if len(input_modifiers) != 0 and len(input_modifiers) != len(self.model.inputs):
+    def _get_input_modifiers(self, input_modifier):
+        input_modifiers = self._get_dict(input_modifier, keys=self.model.input_names)
+        if len(input_modifiers) != len(self.model.inputs):
             raise ValueError('The model has {} inputs, but you passed {} as input_modifiers. '
                              'When the model has multipul inputs, '
                              'you must pass a dictionary as input_modifiers.'.format(
                                  len(self.model.inputs), input_modifier))
         return input_modifiers
 
-    def _prepare_regularizer_dictionary(self, regularizer):
-        regularizers = self._prepare_dictionary(regularizer, [l.name for l in self.model.outputs])
-        if len(regularizers) != len(self.model.outputs):
-            raise ValueError('The model has {} outputs, but you passed {} as regularizers. '
-                             'When the model has multipul outputs, '
-                             'you must pass a dictionary as regularizers.'.format(
-                                 len(self.model.outputs), regularizers))
+    def _get_regularizers(self, regularizer):
+        regularizers = listify(regularizer)
         return regularizers
+
+    def _get_dict(self, values, keys):
+        if isinstance(values, dict):
+            _values = defaultdict(list, values)
+            for key in keys:
+                _values[key] = listify(_values[key])
+        else:
+            _values = defaultdict(list)
+            values = listify(values)
+            for k in keys:
+                _values[k] = values
+        return _values
 
     def _apply_clip(self, seed_inputs, input_ranges):
         return [np.array(K.clip(X, low, high)) for X, (low, high) in zip(seed_inputs, input_ranges)]

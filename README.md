@@ -4,15 +4,16 @@
 [![Build Status](https://travis-ci.org/keisen/tf-keras-vis.svg?branch=master)](https://travis-ci.org/keisen/tf-keras-vis)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-tf-keras-vis is a visualization toolkit for debugging Keras models with Tensorflow2, but not original Keras.
+tf-keras-vis is a visualization toolkit for debugging `tf.keras` models in Tensorflow2.
 
-The features of tf-keras-vis are based on [keras-vis](https://github.com/raghakot/keras-vis), but tf-keras-vis's APIs doesn't have compatibility with keras-vis's because, instead of getting it, we prioritized to get following features.
+The features of tf-keras-vis are based on [keras-vis](https://github.com/raghakot/keras-vis), but tf-keras-vis's APIs doesn't have compatibility with keras-vis's, because we prioritized to get following features for our expriments.
 
 - Support processing multipul images at a time as a batch
 - Support tf.keras.Model that has multipul inputs (and, of course, multipul outpus too)
 - Allow to use optimizers that embeded in tf.keras
 
-## Features
+
+## Visualizations
 
 ### Visualize Dense Layer
 
@@ -22,15 +23,15 @@ The features of tf-keras-vis are based on [keras-vis](https://github.com/raghako
 
 <img src='https://github.com/keisen/tf-keras-vis/raw/master/examples/images/visualize-filters.png' width='800px' />
 
-### Gradcam and Saliency
+### Saliency Map and GradCAM
 
 <img src='https://github.com/keisen/tf-keras-vis/raw/master/examples/images/gradcam.png' width='400px' />
 
 
 ## Requirements
 
-* Python 3.5, 3.6, 3.7 or 3.8
-* tensorflow>=2.0.0
+* Python 3.5-3.8
+* tensorflow>=2.0
 
 
 ## Installation
@@ -71,6 +72,7 @@ Please see [examples/attentions.ipynb](https://github.com/keisen/tf-keras-vis/bl
 ## ToDo
 * API documentations
 * We're going to add some algorisms such as below.
+   - [GradCAM++](https://arxiv.org/abs/1710.11063)
    - [SmoothGrad: removing noise by adding noise](https://arxiv.org/pdf/1706.03825.pdf) (DONE)
    - Deep Dream
    - Style transfer

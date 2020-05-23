@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from collections import defaultdict
 
 import tensorflow as tf
 
@@ -40,42 +39,23 @@ class ModelVisualization(ABC):
         """
         raise NotImplementedError()
 
-    def _prepare_losses(self, loss):
-        model_outputs_length = len(self.model.outputs)
-        losses = self._prepare_list(loss, model_outputs_length)
-        if len(losses) != model_outputs_length:
-            raise ValueError('The model has {} outputs, '
-                             'but the number of loss functions you passed is {}.'.format(
-                                 model_outputs_length, len(losses)))
+    def _get_losses_for_multiple_outputs(self, loss):
+        losses = listify(loss)
+        if len(losses) == 1 and len(losses) < len(self.model.outputs):
+            losses = losses * len(self.model.outputs)
+        if len(losses) != len(self.model.outputs):
+            raise ValueError(('The model has {} outputs, '
+                              'but the number of loss-functions you passed is {}.').format(
+                                  len(self.model.outputs), len(losses)))
         return losses
 
-    def _prepare_list(self,
-                      value,
-                      list_length_if_created,
-                      empty_list_if_none=True,
-                      convert_tuple_to_list=True):
-        values = listify(value,
-                         empty_list_if_none=empty_list_if_none,
-                         convert_tuple_to_list=convert_tuple_to_list)
-        if len(values) == 1 and list_length_if_created > 1:
-            values = values * list_length_if_created
-        return values
-
-    def _prepare_dictionary(self,
-                            values,
-                            keys,
-                            default_value=list,
-                            empty_list_if_none=True,
-                            convert_tuple_to_list=True):
-        if isinstance(values, dict):
-            values = defaultdict(default_value, values)
-        else:
-            _values = defaultdict(default_value)
-            for k in keys:
-                _values[k] = values
-            values = _values
-        for key in values.keys():
-            values[key] = listify(values[key],
-                                  empty_list_if_none=empty_list_if_none,
-                                  convert_tuple_to_list=convert_tuple_to_list)
-        return values
+    def _get_seed_inputs_for_multiple_inputs(self, seed_input):
+        seed_inputs = listify(seed_input)
+        if len(seed_inputs) != len(self.model.inputs):
+            raise ValueError(('The model has {} inputs, '
+                              'but the number of seed-inputs tensors you passed is {}.').format(
+                                  len(self.model.outputs), len(seed_inputs)))
+        seed_inputs = (x if tf.is_tensor(x) else tf.constant(x) for x in seed_inputs)
+        seed_inputs = (tf.expand_dims(x, axis=0) if len(x.shape) == len(tensor.shape[1:]) else x
+                       for x, tensor in zip(seed_inputs, self.model.inputs))
+        return list(seed_inputs)

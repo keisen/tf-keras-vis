@@ -36,15 +36,10 @@ class Saliency(ModelVisualization):
         # Raises
             ValueError: In case of invalid arguments for `loss`, or `seed_input`.
         """
-        losses = self._prepare_losses(loss)
-        seed_inputs = [X if tf.is_tensor(X) else tf.constant(X) for X in listify(seed_input)]
-        seed_inputs = [
-            tf.expand_dims(seed_input, axis=0) if X.shape == input_tensor.shape[1:] else X
-            for X, input_tensor in zip(seed_inputs, self.model.inputs)
-        ]
-        if len(seed_inputs) != len(self.model.inputs):
-            raise ValueError('')
-
+        # Preparing
+        losses = self._get_losses_for_multiple_outputs(loss)
+        seed_inputs = self._get_seed_inputs_for_multiple_inputs(seed_input)
+        # Processing saliency
         if smooth_samples > 0:
             axes = [tuple(range(1, len(X.shape))) for X in seed_inputs]
             sigmas = [
@@ -59,28 +54,25 @@ class Saliency(ModelVisualization):
                             x + np.random.normal(0., s, (1, ) + x.shape) for x, s in zip(X, sigma)
                         ])) for X, sigma in zip(seed_inputs, sigmas)
                 ]
-                gradients, loss_values, outputs = self._get_gradients(self.model,
-                                                                      seed_inputs_plus_noise,
-                                                                      losses, gradient_modifier)
+                gradients = self._get_gradients(seed_inputs_plus_noise, losses, gradient_modifier)
                 total_gradients = (total + g for total, g in zip(total_gradients, gradients))
             grads = [g / smooth_samples for g in total_gradients]
         else:
-            grads, loss_values, outputs = self._get_gradients(self.model, seed_inputs, losses,
-                                                              gradient_modifier)
-
+            grads = self._get_gradients(seed_inputs, losses, gradient_modifier)
+        # Visualizing
         if not keepdims:
             grads = [np.max(g, axis=-1) for g in grads]
         if len(self.model.inputs) == 1 and not isinstance(seed_input, list):
             grads = grads[0]
         return grads
 
-    def _get_gradients(self, model, seed_inputs, losses, gradient_modifier):
+    def _get_gradients(self, seed_inputs, losses, gradient_modifier):
         with tf.GradientTape() as tape:
             tape.watch(seed_inputs)
-            outputs = model(seed_inputs)
+            outputs = self.model(seed_inputs)
             outputs = listify(outputs)
             loss_values = [loss(output) for output, loss in zip(outputs, losses)]
         grads = tape.gradient(loss_values, seed_inputs)
         if gradient_modifier is not None:
             grads = [gradient_modifier(g) for g in grads]
-        return grads, loss_values, outputs
+        return grads

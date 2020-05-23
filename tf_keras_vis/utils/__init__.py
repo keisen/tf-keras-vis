@@ -30,7 +30,7 @@ def print_gpus():
         print("0 GPUs")
 
 
-def listify(value, empty_list_if_none=True, convert_tuple_to_list=True):
+def listify(value, return_empty_list_if_none=True, convert_tuple_to_list=True):
     """
     Ensures that the value is a list.
     If it is not a list, it creates a new list with `value` as an item.
@@ -47,7 +47,7 @@ def listify(value, empty_list_if_none=True, convert_tuple_to_list=True):
         A list, but when `value` is a tuple and `convert_tuple_to_list` is False, a tuple.
     """
     if not isinstance(value, list):
-        if value is None and empty_list_if_none:
+        if value is None and return_empty_list_if_none:
             value = []
         elif isinstance(value, tuple) and convert_tuple_to_list:
             value = list(value)

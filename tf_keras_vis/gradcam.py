@@ -5,7 +5,7 @@ from tensorflow.keras import backend as K
 from tensorflow.python.keras.layers.convolutional import Conv
 
 from tf_keras_vis import ModelVisualization
-from tf_keras_vis.utils import find_layer, listify
+from tf_keras_vis.utils import find_layer
 
 
 class Gradcam(ModelVisualization):
@@ -13,7 +13,7 @@ class Gradcam(ModelVisualization):
                  loss,
                  seed_input,
                  penultimate_layer=-1,
-                 seek_penultimate_layer=True,
+                 seek_penultimate_conv_layer=True,
                  activation_modifier=lambda cam: K.relu(cam),
                  normalize_gradient=True):
         """Generate a gradient based class activation map (CAM) by using positive gradient of
@@ -29,7 +29,7 @@ class Gradcam(ModelVisualization):
             seed_input: An N-dim Numpy array. If the model has multipul inputs,
                 you have to pass a list of N-dim Numpy arrays.
             penultimate_layer: A number of integer or a tf.keras.layers.Layer object.
-            seek_penultimate_layer: True to seek the penultimate layter that is a subtype of
+            seek_penultimate_conv_layer: True to seek the penultimate layter that is a subtype of
                 `keras.layers.convolutional.Conv` class.
                 If False, the penultimate layer is that was elected by penultimate_layer index.
             normalize_gradient: True to normalize gradients.
@@ -40,53 +40,54 @@ class Gradcam(ModelVisualization):
         # Raises
             ValueError: In case of invalid arguments for `loss`, or `penultimate_layer`.
         """
-        losses = self._prepare_losses(loss)
-        seed_inputs = [x if tf.is_tensor(x) else tf.constant(x) for x in listify(seed_input)]
-        seed_inputs = [
-            tf.expand_dims(seed_input, axis=0) if X.shape == input_tensor.shape[1:] else X
-            for X, input_tensor in zip(seed_inputs, self.model.inputs)
-        ]
-        if len(seed_inputs) != len(self.model.inputs):
-            raise ValueError('')
-
-        penultimate_output_tensor = self._find_penultimate_output(self.model, penultimate_layer,
-                                                                  seek_penultimate_layer)
+        # Preparing
+        losses = self._get_losses_for_multiple_outputs(loss)
+        seed_inputs = self._get_seed_inputs_for_multiple_inputs(seed_input)
+        penultimate_output_tensor = self._find_penultimate_output(penultimate_layer,
+                                                                  seek_penultimate_conv_layer)
+        # Processing gradcam
         model = tf.keras.Model(inputs=self.model.inputs,
                                outputs=self.model.outputs + [penultimate_output_tensor])
         with tf.GradientTape() as tape:
             tape.watch(seed_inputs)
             outputs = model(seed_inputs)
-            outputs = listify(outputs)
-            loss_values = [loss(y) for y, loss in zip(outputs[:-1], losses)]
-            penultimate_outputs = outputs[-1]
-        grads = tape.gradient(loss_values, penultimate_outputs)
+            outputs, penultimate_output = outputs[:-1], outputs[-1]
+            loss_values = [loss(y) for y, loss in zip(outputs, losses)]
+        grads = tape.gradient(loss_values, penultimate_output)
         if normalize_gradient:
             grads = K.l2_normalize(grads)
         weights = K.mean(grads, axis=tuple(np.arange(len(grads.shape))[1:-1]))
-        cam = np.asarray([np.sum(o * w, axis=-1) for o, w in zip(penultimate_outputs, weights)])
+        cam = np.asarray([np.sum(o * w, axis=-1) for o, w in zip(penultimate_output, weights)])
         if activation_modifier is not None:
             cam = activation_modifier(cam)
+        # Visualizing
+        cam = self._zoom_for_visualizing(seed_inputs, cam)
+        if len(self.model.inputs) == 1 and not isinstance(seed_input, list):
+            cam = cam[0]
+        return cam
+
+    def _find_penultimate_output(self, layer, seek_conv_layer):
+        _layer = layer
+        if not isinstance(_layer, tf.keras.layers.Layer):
+            if _layer is None:
+                _layer = -1
+            if isinstance(_layer, int) and _layer < len(self.model.layers):
+                _layer = self.model.layers[int(_layer)]
+            elif isinstance(_layer, str):
+                _layer = find_layer(self.model, lambda l: l.name == _layer)
+            else:
+                raise ValueError('Invalid argument. `penultimate_layer`=', layer)
+        if _layer is not None and seek_conv_layer:
+            _layer = find_layer(self.model, lambda l: isinstance(l, Conv), offset=_layer)
+        if _layer is None:
+            raise ValueError(('Unable to determine penultimate `Conv` layer. '
+                              '`penultimate_layer`='), layer)
+        return _layer.output
+
+    def _zoom_for_visualizing(self, seed_inputs, cam):
         input_dims_list = (X.shape[1:-1] for X in seed_inputs)
-        output_dims = penultimate_outputs.shape[1:-1]
+        output_dims = cam.shape[1:]
         zoom_factors = ([i / (j * 1.0) for i, j in iter(zip(input_dims, output_dims))]
                         for input_dims in input_dims_list)
-        cams = [np.asarray([zoom(v, factor) for v in cam]) for factor in zoom_factors]
-        if len(self.model.inputs) == 1 and not isinstance(seed_input, list):
-            cams = cams[0]
-        return cams
-
-    def _find_penultimate_output(self, model, layer, seek):
-        if not isinstance(layer, tf.keras.layers.Layer):
-            if layer is None:
-                layer = -1
-            if isinstance(layer, int) and layer < len(model.layers):
-                layer = model.layers[int(layer)]
-            elif isinstance(layer, str):
-                layer = find_layer(model, lambda l: l.name == layer)
-            else:
-                raise ValueError('Invalid argument. `layer`=', layer)
-        if layer is not None and seek:
-            layer = find_layer(model, lambda l: isinstance(l, Conv), offset=layer)
-        if layer is None:
-            raise ValueError('Unable to determine penultimate `Conv` layer.')
-        return layer.output
+        cam = [np.asarray([zoom(v, factor) for v in cam]) for factor in zoom_factors]
+        return cam

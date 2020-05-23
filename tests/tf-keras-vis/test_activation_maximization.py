@@ -122,11 +122,8 @@ def test__call__with_mutiple_outputs_model(multiple_outputs_model):
     result = activation_maximization([SmoothedLoss(1), SmoothedLoss(1)],
                                      steps=1,
                                      input_modifiers=None,
-                                     regularizers={
-                                         'output_a': [],
-                                         'output_b': [TotalVariation(10.),
-                                                      L2Norm(10.)]
-                                     })
+                                     regularizers=[TotalVariation(10.),
+                                                   L2Norm(10.)])
     assert result.shape == (1, 8, 8, 3)
 
 
