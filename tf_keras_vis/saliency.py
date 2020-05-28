@@ -19,9 +19,9 @@ class Saliency(ModelVisualization):
             See details: https://arxiv.org/pdf/1706.03825.pdf
 
         # Arguments
-            loss: A loss function. If the model has multipul outputs, you can use a different
+            loss: A loss function. If the model has multiple outputs, you can use a different
                 loss on each output by passing a list of losses.
-            seed_input: An N-dim Numpy array. If the model has multipul inputs,
+            seed_input: An N-dim Numpy array. If the model has multiple inputs,
                 you have to pass a list of N-dim Numpy arrays.
             smooth_samples: The number of calculating gradients iterations. If set to zero,
                 the noise for smoothing won't be generated.

@@ -8,8 +8,8 @@ tf-keras-vis is a visualization toolkit for debugging `tf.keras` models in Tenso
 
 The features of tf-keras-vis are based on [keras-vis](https://github.com/raghakot/keras-vis), but tf-keras-vis's APIs doesn't have compatibility with keras-vis's, because we prioritized to get following features for our expriments.
 
-- Support processing multipul images at a time as a batch
-- Support tf.keras.Model that has multipul inputs (and, of course, multipul outpus too)
+- Support processing multiple images at a time as a batch
+- Support tf.keras.Model that has multiple inputs (and, of course, multiple outpus too)
 - Allow to use optimizers that embeded in tf.keras
 
 

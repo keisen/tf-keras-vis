@@ -24,20 +24,20 @@ class ActivationMaximization(ModelVisualization):
         """Generate the model inputs that maximize the output of the given `loss` functions.
 
         # Arguments
-            loss: A loss function. If the model has multipul outputs, you can use a different
+            loss: A loss function. If the model has multiple outputs, you can use a different
                 loss on each output by passing a list of losses. The loss value that will be
                 maximized will then be the sum of all individual losses
                 (and all regularization values).
             seed_input: `None`(default) or An N-dim Numpy array. When `None`, the seed_input
-                value will be generated with randome noise.  If the model has multipul inputs,
+                value will be generated with randome noise.  If the model has multiple inputs,
                 you have to pass a list of N-dim Numpy arrays.
             input_range: A tuple that specifies the input range as a `(min, max)` tuple. If the
-                model has multipul inputs, you can use a different input range on each input by
+                model has multiple inputs, you can use a different input range on each input by
                 passing as list of input ranges. When `None` or a `(None, None)` tuple, the range of
                 a input value (i.e., the result of this function) will be no applied any limitation.
             input_modifiers: A input modifier function or a list of input modifier functions.
                 You can also use a instance of `tf_keras-vis.input_modifiers. InputModifier`'s
-                subclass, instead of a function. If the model has multipul inputs, you have to pass
+                subclass, instead of a function. If the model has multiple inputs, you have to pass
                 a dictionary of input modifier functions or instances on each model inputs:
                 such as `input_modifiers={'input_a': [ input_modifier_a_1, input_modifier_a_2 ],
                 'input_b': input_modifier_b, ... }`.
@@ -166,7 +166,7 @@ class ActivationMaximization(ModelVisualization):
         input_modifiers = self._get_dict(input_modifier, keys=self.model.input_names)
         if len(input_modifiers) != len(self.model.inputs):
             raise ValueError('The model has {} inputs, but you passed {} as input_modifiers. '
-                             'When the model has multipul inputs, '
+                             'When the model has multiple inputs, '
                              'you must pass a dictionary as input_modifiers.'.format(
                                  len(self.model.inputs), input_modifier))
         return input_modifiers
