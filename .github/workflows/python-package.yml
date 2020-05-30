@@ -32,7 +32,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -e .[development] tensorflow==${{ tensorflow }}
+        pip install -e .[development] tensorflow==${{ matrix.tensorflow }}
     - name: Test with pytest
       run: |
         PYTHONPATH=$PWD:$PYTHONPATH py.test
