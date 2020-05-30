@@ -18,9 +18,9 @@ jobs:
         python-version: [3.5, 3.6, 3.7, 3.8]
         tensorflow: [2.0.2, 2.1.1, 2.2.0]
         exclude:
-          - pythone-version: 3.8
+          - python-version: 3.8
             tensorflow: 2.0.2
-          - pythone-version: 3.8
+          - python-version: 3.8
             tensorflow: 2.1.1
 
     steps:
@@ -32,7 +32,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -e .[development]
+        pip install -e .[development] tensorflow==${{ tensorflow }}
     - name: Test with pytest
       run: |
         PYTHONPATH=$PWD:$PYTHONPATH py.test
