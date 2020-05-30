@@ -1,6 +1,8 @@
 import numpy as np
 import pytest
-from tensorflow.keras.layers import Conv2D, Dense, Flatten
+from tensorflow.keras import Model
+from tensorflow.keras import backend as K
+from tensorflow.keras.layers import Conv2D, Dense, Flatten, Input
 from tensorflow.keras.models import Sequential
 
 from tf_keras_vis.saliency import Saliency
@@ -21,6 +23,16 @@ def cnn_model():
         Flatten(),
         Dense(2, activation='softmax')
     ])
+
+
+@pytest.fixture(scope="function", autouse=True)
+def multiple_output_model():
+    inputs = Input(shape=(3, ))
+    x = Dense(5, activation='relu')(inputs)
+    x1 = Dense(1, activation='sigmoid')(x)
+    x2 = Dense(1, activation='linear')(x)
+    x3 = Dense(1, activation='sigmoid')(x)
+    return Model(inputs=inputs, outputs=[x1, x2, x3])
 
 
 def test__call__if_loss_is_None(cnn_model):
@@ -65,3 +77,13 @@ def test__call__if_smoothing_is_active(cnn_model):
     assert result.shape == (1, 8, 8)
     result = saliency(SmoothedLoss(1), np.random.sample((1, 8, 8, 3)), smooth_samples=2)
     assert result.shape == (1, 8, 8)
+
+
+def test__call__when_model_has_multiple_outputs(multiple_output_model):
+    saliency = Saliency(multiple_output_model)
+
+    def loss(output):
+        return K.sum(output[0])
+
+    result = saliency([loss, loss, loss], np.random.sample((3, )), keepdims=True)
+    assert result.shape == (1, 3)
