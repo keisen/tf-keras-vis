@@ -65,7 +65,7 @@ Please see [examples/attentions.ipynb](https://github.com/keisen/tf-keras-vis/bl
 ## Known Issues
 
 * With InceptionV3, ActivationMaximization doesn't work well, that's, it might generate meanninglessly bulr image.
-* With cascading model, Saliency and Gradcam don't work well, that's, it might occur some error.
+* With cascading model, Gradcam and Gradcam++ don't work well, that's, it might occur some error.
 * Unsupport `channels-first` models and datas.
 
 
@@ -74,7 +74,7 @@ Please see [examples/attentions.ipynb](https://github.com/keisen/tf-keras-vis/bl
 * We're going to add some algorisms such as below.
    - [SmoothGrad: removing noise by adding noise](https://arxiv.org/pdf/1706.03825.pdf) (DONE)
    - [GradCAM++](https://arxiv.org/abs/1710.11063)
-   - [Score-CAM](https://arxiv.org/pdf/1910.01279.pdf)
+   - [ScoreCAM](https://arxiv.org/pdf/1910.01279.pdf)
    - Deep Dream
    - Style transfer
 
