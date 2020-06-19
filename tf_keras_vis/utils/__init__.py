@@ -57,8 +57,8 @@ def listify(value, return_empty_list_if_none=True, convert_tuple_to_list=True):
 
 
 def normalize(array, value_range=(1., 0.)):
-    max_value = np.max(array)
-    min_value = np.min(array)
+    max_value = np.max(array, axis=tuple(np.arange(len(array.shape))[1:]), keepdims=True)
+    min_value = np.min(array, axis=tuple(np.arange(len(array.shape))[1:]), keepdims=True)
     normalized_array = (array - min_value) / (max_value - min_value + K.epsilon())
     if value_range is None:
         return normalized_array

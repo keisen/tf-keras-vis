@@ -107,6 +107,7 @@ venv.bak/
 *.swp
 examples/core*
 examples/sandbox.ipynb
+examples/workspace.ipynb
 /*.ipynb
 .node-version
 *.nbconvert.ipynb

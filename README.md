@@ -4,14 +4,7 @@
 [![Build Status](https://travis-ci.org/keisen/tf-keras-vis.svg?branch=master)](https://travis-ci.org/keisen/tf-keras-vis)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-tf-keras-vis is a visualization toolkit for debugging `tf.keras` models in Tensorflow2.
-
-The features of tf-keras-vis are based on [keras-vis](https://github.com/raghakot/keras-vis), but tf-keras-vis's APIs doesn't have compatibility with keras-vis's, because we prioritized to get following features for our expriments.
-
-- Support processing multiple images at a time as a batch
-- Support tf.keras.Model that has multiple inputs (and, of course, multiple outpus too)
-- Allow to use optimizers that embeded in tf.keras
-
+tf-keras-vis is a visualization toolkit for debugging `tf.keras` models in Tensorflow2.0+.
 
 ## Visualizations
 
@@ -25,7 +18,14 @@ The features of tf-keras-vis are based on [keras-vis](https://github.com/raghako
 
 ### Saliency Map and GradCAM
 
-<img src='https://github.com/keisen/tf-keras-vis/raw/master/examples/images/gradcam.png' width='400px' />
+<img src='https://github.com/keisen/tf-keras-vis/raw/master/examples/images/gradcam.png' width='600px' />
+
+
+These features are based on ones of [keras-vis](https://github.com/raghakot/keras-vis), but tf-keras-vis APIs doesn't have compatibility with keras-vis, because we prioritized to get following features for our expriments.
+
+- Support processing multiple images at a time as a batch
+- Support tf.keras.Model that has multiple inputs (and, of course, multiple outpus too)
+- Allow to use optimizers that embeded in tf.keras
 
 
 ## Requirements
@@ -65,15 +65,16 @@ Please see [examples/attentions.ipynb](https://github.com/keisen/tf-keras-vis/bl
 ## Known Issues
 
 * With InceptionV3, ActivationMaximization doesn't work well, that's, it might generate meanninglessly bulr image.
-* With cascading model, Gradcam doesn't work well, that's, it might occur some error.
-* Unsupported `channels-first` models and datas.
+* With cascading model, Gradcam and Gradcam++ don't work well, that's, it might occur some error.
+* Unsupport `channels-first` models and datas.
 
 
 ## ToDo
 * API documentations
 * We're going to add some algorisms such as below.
-   - [GradCAM++](https://arxiv.org/abs/1710.11063)
    - [SmoothGrad: removing noise by adding noise](https://arxiv.org/pdf/1706.03825.pdf) (DONE)
+   - [GradCAM++](https://arxiv.org/abs/1710.11063)
+   - [ScoreCAM](https://arxiv.org/pdf/1910.01279.pdf)
    - Deep Dream
    - Style transfer
 
