@@ -15,7 +15,8 @@ class Gradcam(ModelVisualization):
                  penultimate_layer=-1,
                  seek_penultimate_conv_layer=True,
                  activation_modifier=lambda cam: K.relu(cam),
-                 normalize_gradient=True):
+                 normalize_gradient=True,
+                 expand_cam=True):
         """Generate a gradient based class activation map (CAM) by using positive gradient of
             penultimate_layer with respect to loss.
 
@@ -34,6 +35,10 @@ class Gradcam(ModelVisualization):
                 If False, the penultimate layer is that was elected by penultimate_layer index.
             normalize_gradient: True to normalize gradients.
             activation_modifier: A function to modify gradients.
+            expand_cam: True to expand cam to same as input image size.
+                ![Note] Even if the model has multiple inputs, this function return only one cam
+                value (That's, when `expand_cam` is True, multiple cam images are generated from
+                a model that has multiple inputs).
         # Returns
             The heatmap image or a list of their images that indicate the `seed_input` regions
                 whose change would most contribute  the loss value,
@@ -60,6 +65,10 @@ class Gradcam(ModelVisualization):
         cam = np.asarray([np.sum(o * w, axis=-1) for o, w in zip(penultimate_output, weights)])
         if activation_modifier is not None:
             cam = activation_modifier(cam)
+
+        if not expand_cam:
+            return cam
+
         # Visualizing
         cam = self._zoom_for_visualizing(seed_inputs, cam)
         if len(self.model.inputs) == 1 and not isinstance(seed_input, list):
