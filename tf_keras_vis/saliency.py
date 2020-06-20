@@ -41,7 +41,7 @@ class Saliency(ModelVisualization):
         seed_inputs = self._get_seed_inputs_for_multiple_inputs(seed_input)
         # Processing saliency
         if smooth_samples > 0:
-            axes = [tuple(np.arange(len(X.shape))[1:-1]) for X in seed_inputs]
+            axes = (tuple(np.arange(len(X.shape))[1:]) for X in seed_inputs)
             sigmas = [
                 smooth_noise *
                 (np.max(X, axis=axis, keepdims=True) - np.min(X, axis=axis, keepdims=True))
