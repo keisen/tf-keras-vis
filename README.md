@@ -6,6 +6,14 @@
 
 tf-keras-vis is a visualization toolkit for debugging `tf.keras` models in Tensorflow2.0+.
 
+These features are based on ones of [keras-vis](https://github.com/raghakot/keras-vis), but tf-keras-vis APIs doesn't have compatibility with keras-vis, because we prioritized to get following features for our expriments.
+
+- Support processing multiple images at a time as a batch
+- Support tf.keras.Model that has multiple inputs (and, of course, multiple outpus too)
+- Allow to utilize optimizers that embeded in tf.keras
+- Get faster processing by optimal calculation
+
+
 ## Visualizations
 
 ### Visualize Dense Layer
@@ -16,16 +24,14 @@ tf-keras-vis is a visualization toolkit for debugging `tf.keras` models in Tenso
 
 <img src='examples/images/visualize-filters.png' width='800px' />
 
-### Saliency Map and GradCAM
+### GradCAM
 
 <img src='examples/images/gradcam.png' width='600px' />
 
+### Saliency Map (Vanilla or SmoothGrad)
 
-These features are based on ones of [keras-vis](https://github.com/raghakot/keras-vis), but tf-keras-vis APIs doesn't have compatibility with keras-vis, because we prioritized to get following features for our expriments.
+<img src='https://github.com/keisen/tf-keras-vis/raw/master/examples/images/smoothgrad.png' width='600px' />
 
-- Support processing multiple images at a time as a batch
-- Support tf.keras.Model that has multiple inputs (and, of course, multiple outpus too)
-- Allow to use optimizers that embeded in tf.keras
 
 
 ## Requirements
@@ -77,4 +83,3 @@ Please see [examples/attentions.ipynb](https://github.com/keisen/tf-keras-vis/bl
    - [ScoreCAM](https://arxiv.org/pdf/1910.01279.pdf)
    - Deep Dream
    - Style transfer
-
