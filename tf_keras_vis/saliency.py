@@ -41,18 +41,17 @@ class Saliency(ModelVisualization):
         seed_inputs = self._get_seed_inputs_for_multiple_inputs(seed_input)
         # Processing saliency
         if smooth_samples > 0:
-            axes = [tuple(range(1, len(X.shape))) for X in seed_inputs]
+            axes = [tuple(np.arange(len(X.shape))[1:-1]) for X in seed_inputs]
             sigmas = [
-                smooth_noise * (np.max(X, axis=axis) - np.min(X, axis=axis))
+                smooth_noise *
+                (np.max(X, axis=axis, keepdims=True) - np.min(X, axis=axis, keepdims=True))
                 for X, axis in zip(seed_inputs, axes)
             ]
             total_gradients = (np.zeros_like(X) for X in seed_inputs)
             for i in range(check_steps(smooth_samples)):
                 seed_inputs_plus_noise = [
-                    tf.constant(
-                        np.concatenate([
-                            x + np.random.normal(0., s, (1, ) + x.shape) for x, s in zip(X, sigma)
-                        ])) for X, sigma in zip(seed_inputs, sigmas)
+                    tf.constant(X + np.random.normal(0., sigma, X.shape))
+                    for X, sigma in zip(seed_inputs, sigmas)
                 ]
                 gradients = self._get_gradients(seed_inputs_plus_noise, losses, gradient_modifier)
                 total_gradients = (total + g for total, g in zip(total_gradients, gradients))

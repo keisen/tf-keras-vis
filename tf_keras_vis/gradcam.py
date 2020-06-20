@@ -61,8 +61,8 @@ class Gradcam(ModelVisualization):
         grads = tape.gradient(loss_values, penultimate_output)
         if normalize_gradient:
             grads = K.l2_normalize(grads)
-        weights = K.mean(grads, axis=tuple(np.arange(len(grads.shape))[1:-1]))
-        cam = np.asarray([np.sum(o * w, axis=-1) for o, w in zip(penultimate_output, weights)])
+        weights = K.mean(grads, axis=tuple(np.arange(len(grads.shape))[1:-1]), keepdims=True)
+        cam = np.sum(penultimate_output * weights, axis=-1)
         if activation_modifier is not None:
             cam = activation_modifier(cam)
 
