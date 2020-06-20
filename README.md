@@ -8,7 +8,7 @@ tf-keras-vis is a visualization toolkit for debugging `tf.keras` models in Tenso
 
 These features are based on ones of [keras-vis](https://github.com/raghakot/keras-vis), but tf-keras-vis APIs doesn't have compatibility with keras-vis, because we prioritized to get following features for our expriments.
 
-- Support processing multiple images at a time as a batch
+- Support processing multiple images at a time as a batch (i.e., batchwise-processing)
 - Support tf.keras.Model that has multiple inputs (and, of course, multiple outpus too)
 - Allow to utilize optimizers that embeded in tf.keras
 - Get faster processing by optimal calculation
@@ -24,9 +24,9 @@ These features are based on ones of [keras-vis](https://github.com/raghakot/kera
 
 <img src='https://github.com/keisen/tf-keras-vis/raw/master/examples/images/visualize-filters.png' width='800px' />
 
-### GradCAM
+### GradCAM (GradCAM++)
 
-<img src='https://github.com/keisen/tf-keras-vis/raw/master/examples/images/gradcam.png' width='600px' />
+<img src='https://github.com/keisen/tf-keras-vis/raw/master/examples/images/gradcam_plus_plus.png' width='600px' />
 
 ### Saliency Map (SmoothGrad)
 
@@ -78,7 +78,7 @@ Please see [examples/attentions.ipynb](https://github.com/keisen/tf-keras-vis/bl
 * API documentations
 * We're going to add some algorisms such as below.
    - [SmoothGrad: removing noise by adding noise](https://arxiv.org/pdf/1706.03825.pdf) (DONE)
-   - [GradCAM++](https://arxiv.org/abs/1710.11063)
-   - [ScoreCAM](https://arxiv.org/pdf/1910.01279.pdf)
+   - [GradCAM++: Improved Visual Explanations for Deep Convolutional Networks](https://arxiv.org/pdf/1710.11063.pdf) (DONE)
+   - [Score-CAM: Score-Weighted Visual Explanations for Convolutional Neural Networks](https://arxiv.org/pdf/1910.01279.pdf)
    - Deep Dream
    - Style transfer
