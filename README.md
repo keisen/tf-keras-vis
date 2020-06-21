@@ -10,15 +10,15 @@ tf-keras-vis is a visualization toolkit for debugging `tf.keras` models in Tenso
 
 ### Visualize Dense Layer
 
-<img src='https://github.com/keisen/tf-keras-vis/raw/master/examples/images/visualize-dense-layer.png' width='600px' />
+<img src='examples/images/visualize-dense-layer.png' width='600px' />
 
 ### Visualize Convolutional Filer
 
-<img src='https://github.com/keisen/tf-keras-vis/raw/master/examples/images/visualize-filters.png' width='800px' />
+<img src='examples/images/visualize-filters.png' width='800px' />
 
 ### Saliency Map and GradCAM
 
-<img src='https://github.com/keisen/tf-keras-vis/raw/master/examples/images/gradcam.png' width='600px' />
+<img src='examples/images/gradcam.png' width='600px' />
 
 
 These features are based on ones of [keras-vis](https://github.com/raghakot/keras-vis), but tf-keras-vis APIs doesn't have compatibility with keras-vis, because we prioritized to get following features for our expriments.
