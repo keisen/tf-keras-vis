@@ -33,7 +33,6 @@ These features are based on ones of [keras-vis](https://github.com/raghakot/kera
 <img src='https://github.com/keisen/tf-keras-vis/raw/master/examples/images/smoothgrad.png' width='600px' />
 
 
-
 ## Requirements
 
 * Python 3.5-3.8
