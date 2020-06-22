@@ -41,20 +41,21 @@ class Saliency(ModelVisualization):
         seed_inputs = self._get_seed_inputs_for_multiple_inputs(seed_input)
         # Processing saliency
         if smooth_samples > 0:
-            axes = [tuple(range(1, len(X.shape))) for X in seed_inputs]
-            sigmas = [
-                smooth_noise * (np.max(X, axis=axis) - np.min(X, axis=axis))
-                for X, axis in zip(seed_inputs, axes)
-            ]
-            total_gradients = (np.zeros_like(X) for X in seed_inputs)
-            for i in range(check_steps(smooth_samples)):
-                seed_inputs_plus_noise = [
-                    tf.constant(
-                        np.concatenate([
-                            x + np.random.normal(0., s, (1, ) + x.shape) for x, s in zip(X, sigma)
-                        ])) for X, sigma in zip(seed_inputs, sigmas)
-                ]
-                gradients = self._get_gradients(seed_inputs_plus_noise, losses, gradient_modifier)
+            smooth_samples = check_steps(smooth_samples)
+            seed_inputs = (tf.tile(X, (smooth_samples, ) + (1, ) * (X.ndim - 1))
+                           for X in seed_inputs)
+            seed_inputs = (tf.reshape(X, (smooth_samples, -1) + tuple(X.shape[1:]))
+                           for X in seed_inputs)
+            seed_inputs = ((X, tuple(range(X.ndim)[1:])) for X in seed_inputs)
+            seed_inputs = ((X, smooth_noise * (tf.math.reduce_max(X, axis=axis, keepdims=True) -
+                                               tf.math.reduce_min(X, axis=axis, keepdims=True)))
+                           for X, axis in seed_inputs)
+            seed_inputs = (X + np.random.normal(0., sigma, X.shape) for X, sigma in seed_inputs)
+            seed_inputs = list(seed_inputs)
+            total_gradients = (np.zeros_like(X[0]) for X in seed_inputs)
+            for i in range(smooth_samples):
+                sample = [X[i] for X in seed_inputs]
+                gradients = self._get_gradients(sample, losses, gradient_modifier)
                 total_gradients = (total + g for total, g in zip(total_gradients, gradients))
             grads = [g / smooth_samples for g in total_gradients]
         else:
