@@ -9,6 +9,9 @@ on:
   pull_request:
     branches: [ master ]
 
+env:
+  TF_KERAS_VIS_MAX_STEPS: 2
+
 jobs:
   build:
 
@@ -37,3 +40,12 @@ jobs:
     - name: Test with pytest
       run: |
         PYTHONPATH=$PWD:$PYTHONPATH py.test
+    - name: Test attentions.ipynb
+      run: |
+        jupyter-nbconvert --ExecutePreprocessor.timeout=600 --to notebook --execute examples/attentions.ipynb
+    - name: Test visualize_dense_layer.ipynb
+      run: |
+        jupyter-nbconvert --ExecutePreprocessor.timeout=600 --to notebook --execute examples/visualize_dense_layer.ipynb
+    - name: Test visualize_conv_filters.ipynb
+      run: |
+        jupyter-nbconvert --ExecutePreprocessor.timeout=600 --to notebook --execute examples/visualize_conv_filters.ipynb
