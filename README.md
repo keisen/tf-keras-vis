@@ -18,19 +18,19 @@ These features are based on ones of [keras-vis](https://github.com/raghakot/kera
 
 ### Visualize Dense Layer
 
-<img src='examples/images/visualize-dense-layer.png' width='600px' />
+<img src='https://github.com/keisen/tf-keras-vis/raw/master/examples/images/visualize-dense-layer.png' width='600px' />
 
 ### Visualize Convolutional Filer
 
-<img src='examples/images/visualize-filters.png' width='800px' />
+<img src='https://github.com/keisen/tf-keras-vis/raw/master/examples/images/visualize-filters.png' width='800px' />
 
 ### GradCAM
 
-<img src='examples/images/gradcam.png' width='600px' />
+<img src='https://github.com/keisen/tf-keras-vis/raw/master/examples/images/gradcam.png' width='600px' />
 
-### Saliency Map (Vanilla or SmoothGrad)
+### Saliency Map (SmoothGrad)
 
-<img src='examples/images/smoothgrad.png' width='600px' />
+<img src='https://github.com/keisen/tf-keras-vis/raw/master/examples/images/smoothgrad.png' width='600px' />
 
 
 
