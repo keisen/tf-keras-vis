@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 import numpy as np
-from tensorflow.keras import backend as K
+import tensorflow.keras.backend as K
 
 from tf_keras_vis.utils import listify
 

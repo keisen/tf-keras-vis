@@ -1,7 +1,7 @@
 import numpy as np
 import tensorflow as tf
+import tensorflow.keras.backend as K
 from scipy.ndimage.interpolation import zoom
-from tensorflow.keras import backend as K
 from tensorflow.python.keras.layers.convolutional import Conv
 
 from tf_keras_vis import ModelVisualization

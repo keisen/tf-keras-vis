@@ -25,8 +25,8 @@ class Saliency(ModelVisualization):
                 you have to pass a list of N-dim Numpy arrays.
             smooth_samples: The number of calculating gradients iterations. If set to zero,
                 the noise for smoothing won't be generated.
-            keepdims: A boolean that whether to keep the channels-dim or not.
             smooth_noise: Noise level that is recommended no tweaking when there is no reason.
+            keepdims: A boolean that whether to keep the channels-dim or not.
             gradient_modifier: A function to modify gradients. By default, the function modify
                 gradients to `absolute` values.
         # Returns
