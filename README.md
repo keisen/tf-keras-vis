@@ -24,14 +24,6 @@ All visualizations have the features as follows:
 * Support Optimizers embeded in tf.keras to process Activation maximization.
 
 
-**[NOTE!]**
-If you have ever used [keras-vis](https://github.com/raghakot/keras-vis), perhaps you may feel that tf-keras-vis is similar with keras-vis.
-Yes, tf-keras-vis derived from keras-vis.
-And then it was designed to support above features such as multiple inputs/outputs, batchwise processing and so on.
-Therefore, although both provided visualization algorisms are almost the same, those software architectures are different.
-Please notice that tf-keras-vis APIs doesn’t have compatibility with keras-vis.
-
-
 ## Visualizations
 
 ### Visualize Dense Layer
@@ -91,6 +83,13 @@ Please see below for details:
 * [examples/attentions.ipynb](https://github.com/keisen/tf-keras-vis/blob/master/examples/attentions.ipynb)
 * [examples/visualize_dense_layer.ipynb](https://github.com/keisen/tf-keras-vis/blob/master/examples/visualize_dense_layer.ipynb)
 * [examples/visualize_conv_filters.ipynb](https://github.com/keisen/tf-keras-vis/blob/master/examples/visualize_conv_filters.ipynb)
+
+**[NOTE]**
+If you have ever used [keras-vis](https://github.com/raghakot/keras-vis), perhaps you may feel that tf-keras-vis is similar with keras-vis.
+Yes, tf-keras-vis derived from keras-vis.
+And then it was designed to support features in the description of this README such as multiple inputs/outputs, batchwise processing and so on.
+Therefore, although both provided visualization algorisms are almost the same, those software architectures are different.
+Please notice that tf-keras-vis APIs doesn’t have compatibility with keras-vis.
 
 
 ## ToDo
