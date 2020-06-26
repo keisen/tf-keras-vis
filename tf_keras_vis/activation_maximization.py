@@ -1,7 +1,7 @@
 import numpy as np
 from collections import defaultdict
 import tensorflow as tf
-from tensorflow.keras import backend as K
+import tensorflow.keras.backend as K
 
 from tf_keras_vis import ModelVisualization
 from tf_keras_vis.utils import check_steps, listify
@@ -93,7 +93,7 @@ class ActivationMaximization(ModelVisualization):
                 # Calculate regularization values
                 regularization_values = [(regularizer.name, regularizer(seed_inputs))
                                          for regularizer in regularizers]
-                ys = [(-1. * loss_value) + sum([rv for (_, rv) in regularization_values])
+                ys = [(-1. * loss_value) + sum([val for _, val in regularization_values])
                       for loss_value in loss_values]
             grads = tape.gradient(ys, seed_inputs)
             grads = listify(grads)

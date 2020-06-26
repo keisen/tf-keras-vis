@@ -2,7 +2,6 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 import tensorflow as tf
-import tensorflow.keras.backend as K
 from tensorflow.keras.preprocessing.image import random_rotation
 
 
@@ -37,12 +36,12 @@ class Jitter(InputModifier):
 
     def __call__(self, seed_input):
         if self.jitter is None:
-            shape = seed_input.shape[1:-1]
-            self.axis = list(range(1, 1 + shape.rank))
             self.jitter = [
-                dim * self._jitter if self._jitter < 1. else self._jitter for dim in shape
+                dim * self._jitter if self._jitter < 1. else self._jitter
+                for dim in seed_input.shape[1:-1]
             ]
-        return tf.roll(seed_input, [np.random.randint(-j, j + 1) for j in self.jitter], self.axis)
+        return tf.roll(seed_input, [np.random.randint(-j, j + 1) for j in self.jitter],
+                       tuple(range(len(seed_input.shape))[1:-1]))
 
 
 class Rotate(InputModifier):
@@ -56,9 +55,8 @@ class Rotate(InputModifier):
         self.rg = degree
 
     def __call__(self, seed_input):
-        seed_input = [np.asarray(x) for x in seed_input]
-        seed_input = [
+        if tf.is_tensor(seed_input):
+            seed_input = seed_input.numpy()
+        return np.array([
             random_rotation(x, self.rg, row_axis=0, col_axis=1, channel_axis=2) for x in seed_input
-        ]
-        seed_input = [tf.expand_dims(x, axis=0) for x in seed_input]
-        return K.concatenate(seed_input, axis=0)
+        ])

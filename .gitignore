@@ -111,3 +111,4 @@ examples/workspace.ipynb
 /*.ipynb
 .node-version
 *.nbconvert.ipynb
+/temp/
