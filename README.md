@@ -87,7 +87,7 @@ Please see below for details:
 **[NOTE]**
 If you have ever used [keras-vis](https://github.com/raghakot/keras-vis), you may feel that tf-keras-vis is similar with keras-vis.
 Actually tf-keras-vis derived from keras-vis, and both provided visualization algorisms are almost the same.
-But please notice that tf-keras-vis APIs doesn’t have compatibility with keras-vis.
+But please notice that tf-keras-vis APIs does NOT have compatibility with keras-vis.
 
 
 ## ToDo
