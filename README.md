@@ -10,7 +10,7 @@ Currently supported algorisms for visualization include:
 * Activation Maximization
 * Class Activation Maps
    - [GradCAM](https://arxiv.org/pdf/1610.02391v1.pdf)
-   - [GradCAM++](https://arxiv.org/pdf/1710.11063.pdf)
+   - [GradCAM++](https://arxiv.org/pdf/1710.11063.pdf) :new::zap:
 * Saliency Maps
    - [Vanilla Saliency](https://arxiv.org/pdf/1312.6034.pdf)
    - [SmoothGrad](https://arxiv.org/pdf/1706.03825.pdf)
