@@ -46,7 +46,7 @@ class Saliency(ModelVisualization):
                            for X in seed_inputs)
             seed_inputs = (tf.reshape(X, (smooth_samples, -1) + tuple(X.shape[1:]))
                            for X in seed_inputs)
-            seed_inputs = ((X, tuple(range(X.ndim)[1:])) for X in seed_inputs)
+            seed_inputs = ((X, tuple(range(X.ndim)[2:])) for X in seed_inputs)
             seed_inputs = ((X, smooth_noise * (tf.math.reduce_max(X, axis=axis, keepdims=True) -
                                                tf.math.reduce_min(X, axis=axis, keepdims=True)))
                            for X, axis in seed_inputs)
