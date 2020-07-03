@@ -82,3 +82,7 @@ def find_layer(model, condition, offset=None, reverse=True):
             if result is not None:
                 return result
     return None
+
+
+def zoom_factor(from_shape, to_shape):
+    return tuple(t / f for f, t in iter(zip(from_shape, to_shape)))

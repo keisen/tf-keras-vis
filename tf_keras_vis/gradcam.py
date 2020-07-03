@@ -5,7 +5,7 @@ from scipy.ndimage.interpolation import zoom
 from tensorflow.python.keras.layers.convolutional import Conv
 
 from tf_keras_vis import ModelVisualization
-from tf_keras_vis.utils import find_layer
+from tf_keras_vis.utils import find_layer, zoom_factor
 
 
 class Gradcam(ModelVisualization):
@@ -70,7 +70,8 @@ class Gradcam(ModelVisualization):
             return cam
 
         # Visualizing
-        cam = self._zoom_for_visualizing(seed_inputs, cam)
+        factors = (zoom_factor(cam.shape, X.shape) for X in seed_inputs)
+        cam = [zoom(cam, factor) for factor in factors]
         if len(self.model.inputs) == 1 and not isinstance(seed_input, list):
             cam = cam[0]
         return cam
@@ -92,14 +93,6 @@ class Gradcam(ModelVisualization):
             raise ValueError(('Unable to determine penultimate `Conv` layer. '
                               '`penultimate_layer`='), layer)
         return _layer.output
-
-    def _zoom_for_visualizing(self, seed_inputs, cam):
-        input_dims_list = (X.shape[1:-1] for X in seed_inputs)
-        output_dims = cam.shape[1:]
-        zoom_factors = ([i / (j * 1.0) for i, j in iter(zip(input_dims, output_dims))]
-                        for input_dims in input_dims_list)
-        cam = [np.asarray([zoom(v, factor) for v in cam]) for factor in zoom_factors]
-        return cam
 
 
 class GradcamPlusPlus(Gradcam):
@@ -154,7 +147,7 @@ class GradcamPlusPlus(Gradcam):
         grads = tape.gradient(loss_values, penultimate_output)
 
         score = sum([K.exp(v) for v in loss_values])
-        score = tf.reshape(score, (-1, ) + ((1, ) * (len(grads.shape) - 1)))
+        score = tf.reshape(score, (-1, ) + tuple(np.ones(len(grads.shape) - 1, np.int)))
 
         first_derivative = score * grads
         second_derivative = first_derivative * grads
@@ -192,7 +185,8 @@ class GradcamPlusPlus(Gradcam):
         if not expand_cam:
             return cam
 
-        cam = self._zoom_for_visualizing(seed_inputs, cam)
+        factors = (zoom_factor(cam.shape, X.shape) for X in seed_inputs)
+        cam = [zoom(cam, factor) for factor in factors]
         if len(self.model.inputs) == 1 and not isinstance(seed_input, list):
             cam = cam[0]
         return cam
