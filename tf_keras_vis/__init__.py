@@ -54,7 +54,7 @@ class ModelVisualization(ABC):
         if len(seed_inputs) != len(self.model.inputs):
             raise ValueError(('The model has {} inputs, '
                               'but the number of seed-inputs tensors you passed is {}.').format(
-                                  len(self.model.outputs), len(seed_inputs)))
+                                  len(self.model.inputs), len(seed_inputs)))
         seed_inputs = (x if tf.is_tensor(x) else tf.constant(x) for x in seed_inputs)
         seed_inputs = (tf.expand_dims(x, axis=0) if len(x.shape) == len(tensor.shape[1:]) else x
                        for x, tensor in zip(seed_inputs, self.model.inputs))
