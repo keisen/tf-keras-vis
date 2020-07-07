@@ -10,7 +10,9 @@ Currently supported algorisms for visualization include:
 * Activation Maximization
 * Class Activation Maps
    - [GradCAM](https://arxiv.org/pdf/1610.02391v1.pdf)
-   - [GradCAM++](https://arxiv.org/pdf/1710.11063.pdf) :new::zap:
+   - [GradCAM++](https://arxiv.org/pdf/1710.11063.pdf)
+   - [ScoreCAM](https://arxiv.org/pdf/1910.01279.pdf) :new::zap:
+   - [Faster-ScoreCAM](https://github.com/tabayashi0117/Score-CAM/blob/master/README.md#faster-score-cam) :new::zap:
 * Saliency Maps
    - [Vanilla Saliency](https://arxiv.org/pdf/1312.6034.pdf)
    - [SmoothGrad](https://arxiv.org/pdf/1706.03825.pdf)
@@ -18,9 +20,9 @@ Currently supported algorisms for visualization include:
 tf-keras-vis is designed to be ease of use, light-weight and flexible.
 All visualizations have the features as follows:
 
-* Support N-dim image inputs, that's, not only support pictures but also such as 3D images.
-* Support batch-wise processing, so, be able to efficiently process multiple inputs.
-* Support the model that have either multiple inputs or multiple outputs, or both.
+* Support **N-dim image inputs**, that's, not only support pictures but also such as 3D images.
+* Support **batchwise** processing, so, be able to efficiently process multiple inputs.
+* Support the model that have either **multiple inputs** or **multiple outputs**, or both.
 * Support Optimizers embeded in tf.keras to process Activation maximization.
 
 
@@ -93,7 +95,6 @@ But please notice that tf-keras-vis APIs does NOT have compatibility with keras-
 ## ToDo
 * API documentations
 * We're going to add some algorisms such as below.
-   - [ScoreCAM: Score-Weighted Visual Explanations for Convolutional Neural Networks](https://arxiv.org/pdf/1910.01279.pdf)
    - Deep Dream
    - Style transfer
 
@@ -101,7 +102,7 @@ But please notice that tf-keras-vis APIs does NOT have compatibility with keras-
 ## Known Issues
 
 * With InceptionV3, ActivationMaximization doesn't work well, that's, it might generate meanninglessly bulr image.
-* With cascading model, Gradcam and Gradcam++ don't work well, that's, it might occur some error.
+* With cascading model, Gradcam and Gradcam++ don't work well, that's, it might occur some error. So we recommnend, in this case, to use FasterScoreCAM.
 * Unsupport `channels-first` models and datas.
 
 
