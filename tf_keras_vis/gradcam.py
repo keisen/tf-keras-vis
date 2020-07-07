@@ -17,7 +17,7 @@ class Gradcam(ModelVisualization):
                  activation_modifier=lambda cam: K.relu(cam),
                  normalize_gradient=True,
                  expand_cam=True):
-        """Generate a gradient based class activation map (CAM) by using positive gradient of
+        """Generate gradient based class activation maps (CAM) by using positive gradient of
             penultimate_layer with respect to loss.
 
             For details on Grad-CAM, see the paper:
@@ -103,7 +103,7 @@ class GradcamPlusPlus(Gradcam):
                  seek_penultimate_conv_layer=True,
                  activation_modifier=lambda cam: K.relu(cam),
                  expand_cam=True):
-        """Generate a gradient based class activation map (CAM) by using positive gradient of
+        """Generate gradient based class activation maps (CAM) by using positive gradient of
             penultimate_layer with respect to loss.
 
             For details on GradCAM++, see the paper:

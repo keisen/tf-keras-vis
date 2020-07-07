@@ -4,103 +4,127 @@ import tensorflow as tf
 import tensorflow.keras.backend as K
 
 from tf_keras_vis.gradcam import Gradcam
-from tf_keras_vis.utils import zoom_factor
+from tf_keras_vis.utils import listify, zoom_factor
 
 
 class ScoreCAM(Gradcam):
-    def __init__(self, model):
-        """Create ScoreCAM class instance that analize the model for debugging.
-
-        # Arguments
-            model: The `tf.keras.Model` instance.
-        """
-        super().__init__(model, model_modifier=None, clone=False)
-        if len(model.outputs) > 1:
-            raise ValueError(("`model` has multiple outputs but ,currently, "
-                              "ScoreCAM doesn't yet support such a model."
-                              "If you needed, please feel free to request it on Github-Issues."))
-        if model.layers[-1].activation != tf.keras.activations.softmax:
-            raise ValueError(("`model` MUST has a output layer "
-                              "that is set a softmax activation function."))
-
     def __call__(self,
                  loss,
                  seed_input,
                  penultimate_layer=-1,
                  seek_penultimate_conv_layer=True,
                  activation_modifier=lambda cam: K.relu(cam),
-                 normalize_gradient=True,
-                 expand_cam=True):
+                 expand_cam=True,
+                 batch_size=32,
+                 max_N=None):
+        """Generate score-weighted class activation maps (CAM) by using gradient-free visualization method.
+
+            For details on Score-CAM, see the paper:
+            [Score-CAM: Score-Weighted Visual Explanations for Convolutional Neural Networks ]
+            (https://arxiv.org/pdf/1910.01279.pdf).
+
+        # Arguments
+            loss: A loss function. If the model has multiple outputs, you can use a different
+                loss on each output by passing a list of losses.
+            seed_input: An N-dim Numpy array. If the model has multiple inputs,
+                you have to pass a list of N-dim Numpy arrays.
+            penultimate_layer: A number of integer or a tf.keras.layers.Layer object.
+            seek_penultimate_conv_layer: True to seek the penultimate layter that is a subtype of
+                `keras.layers.convolutional.Conv` class.
+                If False, the penultimate layer is that was elected by penultimate_layer index.
+            activation_modifier: A function to modify activations.
+            expand_cam: True to expand cam to same as input image size.
+                ![Note] Even if the model has multiple inputs, this function return only one cam
+                value (That's, when `expand_cam` is True, multiple cam images are generated from
+                a model that has multiple inputs).
+            batch_size: Integer or None. Number of samples per batch.
+                If unspecified, batch_size will default to 32.
+            max_N: Integer or None. If None, we do NOT recommend, because it takes huge time.
+                If not None, that's setting Integer, run as Faster-ScoreCAM.
+                Set larger number, need more time to visualize CAM but to be able to get
+                clearer attention images.
+        # Returns
+            The heatmap image or a list of their images that indicate the `seed_input` regions
+                whose change would most contribute  the loss value,
+        # Raises
+            ValueError: In case of invalid arguments for `loss`, or `penultimate_layer`.
+        """
 
         # Preparing
-        losses = self._get_losses_for_multiple_outputs(loss)  # TODO
+        losses = self._get_losses_for_multiple_outputs(loss)
         seed_inputs = self._get_seed_inputs_for_multiple_inputs(seed_input)
         penultimate_output_tensor = self._find_penultimate_output(penultimate_layer,
                                                                   seek_penultimate_conv_layer)
         # Processing score-cam
-        model = tf.keras.Model(inputs=self.model.inputs, outputs=penultimate_output_tensor)
-        penultimate_output = model(seed_inputs)
+        penultimate_output = tf.keras.Model(inputs=self.model.inputs,
+                                            outputs=penultimate_output_tensor)(seed_inputs)
+        # For efficiently visualizing, extract maps that has a large variance.
+        # This excellent idea is devised by tabayashi0117.
+        # (see for details: https://github.com/tabayashi0117/Score-CAM#faster-score-cam)
+        if max_N is not None:
+            activation_map_std = tf.math.reduce_std(penultimate_output,
+                                                    axis=tuple(
+                                                        range(penultimate_output.ndim)[1:-1]),
+                                                    keepdims=True)
+            _, top_k_indices = tf.math.top_k(activation_map_std, max_N)
+            top_k_indices, _ = tf.unique(tf.reshape(top_k_indices, (-1, )))
+            penultimate_output = tf.gather(penultimate_output, top_k_indices, axis=-1)
 
-        # Resizing activation-maps
-        factors = (zoom_factor(penultimate_output.shape, seed_input.shape)
-                   for seed_input in seed_inputs)
-        resized_activation_maps = [zoom(penultimate_output, factor) for factor in factors]
+        # Upsampling activation-maps
+        input_shapes = [seed_input.shape for seed_input in seed_inputs]
+        factors = (zoom_factor(penultimate_output.shape[:-1], input_shape[:-1])
+                   for input_shape in input_shapes)
+        upsampled_activation_maps = [zoom(penultimate_output, factor + (1, )) for factor in factors]
+        map_shapes = [activation_map.shape for activation_map in upsampled_activation_maps]
 
         # Normalizing activation-maps
         min_activation_maps = (np.min(activation_map,
-                                      axis=tuple(range(len(activation_map.shape))[1:-1]),
-                                      keepdims=True) for activation_map in resized_activation_maps)
+                                      axis=tuple(range(activation_map.ndim)[1:-1]),
+                                      keepdims=True)
+                               for activation_map in upsampled_activation_maps)
         max_activation_maps = (np.max(activation_map,
-                                      axis=tuple(range(len(activation_map.shape))[1:-1]),
-                                      keepdims=True) for activation_map in resized_activation_maps)
-        normalized_activation_maps = [
+                                      axis=tuple(range(activation_map.ndim)[1:-1]),
+                                      keepdims=True)
+                               for activation_map in upsampled_activation_maps)
+        normalized_activation_maps = (
             (activation_map - min_activation_map) / (max_activation_map - min_activation_map)
             for activation_map, min_activation_map, max_activation_map in zip(
-                resized_activation_maps, min_activation_maps, max_activation_maps)
-        ]
+                upsampled_activation_maps, min_activation_maps, max_activation_maps))
 
-        # Masking input-sheeds by multiply by activation-maps.
-        input_tile_axes = (
-            (activation_map.shape[-1], ) + tuple(np.ones(len(seed_input.shape), np.int))
-            for seed_input, activation_map in zip(seed_inputs, normalized_activation_maps))
-        map_tile_axes = (
-            (seed_input.shape[-1], ) + tuple(np.ones(len(activation_map.shape), np.int))
-            for seed_input, activation_map in zip(seed_inputs, normalized_activation_maps))
-        map_transpose_axes = ((len(activation_map.shape), ) +
-                              tuple(range(len(activation_map.shape))[1:]) + (0, )
-                              for activation_map in normalized_activation_maps)
+        # Masking inputs
+        input_tile_axes = ((map_shape[-1], ) + tuple(np.ones(len(input_shape), np.int))
+                           for input_shape, map_shape in zip(input_shapes, map_shapes))
         mask_templates = (np.tile(seed_input, axes)
                           for seed_input, axes in zip(seed_inputs, input_tile_axes))
-        masks = (np.transpose(np.tile(activation_map, tile_axis),
-                              transpose_axis) for activation_map, tile_axis, transpose_axis in zip(
-                                  normalized_activation_maps, map_tile_axes, map_transpose_axes))
+        map_transpose_axes = ((len(map_shape) - 1, ) + tuple(range(len(map_shape))[:-1])
+                              for map_shape in map_shapes)
+        masks = (np.transpose(activation_map,
+                              transpose_axis) for activation_map, transpose_axis in zip(
+                                  normalized_activation_maps, map_transpose_axes))
+        map_tile_axes = (tuple(np.ones(len(map_shape), np.int)) + (input_shape[-1], )
+                         for input_shape, map_shape in zip(input_shapes, map_shapes))
+        masks = (np.tile(np.expand_dims(activation_map, axis=-1), tile_axis)
+                 for activation_map, tile_axis in zip(masks, map_tile_axes))
+        masked_seed_inputs = (mask_template * mask
+                              for mask_template, mask in zip(mask_templates, masks))
         masked_seed_inputs = [
-            np.reshape(mask_template * mask, (-1, ) + mask.shape[2:])
-            for mask_template, mask in zip(mask_templates, masks)
+            np.reshape(masked_seed_input, (-1, ) + masked_seed_input.shape[2:])
+            for masked_seed_input in masked_seed_inputs
         ]
 
         # Predicting masked seed-inputs
-        preds = self.model.predict(masked_seed_inputs)
-        if losses == 1:
-            preds = [preds]
-        preds = [
-            np.reshape(prediction, (penultimate_output.shape[-1], -1, prediction.shape[-1]))
-            for prediction in preds
-        ]
+        preds = self.model.predict(masked_seed_inputs, batch_size=batch_size)
+        preds = (np.reshape(prediction, (penultimate_output.shape[-1], -1, prediction.shape[-1]))
+                 for prediction in listify(preds))
 
         # Calculating weights
         weights = [[loss(p) for p in prediction] for loss, prediction in zip(losses, preds)]
         weights = np.sum(np.array(weights), axis=0)
         weights = np.transpose(weights, (1, 0))
-        if len(penultimate_output.shape) > 2:
-            weights = np.reshape(weights, (weights.shape[0], ) +
-                                 tuple(np.ones(len(penultimate_output.shape[1:-1]))) +
-                                 (weights.shape[-1], ))
 
         # Generate cam
-        cam = penultimate_output * weights
+        cam = K.batch_dot(penultimate_output, weights)
         cam = activation_modifier(cam)
-        cam /= np.max(cam)
 
         if not expand_cam:
             return cam

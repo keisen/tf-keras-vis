@@ -52,12 +52,11 @@ class Saliency(ModelVisualization):
                            for X, axis in seed_inputs)
             seed_inputs = (X + np.random.normal(0., sigma, X.shape) for X, sigma in seed_inputs)
             seed_inputs = list(seed_inputs)
-            total_gradients = (np.zeros_like(X[0]) for X in seed_inputs)
+            total = (np.zeros_like(X[0]) for X in seed_inputs)
             for i in range(smooth_samples):
-                sample = [X[i] for X in seed_inputs]
-                gradients = self._get_gradients(sample, losses, gradient_modifier)
-                total_gradients = (total + g for total, g in zip(total_gradients, gradients))
-            grads = [g / smooth_samples for g in total_gradients]
+                grads = self._get_gradients([X[i] for X in seed_inputs], losses, gradient_modifier)
+                total = (total + g for total, g in zip(total, grads))
+            grads = [g / smooth_samples for g in total]
         else:
             grads = self._get_gradients(seed_inputs, losses, gradient_modifier)
         # Visualizing
