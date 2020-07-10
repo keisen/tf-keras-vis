@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+import tensorflow as tf
 from tensorflow.keras import backend as K
 from tensorflow.keras.layers import (Conv2D, Dense, GlobalAveragePooling2D, Input)
 from tensorflow.keras.models import Model
@@ -74,8 +75,12 @@ def test__call__if_seed_input_is_None(model):
 
 def test__call__if_seed_input_shape_is_invalid(model):
     gradcam = Gradcam(model)
-    with pytest.raises(ValueError):
+    try:
         gradcam(CategoricalScore(1, 2), np.random.sample((8, )))
+        assert False
+    except (ValueError, tf.errors.InvalidArgumentError):
+        # TF became to raise InvalidArgumentError from ver.2.0.2.
+        assert True
 
 
 def test__call__if_seed_input_has_not_batch_dim(model):
