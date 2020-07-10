@@ -67,12 +67,14 @@ class Saliency(ModelVisualization):
         return grads
 
     def _get_gradients(self, seed_inputs, losses, gradient_modifier):
-        with tf.GradientTape() as tape:
+        with tf.GradientTape(watch_accessed_variables=False, persistent=True) as tape:
             tape.watch(seed_inputs)
             outputs = self.model(seed_inputs)
             outputs = listify(outputs)
             loss_values = [loss(output) for output, loss in zip(outputs, losses)]
-        grads = tape.gradient(loss_values, seed_inputs)
+        grads = tape.gradient(loss_values,
+                              seed_inputs,
+                              unconnected_gradients=tf.UnconnectedGradients.ZERO)
         if gradient_modifier is not None:
             grads = [gradient_modifier(g) for g in grads]
         return grads

@@ -1,11 +1,12 @@
 import numpy as np
 import pytest
-from tensorflow.keras.layers import Concatenate, Conv2D, Dense, Flatten, Input
-from tensorflow.keras.models import Model, Sequential
+from tensorflow.keras import backend as K
+from tensorflow.keras.layers import (Conv2D, Dense, GlobalAveragePooling2D, Input)
+from tensorflow.keras.models import Model
 
 from tf_keras_vis.activation_maximization import ActivationMaximization
 from tf_keras_vis.utils.callbacks import OptimizerCallback
-from tf_keras_vis.utils.losses import SmoothedLoss
+from tf_keras_vis.utils.losses import CategoricalScore
 from tf_keras_vis.utils.regularizers import L2Norm, TotalVariation
 
 
@@ -21,117 +22,129 @@ class MockCallback(OptimizerCallback):
 
 
 @pytest.fixture(scope="function", autouse=True)
+def dense_model():
+    inputs = Input((3, ))
+    x = Dense(5, activation='relu')(inputs)
+    x = Dense(2, activation='softmax')(x)
+    return Model(inputs=inputs, outputs=x)
+
+
+@pytest.fixture(scope="function", autouse=True)
+def model():
+    inputs = Input((8, 8, 3))
+    x = Conv2D(2, 3, activation='relu')(inputs)
+    x = GlobalAveragePooling2D()(x)
+    x = Dense(2, activation='softmax')(x)
+    return Model(inputs=inputs, outputs=x)
+
+
+@pytest.fixture(scope="function", autouse=True)
 def multiple_inputs_model():
-    a = Input(shape=(8, 8, 3))
-    b = Input(shape=(8, 8, 3))
-    c = Input(shape=(8, 8, 3))
-    x1 = Conv2D(5, 3, activation='relu')(a)
-    x2 = Conv2D(5, 3, activation='relu')(b)
-    x3 = Conv2D(5, 3, activation='relu')(c)
-    x = Concatenate()([x1, x2, x3])
-    x = Dense(3)(x)
-    return Model([a, b, c], [x])
+    inputs1 = Input((8, 8, 3))
+    inputs2 = Input((10, 10, 3))
+    x1 = Conv2D(2, 3, padding='same', activation='relu')(inputs1)
+    x2 = Conv2D(2, 3, activation='relu')(inputs2)
+    x = K.concatenate([x1, x2], axis=-1)
+    x = GlobalAveragePooling2D()(x)
+    x = Dense(2, activation='softmax')(x)
+    return Model(inputs=[inputs1, inputs2], outputs=x)
 
 
 @pytest.fixture(scope="function", autouse=True)
 def multiple_outputs_model():
-    x = i = Input(shape=(8, 8, 3))
-    x = Conv2D(5, 3, activation='relu')(x)
-    x = Flatten()(x)
-    a = Dense(3, name='output_a')(x)
-    b = Dense(2, name='output_b')(x)
-    return Model([i], [a, b])
+    inputs = Input((8, 8, 3))
+    x = Conv2D(2, 3, activation='relu')(inputs)
+    x = GlobalAveragePooling2D()(x)
+    x1 = Dense(2, activation='softmax')(x)
+    x2 = Dense(1)(x)
+    return Model(inputs=inputs, outputs=[x1, x2])
 
 
 @pytest.fixture(scope="function", autouse=True)
-def cnn_model():
-    return _cnn_model()
+def multiple_io_model():
+    inputs1 = Input((8, 8, 3))
+    inputs2 = Input((10, 10, 3))
+    x1 = Conv2D(2, 3, padding='same', activation='relu')(inputs1)
+    x2 = Conv2D(2, 3, activation='relu')(inputs2)
+    x = K.concatenate([x1, x2], axis=-1)
+    x = GlobalAveragePooling2D()(x)
+    x1 = Dense(2, activation='softmax')(x)
+    x2 = Dense(1)(x)
+    return Model(inputs=[inputs1, inputs2], outputs=[x1, x2])
 
 
-def _cnn_model():
-    return Sequential([
-        Input(shape=(8, 8, 3)),
-        Conv2D(5, 3, activation='relu'),
-        Flatten(),
-        Dense(2, activation='softmax')
-    ])
-
-
-def test__call__if_loss_is_None(cnn_model):
-    activation_maximization = ActivationMaximization(cnn_model)
-    try:
+def test__call__if_loss_is_None(model):
+    activation_maximization = ActivationMaximization(model)
+    with pytest.raises(ValueError):
         activation_maximization(None, steps=1)
-        assert False
-    except ValueError:
-        assert True
 
 
-def test__call__(cnn_model):
-    activation_maximization = ActivationMaximization(cnn_model)
-    result = activation_maximization(SmoothedLoss(1), steps=1)
+def test__call__(model):
+    activation_maximization = ActivationMaximization(model)
+    result = activation_maximization(CategoricalScore(1, 2), steps=1)
     assert result.shape == (1, 8, 8, 3)
 
 
-def test__call__if_loss_is_list(cnn_model):
-    activation_maximization = ActivationMaximization(cnn_model)
-    result = activation_maximization([SmoothedLoss(1)], steps=1)
+def test__call__if_loss_is_list(model):
+    activation_maximization = ActivationMaximization(model)
+    result = activation_maximization([CategoricalScore(1, 2)], steps=1)
     assert result.shape == (1, 8, 8, 3)
 
 
-def test__call__with_seed_input(cnn_model):
-    activation_maximization = ActivationMaximization(cnn_model)
-    result = activation_maximization(SmoothedLoss(1),
+def test__call__with_seed_input(model):
+    activation_maximization = ActivationMaximization(model)
+    result = activation_maximization(CategoricalScore(1, 2),
                                      seed_input=np.random.sample((8, 8, 3)),
                                      steps=1)
     assert result.shape == (1, 8, 8, 3)
 
 
-def test__call__with_callback(cnn_model):
-    activation_maximization = ActivationMaximization(cnn_model)
+def test__call__with_callback(model):
+    activation_maximization = ActivationMaximization(model)
     mock = MockCallback()
-    result = activation_maximization(SmoothedLoss(1), steps=1, callbacks=mock)
+    result = activation_maximization(CategoricalScore(1, 2), steps=1, callbacks=mock)
     assert result.shape == (1, 8, 8, 3)
     assert mock.on_begin_was_called
     assert mock.on_call_was_called
     assert mock.on_end_was_called
 
 
-def test__call__with_gradient_modifier(cnn_model):
-    activation_maximization = ActivationMaximization(cnn_model)
-    result = activation_maximization(SmoothedLoss(1), steps=1, gradient_modifier=lambda x: x)
+def test__call__with_gradient_modifier(model):
+    activation_maximization = ActivationMaximization(model)
+    result = activation_maximization(CategoricalScore(1, 2), steps=1, gradient_modifier=lambda x: x)
     assert result.shape == (1, 8, 8, 3)
 
 
 def test__call__with_mutiple_inputs_model(multiple_inputs_model):
     activation_maximization = ActivationMaximization(multiple_inputs_model)
-    result = activation_maximization(SmoothedLoss(1), steps=1, input_modifiers=None)
+    result = activation_maximization(CategoricalScore(1, 2), steps=1, input_modifiers=None)
     assert result[0].shape == (1, 8, 8, 3)
-    assert result[1].shape == (1, 8, 8, 3)
+    assert result[1].shape == (1, 10, 10, 3)
 
 
 def test__call__with_mutiple_outputs_model(multiple_outputs_model):
     activation_maximization = ActivationMaximization(multiple_outputs_model)
-    result = activation_maximization(SmoothedLoss(1), steps=1, input_modifiers=None)
+    result = activation_maximization(CategoricalScore(1, 2), steps=1, input_modifiers=None)
     assert result.shape == (1, 8, 8, 3)
     activation_maximization = ActivationMaximization(multiple_outputs_model)
-    result = activation_maximization([SmoothedLoss(1), SmoothedLoss(1)],
-                                     steps=1,
-                                     input_modifiers=None)
+    result = activation_maximization(
+        [CategoricalScore(1, 2), CategoricalScore(1, 2)], steps=1, input_modifiers=None)
     assert result.shape == (1, 8, 8, 3)
     activation_maximization = ActivationMaximization(multiple_outputs_model)
-    result = activation_maximization([SmoothedLoss(1), SmoothedLoss(1)],
-                                     steps=1,
-                                     input_modifiers=None,
-                                     regularizers=[TotalVariation(10.),
-                                                   L2Norm(10.)])
+    result = activation_maximization(
+        [CategoricalScore(1, 2), CategoricalScore(1, 2)],
+        steps=1,
+        input_modifiers=None,
+        regularizers=[TotalVariation(10.), L2Norm(10.)])
     assert result.shape == (1, 8, 8, 3)
 
 
 def test__call__with_mutiple_outputs_model_but_losses_is_too_many(multiple_outputs_model):
     activation_maximization = ActivationMaximization(multiple_outputs_model)
-    try:
+    with pytest.raises(ValueError):
         activation_maximization(
-            [SmoothedLoss(1), SmoothedLoss(1), SmoothedLoss(1)], steps=1, input_modifiers=None)
-        assert False
-    except ValueError:
-        assert True
+            [CategoricalScore(1, 2),
+             CategoricalScore(1, 2),
+             CategoricalScore(1, 2)],
+            steps=1,
+            input_modifiers=None)

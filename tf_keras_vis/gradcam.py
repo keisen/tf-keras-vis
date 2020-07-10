@@ -53,12 +53,14 @@ class Gradcam(ModelVisualization):
         # Processing gradcam
         model = tf.keras.Model(inputs=self.model.inputs,
                                outputs=self.model.outputs + [penultimate_output_tensor])
-        with tf.GradientTape() as tape:
+        with tf.GradientTape(watch_accessed_variables=False) as tape:
             tape.watch(seed_inputs)
             outputs = model(seed_inputs)
             outputs, penultimate_output = outputs[:-1], outputs[-1]
             loss_values = [loss(y) for y, loss in zip(outputs, losses)]
-        grads = tape.gradient(loss_values, penultimate_output)
+        grads = tape.gradient(loss_values,
+                              penultimate_output,
+                              unconnected_gradients=tf.UnconnectedGradients.ZERO)
         if normalize_gradient:
             grads = K.l2_normalize(grads)
         weights = K.mean(grads, axis=tuple(range(grads.ndim)[1:-1]), keepdims=True)
@@ -92,7 +94,11 @@ class Gradcam(ModelVisualization):
         if _layer is None:
             raise ValueError(('Unable to determine penultimate `Conv` layer. '
                               '`penultimate_layer`='), layer)
-        return _layer.output
+        output = _layer.output
+        if len(output.shape) < 3:
+            raise ValueError(("Penultimate layer's output tensor MUST have "
+                              "samples, spaces and channels dimensions. [{}]").format(output.shape))
+        return output
 
 
 class GradcamPlusPlus(Gradcam):
@@ -139,15 +145,17 @@ class GradcamPlusPlus(Gradcam):
         model = tf.keras.Model(inputs=self.model.inputs,
                                outputs=self.model.outputs + [penultimate_output_tensor])
 
-        with tf.GradientTape() as tape:
+        with tf.GradientTape(watch_accessed_variables=False) as tape:
             tape.watch(seed_inputs)
             outputs = model(seed_inputs)
             outputs, penultimate_output = outputs[:-1], outputs[-1]
             loss_values = [loss(y) for y, loss in zip(outputs, losses)]
-        grads = tape.gradient(loss_values, penultimate_output)
+        grads = tape.gradient(loss_values,
+                              penultimate_output,
+                              unconnected_gradients=tf.UnconnectedGradients.ZERO)
 
-        score = sum([K.exp(v) for v in loss_values])
-        score = tf.reshape(score, (-1, ) + tuple(np.ones(len(grads.shape) - 1, np.int)))
+        score = sum([K.exp(tf.reshape(v, (-1, ))) for v in loss_values])
+        score = tf.reshape(score, (-1, ) + tuple(np.ones(grads.ndim - 1, np.int)))
 
         first_derivative = score * grads
         second_derivative = first_derivative * grads

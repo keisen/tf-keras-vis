@@ -43,6 +43,7 @@ class ScoreCAM(Gradcam):
                 If not None, that's setting Integer, run as Faster-ScoreCAM.
                 Set larger number, need more time to visualize CAM but to be able to get
                 clearer attention images.
+                (see for details: https://github.com/tabayashi0117/Score-CAM#faster-score-cam)
         # Returns
             The heatmap image or a list of their images that indicate the `seed_input` regions
                 whose change would most contribute  the loss value,
@@ -69,8 +70,10 @@ class ScoreCAM(Gradcam):
             _, top_k_indices = tf.math.top_k(activation_map_std, max_N)
             top_k_indices, _ = tf.unique(tf.reshape(top_k_indices, (-1, )))
             penultimate_output = tf.gather(penultimate_output, top_k_indices, axis=-1)
+            N = penultimate_output.shape[-1]
 
         # Upsampling activation-maps
+        penultimate_output = penultimate_output.numpy()
         input_shapes = [seed_input.shape for seed_input in seed_inputs]
         factors = (zoom_factor(penultimate_output.shape[:-1], input_shape[:-1])
                    for input_shape in input_shapes)
@@ -114,17 +117,21 @@ class ScoreCAM(Gradcam):
 
         # Predicting masked seed-inputs
         preds = self.model.predict(masked_seed_inputs, batch_size=batch_size)
-        preds = (np.reshape(prediction, (penultimate_output.shape[-1], -1, prediction.shape[-1]))
+        preds = (np.reshape(prediction, (N, -1, prediction.shape[-1]))
                  for prediction in listify(preds))
 
         # Calculating weights
-        weights = [[loss(p) for p in prediction] for loss, prediction in zip(losses, preds)]
-        weights = np.sum(np.array(weights), axis=0)
+        weights = ([loss(p) for p in prediction] for loss, prediction in zip(losses, preds))
+        weights = (np.array(w, dtype=np.float32) for w in weights)
+        weights = (np.reshape(w, (N, -1)) for w in weights)
+        weights = np.array(list(weights), dtype=np.float32)
+        weights = np.sum(weights, axis=0)
         weights = np.transpose(weights, (1, 0))
 
         # Generate cam
         cam = K.batch_dot(penultimate_output, weights)
-        cam = activation_modifier(cam)
+        if activation_modifier is not None:
+            cam = activation_modifier(cam)
 
         if not expand_cam:
             return cam

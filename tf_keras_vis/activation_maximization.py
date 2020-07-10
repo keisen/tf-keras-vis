@@ -85,22 +85,24 @@ class ActivationMaximization(ModelVisualization):
 
             seed_inputs = [tf.Variable(X) for X in seed_inputs]
             # Calculate gradients
-            with tf.GradientTape() as tape:
+            with tf.GradientTape(watch_accessed_variables=False) as tape:
                 tape.watch(seed_inputs)
                 outputs = self.model(seed_inputs)
                 outputs = listify(outputs)
                 loss_values = [loss(output) for output, loss in zip(outputs, losses)]
                 # Calculate regularization values
-                regularization_values = [(regularizer.name, regularizer(seed_inputs))
-                                         for regularizer in regularizers]
-                ys = [(-1. * loss_value) + sum([val for _, val in regularization_values])
+                regularizations = [(regularizer.name, regularizer(seed_inputs))
+                                   for regularizer in regularizers]
+                ys = [(-1. * loss_value) + sum([v for _, v in regularizations])
                       for loss_value in loss_values]
-            grads = tape.gradient(ys, seed_inputs)
+            grads = tape.gradient(ys,
+                                  seed_inputs,
+                                  unconnected_gradients=tf.UnconnectedGradients.ZERO)
             grads = listify(grads)
             if gradient_modifier is not None:
-                grads = [gradient_modifier(g) for g in grads]
+                grads = (gradient_modifier(g) for g in grads)
             if normalize_gradient:
-                grads = [K.l2_normalize(g) for g in grads]
+                grads = (K.l2_normalize(g) for g in grads)
             optimizer.apply_gradients(zip(grads, seed_inputs))
 
             for callback in callbacks:
@@ -109,7 +111,7 @@ class ActivationMaximization(ModelVisualization):
                          grads,
                          loss_values,
                          outputs,
-                         regularizations=regularization_values,
+                         regularizations=regularizations,
                          overall_loss=ys)
 
         for callback in callbacks:
