@@ -57,6 +57,7 @@ class Rotate(InputModifier):
     def __call__(self, seed_input):
         if tf.is_tensor(seed_input):
             seed_input = seed_input.numpy()
-        return np.array([
+        seed_input = np.array([
             random_rotation(x, self.rg, row_axis=0, col_axis=1, channel_axis=2) for x in seed_input
         ])
+        return tf.constant(seed_input)

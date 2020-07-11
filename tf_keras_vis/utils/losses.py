@@ -23,10 +23,11 @@ class CategoricalScore(Loss):
         self.depth = depth
 
     def __call__(self, output):
-        return K.sum(output * tf.one_hot(self.indices, self.depth), axis=-1)
+        score = output * tf.one_hot(self.indices, self.depth)
+        return K.sum(, axis=-1)
 
 
-class CategoricalSmoothedScore(Loss):
+class SmoothedCategoricalScore(Loss):
     def __init__(self, indices, epsilon=0.05):
         super().__init__('CategoricalSmoothedScore')
         self.indices = listify(indices)
@@ -36,5 +37,5 @@ class CategoricalSmoothedScore(Loss):
         smoothing_label = np.full(output.shape, self.epsilon / (np.prod(output.shape) - 1.))
         for i in self.indices:
             smoothing_label[:, i] = 1. - self.epsilon
-        loss = output * smoothing_label
-        return loss
+        score = output * smoothing_label
+        return K.sum(score, axis=-1)

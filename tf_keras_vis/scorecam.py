@@ -62,7 +62,7 @@ class ScoreCAM(Gradcam):
         # For efficiently visualizing, extract maps that has a large variance.
         # This excellent idea is devised by tabayashi0117.
         # (see for details: https://github.com/tabayashi0117/Score-CAM#faster-score-cam)
-        if max_N is not None:
+        if max_N is not None and max_N > -1:
             activation_map_std = tf.math.reduce_std(penultimate_output,
                                                     axis=tuple(
                                                         range(penultimate_output.ndim)[1:-1]),
