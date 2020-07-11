@@ -30,11 +30,6 @@ def num_of_gpus():
         return 0, 0
 
 
-def print_gpus():
-    physical_gpus, logical_gpus = num_of_gpus()
-    print(physical_gpus, "Physical-GPUs, ", logical_gpus, "Logical-GPUs")
-
-
 def listify(value, return_empty_list_if_none=True, convert_tuple_to_list=True):
     """
     Ensures that the value is a list.
