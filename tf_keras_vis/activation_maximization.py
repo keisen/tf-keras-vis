@@ -90,10 +90,11 @@ class ActivationMaximization(ModelVisualization):
                 outputs = self.model(seed_inputs)
                 outputs = listify(outputs)
                 loss_values = (loss(output) for output, loss in zip(outputs, losses))
+                loss_values = (tf.stack(loss_value, axis=0) if isinstance(
+                    loss_value, (list, tuple)) else loss_value for loss_value in loss_values)
                 loss_values = [
-                    tf.reshape(tf.stack(loss_value, axis=0), (-1, 1))
-                    if isinstance(loss_value, list) or isinstance(loss_value, tuple) else loss_value
-                    for loss_value in loss_values
+                    K.mean(tf.reshape(loss_value, (X.shape[0], -1)), axis=1)
+                    for loss_value, X in zip(loss_values, seed_inputs)
                 ]
                 # Calculate regularization values
                 regularizations = [(regularizer.name, regularizer(seed_inputs))
