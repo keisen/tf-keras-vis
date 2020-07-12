@@ -65,7 +65,7 @@ class ActivationMaximization(ModelVisualization):
 
         # Get initial seed-inputs
         input_ranges = self._get_input_ranges(input_range)
-        seed_inputs, input_ranges = self._get_seed_inputs(seed_input, input_ranges)
+        seed_inputs = self._get_seed_inputs(seed_input, input_ranges)
 
         # input_modifiers
         input_modifiers = self._get_input_modifiers(input_modifiers)
@@ -85,22 +85,30 @@ class ActivationMaximization(ModelVisualization):
 
             seed_inputs = [tf.Variable(X) for X in seed_inputs]
             # Calculate gradients
-            with tf.GradientTape() as tape:
+            with tf.GradientTape(watch_accessed_variables=False) as tape:
                 tape.watch(seed_inputs)
                 outputs = self.model(seed_inputs)
                 outputs = listify(outputs)
-                loss_values = [loss(output) for output, loss in zip(outputs, losses)]
+                loss_values = (loss(output) for output, loss in zip(outputs, losses))
+                loss_values = (tf.stack(loss_value, axis=0) if isinstance(
+                    loss_value, (list, tuple)) else loss_value for loss_value in loss_values)
+                loss_values = [
+                    K.mean(tf.reshape(loss_value, (X.shape[0], -1)), axis=1)
+                    for loss_value, X in zip(loss_values, seed_inputs)
+                ]
                 # Calculate regularization values
-                regularization_values = [(regularizer.name, regularizer(seed_inputs))
-                                         for regularizer in regularizers]
-                ys = [(-1. * loss_value) + sum([val for _, val in regularization_values])
-                      for loss_value in loss_values]
-            grads = tape.gradient(ys, seed_inputs)
+                regularizations = [(regularizer.name, regularizer(seed_inputs))
+                                   for regularizer in regularizers]
+                regularized_loss_values = [(-1. * loss_value) + sum([v for _, v in regularizations])
+                                           for loss_value in loss_values]
+            grads = tape.gradient(regularized_loss_values,
+                                  seed_inputs,
+                                  unconnected_gradients=tf.UnconnectedGradients.ZERO)
             grads = listify(grads)
             if gradient_modifier is not None:
-                grads = [gradient_modifier(g) for g in grads]
+                grads = (gradient_modifier(g) for g in grads)
             if normalize_gradient:
-                grads = [K.l2_normalize(g) for g in grads]
+                grads = (K.l2_normalize(g, axis=tuple(range(len(g))[1:])) for g in grads)
             optimizer.apply_gradients(zip(grads, seed_inputs))
 
             for callback in callbacks:
@@ -109,8 +117,8 @@ class ActivationMaximization(ModelVisualization):
                          grads,
                          loss_values,
                          outputs,
-                         regularizations=regularization_values,
-                         overall_loss=ys)
+                         regularizations=regularizations,
+                         overall_loss=regularized_loss_values)
 
         for callback in callbacks:
             callback.on_end()
@@ -140,27 +148,26 @@ class ActivationMaximization(ModelVisualization):
         if seed_inputs is None or len(seed_inputs) == 0:
             # Replace None to 0.0-1.0 or any properly value
             input_ranges = ((0., 1.) if low is None and high is None else (low, high)
-                            for (low, high) in input_ranges)
+                            for low, high in input_ranges)
             input_ranges = ((high - np.abs(high / 2.0), high) if low is None else (low, high)
-                            for (low, high) in input_ranges)
+                            for low, high in input_ranges)
             input_ranges = ((low, low + np.abs(low * 2.0)) if high is None else (low, high)
-                            for (low, high) in input_ranges)
+                            for low, high in input_ranges)
             input_ranges = list(input_ranges)
             # Prepare input_shape
             input_shapes = (input_tensor.shape[1:] for input_tensor in self.model.inputs)
             # Generae seed-inputs
-            seed_inputs = (None, ) * len(self.model.inputs)
             seed_inputs = (tf.random.uniform(shape, low, high)
                            for (low, high), shape in zip(input_ranges, input_shapes))
         else:
             seed_inputs = listify(seed_inputs)
         # Convert numpy to tf-tensor
-        seed_inputs = (X if tf.is_tensor(X) else tf.Variable(X, dtype=input_tensor.dtype)
+        seed_inputs = (tf.constant(X, dtype=input_tensor.dtype)
                        for X, input_tensor in zip(seed_inputs, self.model.inputs))
         # Do expand_dims when tensor doesn't have the dim for samples
         seed_inputs = (tf.expand_dims(X, axis=0) if len(X.shape) < len(input_tensor.shape) else X
                        for X, input_tensor in zip(seed_inputs, self.model.inputs))
-        return list(seed_inputs), input_ranges
+        return list(seed_inputs)
 
     def _get_input_modifiers(self, input_modifier):
         input_modifiers = self._get_dict(input_modifier, keys=self.model.input_names)
@@ -188,4 +195,7 @@ class ActivationMaximization(ModelVisualization):
         return _values
 
     def _apply_clip(self, seed_inputs, input_ranges):
+        input_ranges = ((input_tensor.dtype.min if low is None else low,
+                         input_tensor.dtype.max if high is None else high)
+                        for (low, high), input_tensor in zip(input_ranges, self.model.inputs))
         return [np.array(K.clip(X, low, high)) for X, (low, high) in zip(seed_inputs, input_ranges)]

@@ -60,7 +60,6 @@ class Print(OptimizerCallback):
             return [self._tolist(e) for e in ary]
         elif isinstance(ary, tuple):
             return tuple(self._tolist(e) for e in ary)
-
         elif tf.is_tensor(ary):
             return ary.numpy().tolist()
         else:
@@ -100,7 +99,7 @@ class GifGenerator(OptimizerCallback):
             path = '{}.{}.gif'.format(self.path, i)
             writer = None
             try:
-                writer = imageio.get_writer(path, mode='I', loop=1)
+                writer = imageio.get_writer(path, mode='I', loop=0)
                 for data in self.data[i]:
                     writer.append_data(data)
             finally:

@@ -42,7 +42,7 @@ class Saliency(ModelVisualization):
         # Processing saliency
         if smooth_samples > 0:
             smooth_samples = check_steps(smooth_samples)
-            seed_inputs = (tf.tile(X, (smooth_samples, ) + (1, ) * (X.ndim - 1))
+            seed_inputs = (tf.tile(X, (smooth_samples, ) + tuple(np.ones(X.ndim - 1, np.int)))
                            for X in seed_inputs)
             seed_inputs = (tf.reshape(X, (smooth_samples, -1) + tuple(X.shape[1:]))
                            for X in seed_inputs)
@@ -52,12 +52,11 @@ class Saliency(ModelVisualization):
                            for X, axis in seed_inputs)
             seed_inputs = (X + np.random.normal(0., sigma, X.shape) for X, sigma in seed_inputs)
             seed_inputs = list(seed_inputs)
-            total_gradients = (np.zeros_like(X[0]) for X in seed_inputs)
+            total = (np.zeros_like(X[0]) for X in seed_inputs)
             for i in range(smooth_samples):
-                sample = [X[i] for X in seed_inputs]
-                gradients = self._get_gradients(sample, losses, gradient_modifier)
-                total_gradients = (total + g for total, g in zip(total_gradients, gradients))
-            grads = [g / smooth_samples for g in total_gradients]
+                grads = self._get_gradients([X[i] for X in seed_inputs], losses, gradient_modifier)
+                total = (total + g for total, g in zip(total, grads))
+            grads = [g / smooth_samples for g in total]
         else:
             grads = self._get_gradients(seed_inputs, losses, gradient_modifier)
         # Visualizing
@@ -68,12 +67,14 @@ class Saliency(ModelVisualization):
         return grads
 
     def _get_gradients(self, seed_inputs, losses, gradient_modifier):
-        with tf.GradientTape() as tape:
+        with tf.GradientTape(watch_accessed_variables=False, persistent=True) as tape:
             tape.watch(seed_inputs)
             outputs = self.model(seed_inputs)
             outputs = listify(outputs)
             loss_values = [loss(output) for output, loss in zip(outputs, losses)]
-        grads = tape.gradient(loss_values, seed_inputs)
+        grads = tape.gradient(loss_values,
+                              seed_inputs,
+                              unconnected_gradients=tf.UnconnectedGradients.ZERO)
         if gradient_modifier is not None:
             grads = [gradient_modifier(g) for g in grads]
         return grads

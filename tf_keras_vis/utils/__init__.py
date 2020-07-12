@@ -15,19 +15,19 @@ def check_steps(steps):
     return min(steps, max_steps)
 
 
-def print_gpus():
+def num_of_gpus():
     if tf.__version__.startswith('2.0.'):
         list_physical_devices = tf.config.experimental.list_physical_devices
         list_logical_devices = tf.config.experimental.list_logical_devices
     else:
         list_physical_devices = tf.config.list_physical_devices
         list_logical_devices = tf.config.list_logical_devices
-    gpus = list_physical_devices('GPU')
-    if gpus:
+    physical_gpus = list_physical_devices('GPU')
+    if physical_gpus:
         logical_gpus = list_logical_devices('GPU')
-        print(len(gpus), "Physical GPUs,", len(logical_gpus), "Logical GPU")
+        return len(physical_gpus), len(logical_gpus)
     else:
-        print("0 GPUs")
+        return 0, 0
 
 
 def listify(value, return_empty_list_if_none=True, convert_tuple_to_list=True):
@@ -82,3 +82,7 @@ def find_layer(model, condition, offset=None, reverse=True):
             if result is not None:
                 return result
     return None
+
+
+def zoom_factor(from_shape, to_shape):
+    return tuple(t / f for f, t in iter(zip(from_shape, to_shape)))

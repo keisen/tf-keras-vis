@@ -5,23 +5,25 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 tf-keras-vis is a visualization toolkit for debugging `tf.keras` models in Tensorflow2.0+.
-Currently supported algorisms for visualization include:
+Currently supported methods for visualization include:
 
 * Activation Maximization
 * Class Activation Maps
    - [GradCAM](https://arxiv.org/pdf/1610.02391v1.pdf)
-   - [GradCAM++](https://arxiv.org/pdf/1710.11063.pdf) :new::zap:
+   - [GradCAM++](https://arxiv.org/pdf/1710.11063.pdf)
+   - [ScoreCAM](https://arxiv.org/pdf/1910.01279.pdf) :new::zap:
+   - [Faster-ScoreCAM](https://github.com/tabayashi0117/Score-CAM/blob/master/README.md#faster-score-cam) :new::zap:
 * Saliency Maps
    - [Vanilla Saliency](https://arxiv.org/pdf/1312.6034.pdf)
    - [SmoothGrad](https://arxiv.org/pdf/1706.03825.pdf)
 
-tf-keras-vis is designed to be ease of use, light-weight and flexible.
+tf-keras-vis is designed to be light-weight, flexible and ease of use.
 All visualizations have the features as follows:
 
-* Support N-dim image inputs, that's, not only support pictures but also such as 3D images.
-* Support batch-wise processing, so, be able to efficiently process multiple inputs.
-* Support the model that have either multiple inputs or multiple outputs, or both.
-* Support Optimizers embeded in tf.keras to process Activation maximization.
+* Support **N-dim image inputs**, that's, not only support pictures but also such as 3D images.
+* Support **batchwise** processing, so, be able to efficiently process multiple input images.
+* Support the model that have either **multiple inputs** or **multiple outputs**, or both.
+* Support Optimizers embedded in tf.keras to process Activation maximization.
 
 
 ## Visualizations
@@ -32,7 +34,7 @@ All visualizations have the features as follows:
 
 ### Visualize Convolutional Filer
 
-<img src='https://github.com/keisen/tf-keras-vis/raw/master/examples/images/visualize-filters.png' width='800px' />
+<img src='https://github.com/keisen/tf-keras-vis/raw/master/examples/images/visualize-filters.png' width='600px' />
 
 ### GradCAM
 
@@ -64,13 +66,13 @@ $ pip install tf-keras-vis tensorflow
 * Docker (container that run Jupyter Notebook)
 
 ```bash
-$ docker run -itd -p 8888:8888 keisen/tf-keras-vis:0.4.0
+$ docker run -itd -p 8888:8888 keisen/tf-keras-vis:0.5.0
 ```
 
 If you have GPU processors,
 
 ```bash
-$ docker run -itd --runtime=nvidia -p 8888:8888 keisen/tf-keras-vis:0.4.0-gpu
+$ docker run -itd --runtime=nvidia -p 8888:8888 keisen/tf-keras-vis:0.5.0-gpu
 ```
 
 > You can find other images at [Docker Hub](https://hub.docker.com/repository/docker/keisen/tf-keras-vis/tags).
@@ -80,28 +82,39 @@ $ docker run -itd --runtime=nvidia -p 8888:8888 keisen/tf-keras-vis:0.4.0-gpu
 
 Please see below for details:
 
-* [examples/attentions.ipynb](https://github.com/keisen/tf-keras-vis/blob/master/examples/attentions.ipynb)
-* [examples/visualize_dense_layer.ipynb](https://github.com/keisen/tf-keras-vis/blob/master/examples/visualize_dense_layer.ipynb)
-* [examples/visualize_conv_filters.ipynb](https://github.com/keisen/tf-keras-vis/blob/master/examples/visualize_conv_filters.ipynb)
+### Getting Started Guides
+
+* [Saliency and CAMs](https://github.com/keisen/tf-keras-vis/blob/master/examples/attentions.ipynb)
+* [Visualize Dense Layer](https://github.com/keisen/tf-keras-vis/blob/master/examples/visualize_dense_layer.ipynb)
+* [Visualize Convolutional Filer](https://github.com/keisen/tf-keras-vis/blob/master/examples/visualize_conv_filters.ipynb)
 
 **[NOTE]**
 If you have ever used [keras-vis](https://github.com/raghakot/keras-vis), you may feel that tf-keras-vis is similar with keras-vis.
-Actually tf-keras-vis derived from keras-vis, and both provided visualization algorisms are almost the same.
+Actually tf-keras-vis derived from keras-vis, and both provided visualization methods are almost the same.
 But please notice that tf-keras-vis APIs does NOT have compatibility with keras-vis.
+
+### Guides (ToDo)
+
+* Visualizing multiple attention or activation images at once utilizing batch-system of model
+* Define various loss functions
+* Visualizing attentions with multiple inputs models
+* Visualizing attentions with multiple outputs models
+* Advanced loss functions
+* Tuning Activation Maximization
+* Visualizing attentions for N-dim image inputs
 
 
 ## ToDo
+* Guide documentations
 * API documentations
-* We're going to add some algorisms such as below.
-   - [ScoreCAM: Score-Weighted Visual Explanations for Convolutional Neural Networks](https://arxiv.org/pdf/1910.01279.pdf)
+* We're going to add some methods such as below.
    - Deep Dream
    - Style transfer
 
 
 ## Known Issues
 
-* With InceptionV3, ActivationMaximization doesn't work well, that's, it might generate meanninglessly bulr image.
-* With cascading model, Gradcam and Gradcam++ don't work well, that's, it might occur some error.
-* Unsupport `channels-first` models and datas.
-
+* With InceptionV3, ActivationMaximization doesn't work well, that's, it might generate meaninglessly blur image.
+* With cascading model, Gradcam and Gradcam++ don't work well, that's, it might occur some error. So we recommend, in this case, to use FasterScoreCAM.
+* `channels-first` models and data is unsupported.
 
