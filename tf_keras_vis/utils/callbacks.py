@@ -60,7 +60,6 @@ class Print(OptimizerCallback):
             return [self._tolist(e) for e in ary]
         elif isinstance(ary, tuple):
             return tuple(self._tolist(e) for e in ary)
-
         elif tf.is_tensor(ary):
             return ary.numpy().tolist()
         else:

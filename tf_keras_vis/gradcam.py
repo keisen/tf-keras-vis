@@ -15,7 +15,7 @@ class Gradcam(ModelVisualization):
                  penultimate_layer=-1,
                  seek_penultimate_conv_layer=True,
                  activation_modifier=lambda cam: K.relu(cam),
-                 normalize_gradient=True,
+                 normalize_gradient=False,
                  expand_cam=True):
         """Generate gradient based class activation maps (CAM) by using positive gradient of
             penultimate_layer with respect to loss.
@@ -62,7 +62,7 @@ class Gradcam(ModelVisualization):
                               penultimate_output,
                               unconnected_gradients=tf.UnconnectedGradients.ZERO)
         if normalize_gradient:
-            grads = K.l2_normalize(grads)
+            grads = K.l2_normalize(grads, axis=tuple(range(len(grads))[1:]))
         weights = K.mean(grads, axis=tuple(range(grads.ndim)[1:-1]), keepdims=True)
         cam = np.sum(penultimate_output * weights, axis=-1)
         if activation_modifier is not None:
