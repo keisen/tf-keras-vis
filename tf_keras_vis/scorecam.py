@@ -70,7 +70,7 @@ class ScoreCAM(Gradcam):
             _, top_k_indices = tf.math.top_k(activation_map_std, max_N)
             top_k_indices, _ = tf.unique(tf.reshape(top_k_indices, (-1, )))
             penultimate_output = tf.gather(penultimate_output, top_k_indices, axis=-1)
-            N = penultimate_output.shape[-1]
+        channels = penultimate_output.shape[-1]
 
         # Upsampling activation-maps
         penultimate_output = penultimate_output.numpy()
@@ -117,13 +117,13 @@ class ScoreCAM(Gradcam):
 
         # Predicting masked seed-inputs
         preds = self.model.predict(masked_seed_inputs, batch_size=batch_size)
-        preds = (np.reshape(prediction, (N, -1, prediction.shape[-1]))
+        preds = (np.reshape(prediction, (channels, -1, prediction.shape[-1]))
                  for prediction in listify(preds))
 
         # Calculating weights
         weights = ([loss(p) for p in prediction] for loss, prediction in zip(losses, preds))
         weights = (np.array(w, dtype=np.float32) for w in weights)
-        weights = (np.reshape(w, (N, -1)) for w in weights)
+        weights = (np.reshape(w, (channels, -1)) for w in weights)
         weights = np.array(list(weights), dtype=np.float32)
         weights = np.sum(weights, axis=0)
         weights = np.transpose(weights, (1, 0))
