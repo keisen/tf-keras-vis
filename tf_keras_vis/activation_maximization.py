@@ -20,7 +20,8 @@ class ActivationMaximization(ModelVisualization):
                  optimizer=tf.optimizers.RMSprop(1., 0.95),
                  normalize_gradient=True,
                  gradient_modifier=None,
-                 callbacks=None):
+                 callbacks=None,
+                 training=True):
         """Generate the model inputs that maximize the output of the given `loss` functions.
 
         # Arguments
@@ -87,7 +88,7 @@ class ActivationMaximization(ModelVisualization):
             # Calculate gradients
             with tf.GradientTape(watch_accessed_variables=False) as tape:
                 tape.watch(seed_inputs)
-                outputs = self.model(seed_inputs)
+                outputs = self.model(seed_inputs, training=training)
                 outputs = listify(outputs)
                 loss_values = (loss(output) for output, loss in zip(outputs, losses))
                 loss_values = (tf.stack(loss_value, axis=0) if isinstance(

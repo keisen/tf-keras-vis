@@ -16,7 +16,8 @@ class Gradcam(ModelVisualization):
                  seek_penultimate_conv_layer=True,
                  activation_modifier=lambda cam: K.relu(cam),
                  normalize_gradient=False,
-                 expand_cam=True):
+                 expand_cam=True,
+                 training=True):
         """Generate gradient based class activation maps (CAM) by using positive gradient of
             penultimate_layer with respect to loss.
 
@@ -55,7 +56,7 @@ class Gradcam(ModelVisualization):
                                outputs=self.model.outputs + [penultimate_output_tensor])
         with tf.GradientTape(watch_accessed_variables=False) as tape:
             tape.watch(seed_inputs)
-            outputs = model(seed_inputs)
+            outputs = model(seed_inputs, training=training)
             outputs, penultimate_output = outputs[:-1], outputs[-1]
             loss_values = [loss(y) for y, loss in zip(outputs, losses)]
         grads = tape.gradient(loss_values,
@@ -108,7 +109,8 @@ class GradcamPlusPlus(Gradcam):
                  penultimate_layer=-1,
                  seek_penultimate_conv_layer=True,
                  activation_modifier=lambda cam: K.relu(cam),
-                 expand_cam=True):
+                 expand_cam=True,
+                 training=True):
         """Generate gradient based class activation maps (CAM) by using positive gradient of
             penultimate_layer with respect to loss.
 
@@ -147,7 +149,7 @@ class GradcamPlusPlus(Gradcam):
 
         with tf.GradientTape(watch_accessed_variables=False) as tape:
             tape.watch(seed_inputs)
-            outputs = model(seed_inputs)
+            outputs = model(seed_inputs, training=training)
             outputs, penultimate_output = outputs[:-1], outputs[-1]
             loss_values = [loss(y) for y, loss in zip(outputs, losses)]
         grads = tape.gradient(loss_values,

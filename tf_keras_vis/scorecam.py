@@ -16,7 +16,8 @@ class ScoreCAM(Gradcam):
                  activation_modifier=lambda cam: K.relu(cam),
                  expand_cam=True,
                  batch_size=32,
-                 max_N=None):
+                 max_N=None,
+                 training=True):
         """Generate score-weighted class activation maps (CAM) by using gradient-free visualization method.
 
             For details on Score-CAM, see the paper:
@@ -58,7 +59,8 @@ class ScoreCAM(Gradcam):
                                                                   seek_penultimate_conv_layer)
         # Processing score-cam
         penultimate_output = tf.keras.Model(inputs=self.model.inputs,
-                                            outputs=penultimate_output_tensor)(seed_inputs)
+                                            outputs=penultimate_output_tensor)(seed_inputs,
+                                                                               training=training)
         # For efficiently visualizing, extract maps that has a large variance.
         # This excellent idea is devised by tabayashi0117.
         # (see for details: https://github.com/tabayashi0117/Score-CAM#faster-score-cam)
