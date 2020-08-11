@@ -14,7 +14,7 @@ class Saliency(ModelVisualization):
                  smooth_noise=0.20,
                  keepdims=False,
                  gradient_modifier=lambda grads: K.abs(grads),
-                 training=True):
+                 training=False):
         """Generate an attention map that appears how output value changes with respect to a small
             change in input image pixels.
             See details: https://arxiv.org/pdf/1706.03825.pdf
@@ -30,6 +30,7 @@ class Saliency(ModelVisualization):
             keepdims: A boolean that whether to keep the channels-dim or not.
             gradient_modifier: A function to modify gradients. By default, the function modify
                 gradients to `absolute` values.
+            training: A bool whether the model's trainig-mode turn on or off.
         # Returns
             The heatmap image indicating the `seed_input` regions whose change would most contribute
             towards maximizing the loss value, Or a list of their images.

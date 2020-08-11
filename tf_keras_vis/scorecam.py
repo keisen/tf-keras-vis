@@ -17,7 +17,7 @@ class ScoreCAM(Gradcam):
                  expand_cam=True,
                  batch_size=32,
                  max_N=None,
-                 training=True):
+                 training=False):
         """Generate score-weighted class activation maps (CAM) by using gradient-free visualization method.
 
             For details on Score-CAM, see the paper:
@@ -45,6 +45,7 @@ class ScoreCAM(Gradcam):
                 Set larger number, need more time to visualize CAM but to be able to get
                 clearer attention images.
                 (see for details: https://github.com/tabayashi0117/Score-CAM#faster-score-cam)
+            training: A bool whether the model's trainig-mode turn on or off.
         # Returns
             The heatmap image or a list of their images that indicate the `seed_input` regions
                 whose change would most contribute  the loss value,

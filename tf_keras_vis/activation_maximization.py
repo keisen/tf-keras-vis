@@ -21,7 +21,7 @@ class ActivationMaximization(ModelVisualization):
                  normalize_gradient=True,
                  gradient_modifier=None,
                  callbacks=None,
-                 training=True):
+                 training=False):
         """Generate the model inputs that maximize the output of the given `loss` functions.
 
         # Arguments
@@ -53,6 +53,7 @@ class ActivationMaximization(ModelVisualization):
             gradient_modifier: A function to modify gradients. This function is executed before
                 normalizing gradients.
             callbacks: A `tf_keras_vis.callbacks.OptimizerCallback` instance or a list of them.
+            training: A bool whether the model's trainig-mode turn on or off.
         # Returns
             An Numpy arrays when the model has a single input and `seed_input` is None or An N-dim
             Numpy Array, Or a list of Numpy arrays when otherwise. The Numpy is that the model
