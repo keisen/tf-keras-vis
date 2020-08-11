@@ -16,7 +16,8 @@ class Gradcam(ModelVisualization):
                  seek_penultimate_conv_layer=True,
                  activation_modifier=lambda cam: K.relu(cam),
                  normalize_gradient=False,
-                 expand_cam=True):
+                 expand_cam=True,
+                 training=False):
         """Generate gradient based class activation maps (CAM) by using positive gradient of
             penultimate_layer with respect to loss.
 
@@ -39,6 +40,7 @@ class Gradcam(ModelVisualization):
                 ![Note] Even if the model has multiple inputs, this function return only one cam
                 value (That's, when `expand_cam` is True, multiple cam images are generated from
                 a model that has multiple inputs).
+            training: A bool whether the model's trainig-mode turn on or off.
         # Returns
             The heatmap image or a list of their images that indicate the `seed_input` regions
                 whose change would most contribute  the loss value,
@@ -55,7 +57,7 @@ class Gradcam(ModelVisualization):
                                outputs=self.model.outputs + [penultimate_output_tensor])
         with tf.GradientTape(watch_accessed_variables=False) as tape:
             tape.watch(seed_inputs)
-            outputs = model(seed_inputs)
+            outputs = model(seed_inputs, training=training)
             outputs, penultimate_output = outputs[:-1], outputs[-1]
             loss_values = [loss(y) for y, loss in zip(outputs, losses)]
         grads = tape.gradient(loss_values,
@@ -108,7 +110,8 @@ class GradcamPlusPlus(Gradcam):
                  penultimate_layer=-1,
                  seek_penultimate_conv_layer=True,
                  activation_modifier=lambda cam: K.relu(cam),
-                 expand_cam=True):
+                 expand_cam=True,
+                 training=False):
         """Generate gradient based class activation maps (CAM) by using positive gradient of
             penultimate_layer with respect to loss.
 
@@ -130,6 +133,7 @@ class GradcamPlusPlus(Gradcam):
                 ![Note] Even if the model has multiple inputs, this function return only one cam
                 value (That's, when `expand_cam` is True, multiple cam images are generated from
                 a model that has multiple inputs).
+            training: A bool whether the model's trainig-mode turn on or off.
         # Returns
             The heatmap image or a list of their images that indicate the `seed_input` regions
                 whose change would most contribute  the loss value,
@@ -147,7 +151,7 @@ class GradcamPlusPlus(Gradcam):
 
         with tf.GradientTape(watch_accessed_variables=False) as tape:
             tape.watch(seed_inputs)
-            outputs = model(seed_inputs)
+            outputs = model(seed_inputs, training=training)
             outputs, penultimate_output = outputs[:-1], outputs[-1]
             loss_values = [loss(y) for y, loss in zip(outputs, losses)]
         grads = tape.gradient(loss_values,

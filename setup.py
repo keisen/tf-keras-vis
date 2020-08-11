@@ -21,7 +21,7 @@ setup(
     python_requires='>=3.5, <3.9',
     install_requires=['numpy', 'scipy', 'imageio', 'pillow'],
     extras_require={
-        'develop': ['flake8', 'isort', 'yapf', 'pytest', 'pytest-pep8', 'pytest-cov'],
+        'develop': ['flake8', 'isort', 'yapf', 'pytest<6.0', 'pytest-pep8', 'pytest-cov'],
         'examples': ['jupyterlab', 'matplotlib'],
     },
     include_package_data=True,
