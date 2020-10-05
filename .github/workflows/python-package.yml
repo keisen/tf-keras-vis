@@ -19,12 +19,12 @@ jobs:
     strategy:
       matrix:
         python-version: [3.5, 3.6, 3.7, 3.8]
-        tensorflow: [2.0.2, 2.1.1, 2.2.0, 2.3.0]
+        tensorflow: [2.0.3, 2.1.2, 2.2.1, 2.3.1]
         exclude:
           - python-version: 3.8
-            tensorflow: 2.0.2
+            tensorflow: 2.0.3
           - python-version: 3.8
-            tensorflow: 2.1.1
+            tensorflow: 2.1.2
 
     steps:
     - uses: actions/checkout@v2
