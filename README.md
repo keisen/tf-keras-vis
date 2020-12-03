@@ -96,10 +96,10 @@ But please note that tf-keras-vis APIs does NOT have compatibility with keras-vi
 ### Guides (ToDo)
 
 * Visualizing multiple attention or activation images at once utilizing batch-system of model
-* Define various loss functions
+* Define various score functions
 * Visualizing attentions with multiple inputs models
 * Visualizing attentions with multiple outputs models
-* Advanced loss functions
+* Advanced score functions
 * Tuning Activation Maximization
 * Visualizing attentions for N-dim image inputs
 
@@ -118,3 +118,7 @@ But please note that tf-keras-vis APIs does NOT have compatibility with keras-vi
 * With cascading model, Gradcam and Gradcam++ don't work well, that's, it might occur some error. So we recommend, in this case, to use FasterScoreCAM.
 * `channels-first` models and data is unsupported.
 
+## Used by
+
+* [chitra](https://github.com/aniketmaurya/chitra)
+   * A Deep Learning Computer Vision library for easy data loading, model building and model interpretation with GradCAM/GradCAM++.
