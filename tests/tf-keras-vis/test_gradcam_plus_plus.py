@@ -6,7 +6,7 @@ from tensorflow.keras.layers import (Conv2D, Dense, GlobalAveragePooling2D, Inpu
 from tensorflow.keras.models import Model
 
 from tf_keras_vis.gradcam import GradcamPlusPlus as Gradcam
-from tf_keras_vis.utils.losses import CategoricalScore
+from tf_keras_vis.utils.scores import CategoricalScore
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -70,13 +70,13 @@ def test__call__if_loss_is_None(model):
 def test__call__if_seed_input_is_None(model):
     gradcam = Gradcam(model)
     with pytest.raises(ValueError):
-        gradcam(CategoricalScore(1, 2), None)
+        gradcam(CategoricalScore(1), None)
 
 
 def test__call__if_seed_input_shape_is_invalid(model):
     gradcam = Gradcam(model)
     try:
-        gradcam(CategoricalScore(1, 2), np.random.sample((8, )))
+        gradcam(CategoricalScore(1), np.random.sample((8, )))
         assert False
     except (ValueError, tf.errors.InvalidArgumentError):
         # TF became to raise InvalidArgumentError from ver.2.0.2.
@@ -85,44 +85,44 @@ def test__call__if_seed_input_shape_is_invalid(model):
 
 def test__call__if_seed_input_has_not_batch_dim(model):
     gradcam = Gradcam(model)
-    result = gradcam(CategoricalScore(1, 2), np.random.sample((8, 8, 3)))
+    result = gradcam(CategoricalScore(1), np.random.sample((8, 8, 3)))
     assert result.shape == (1, 8, 8)
 
 
 def test__call__(model):
     gradcam = Gradcam(model)
-    result = gradcam(CategoricalScore(1, 2), np.random.sample((1, 8, 8, 3)))
+    result = gradcam(CategoricalScore(1), np.random.sample((1, 8, 8, 3)))
     assert result.shape == (1, 8, 8)
 
 
 def test__call__if_penultimate_layer_is_None(model):
     gradcam = Gradcam(model)
-    result = gradcam(CategoricalScore(1, 2), np.random.sample((1, 8, 8, 3)), penultimate_layer=None)
+    result = gradcam(CategoricalScore(1), np.random.sample((1, 8, 8, 3)), penultimate_layer=None)
     assert result.shape == (1, 8, 8)
 
 
 def test__call__if_penultimate_layer_is_no_exist_index(model):
     gradcam = Gradcam(model)
     with pytest.raises(ValueError):
-        gradcam(CategoricalScore(1, 2), np.random.sample((1, 8, 8, 3)), penultimate_layer=100000)
+        gradcam(CategoricalScore(1), np.random.sample((1, 8, 8, 3)), penultimate_layer=100000)
 
 
 def test__call__if_penultimate_layer_is_no_exist_name(model):
     gradcam = Gradcam(model)
     with pytest.raises(ValueError):
-        gradcam(CategoricalScore(1, 2), np.random.sample((1, 8, 8, 3)), penultimate_layer='hoge')
+        gradcam(CategoricalScore(1), np.random.sample((1, 8, 8, 3)), penultimate_layer='hoge')
 
 
 def test__call__if_model_has_only_dense_layer(dense_model):
     gradcam = Gradcam(dense_model)
     with pytest.raises(ValueError):
-        gradcam(CategoricalScore(1, 2), np.random.sample((1, 3)))
+        gradcam(CategoricalScore(1), np.random.sample((1, 3)))
 
 
 def test__call__if_model_has_multiple_inputs(multiple_inputs_model):
     gradcam = Gradcam(multiple_inputs_model)
-    result = gradcam(CategoricalScore(
-        1, 2), [np.random.sample(
+    result = gradcam(
+        CategoricalScore(1), [np.random.sample(
             (1, 8, 8, 3)), np.random.sample((1, 10, 10, 3))])
     assert len(result) == 2
     assert result[0].shape == (1, 8, 8)
@@ -131,14 +131,14 @@ def test__call__if_model_has_multiple_inputs(multiple_inputs_model):
 
 def test__call__if_model_has_multiple_outputs(multiple_outputs_model):
     gradcam = Gradcam(multiple_outputs_model)
-    result = gradcam([CategoricalScore(1, 2), lambda x: x], np.random.sample((1, 8, 8, 3)))
+    result = gradcam([CategoricalScore(1), lambda x: x], np.random.sample((1, 8, 8, 3)))
     assert result.shape == (1, 8, 8)
 
 
 def test__call__if_model_has_multiple_io(multiple_io_model):
     gradcam = Gradcam(multiple_io_model)
     result = gradcam(
-        [CategoricalScore(1, 2), lambda x: x],
+        [CategoricalScore(1), lambda x: x],
         [np.random.sample(
             (1, 8, 8, 3)), np.random.sample((1, 10, 10, 3))])
     assert len(result) == 2
@@ -149,7 +149,7 @@ def test__call__if_model_has_multiple_io(multiple_io_model):
 def test__call__if_model_has_multiple_io_when_batchsize_is_2(multiple_io_model):
     gradcam = Gradcam(multiple_io_model)
     result = gradcam(
-        [CategoricalScore([1, 0], 2), lambda x: x],
+        [CategoricalScore([1, 0]), lambda x: x],
         [np.random.sample(
             (2, 8, 8, 3)), np.random.sample((2, 10, 10, 3))])
     assert len(result) == 2
@@ -159,14 +159,14 @@ def test__call__if_model_has_multiple_io_when_batchsize_is_2(multiple_io_model):
 
 def test__call__if_expand_cam_is_False(model):
     gradcam = Gradcam(model)
-    result = gradcam(CategoricalScore(1, 2), np.random.sample((1, 8, 8, 3)), expand_cam=False)
+    result = gradcam(CategoricalScore(1), np.random.sample((1, 8, 8, 3)), expand_cam=False)
     assert result.shape == (1, 6, 6)
 
 
 def test__call__if_expand_cam_is_False_and_model_has_multiple_inputs(multiple_inputs_model):
     gradcam = Gradcam(multiple_inputs_model)
-    result = gradcam(CategoricalScore(
-        1, 2), [np.random.sample(
+    result = gradcam(
+        CategoricalScore(1), [np.random.sample(
             (1, 8, 8, 3)), np.random.sample((1, 10, 10, 3))],
-                     expand_cam=False)
+        expand_cam=False)
     assert result.shape == (1, 8, 8)

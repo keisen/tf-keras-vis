@@ -5,7 +5,7 @@ from tensorflow.keras import backend as K
 from tensorflow.keras.layers import (Conv2D, Dense, GlobalAveragePooling2D, Input)
 
 from tf_keras_vis.saliency import Saliency
-from tf_keras_vis.utils.losses import CategoricalScore
+from tf_keras_vis.utils.scores import CategoricalScore
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -69,45 +69,45 @@ def test__call__if_loss_is_None(model):
 def test__call__if_seed_input_is_None(model):
     saliency = Saliency(model)
     with pytest.raises(ValueError):
-        saliency(CategoricalScore(1, 2), None)
+        saliency(CategoricalScore(1), None)
 
 
 def test__call__if_seed_input_has_not_batch_dim(model):
     saliency = Saliency(model)
-    result = saliency(CategoricalScore(1, 2), np.random.sample((8, 8, 3)))
+    result = saliency(CategoricalScore(1), np.random.sample((8, 8, 3)))
     assert result.shape == (1, 8, 8)
 
 
 def test__call__(model):
     saliency = Saliency(model)
-    result = saliency(CategoricalScore(1, 2), np.random.sample((1, 8, 8, 3)))
+    result = saliency(CategoricalScore(1), np.random.sample((1, 8, 8, 3)))
     assert result.shape == (1, 8, 8)
 
 
 def test__call__if_keepdims_is_active(dense_model):
     saliency = Saliency(dense_model)
-    result = saliency(CategoricalScore(1, 2), np.random.sample((3, )), keepdims=True)
+    result = saliency(CategoricalScore(1), np.random.sample((3, )), keepdims=True)
     assert result.shape == (1, 3)
 
 
 def test__call__if_smoothing_is_active(model):
     saliency = Saliency(model)
-    result = saliency(CategoricalScore(1, 2), np.random.sample((1, 8, 8, 3)), smooth_samples=1)
+    result = saliency(CategoricalScore(1), np.random.sample((1, 8, 8, 3)), smooth_samples=1)
     assert result.shape == (1, 8, 8)
-    result = saliency(CategoricalScore(1, 2), np.random.sample((1, 8, 8, 3)), smooth_samples=2)
+    result = saliency(CategoricalScore(1), np.random.sample((1, 8, 8, 3)), smooth_samples=2)
     assert result.shape == (1, 8, 8)
 
 
 def test__call__if_model_has_only_dense_layer(dense_model):
     saliency = Saliency(dense_model)
-    result = saliency(CategoricalScore(1, 2), np.random.sample((3, )), keepdims=True)
+    result = saliency(CategoricalScore(1), np.random.sample((3, )), keepdims=True)
     assert result.shape == (1, 3)
 
 
 def test__call__if_model_has_multiple_inputs(multiple_inputs_model):
     saliency = Saliency(multiple_inputs_model)
-    result = saliency(CategoricalScore(
-        1, 2), [np.random.sample(
+    result = saliency(
+        CategoricalScore(1), [np.random.sample(
             (1, 8, 8, 3)), np.random.sample((1, 10, 10, 3))])
     assert len(result) == 2
     assert result[0].shape == (1, 8, 8)
@@ -116,14 +116,14 @@ def test__call__if_model_has_multiple_inputs(multiple_inputs_model):
 
 def test__call__when_model_has_multiple_outputs(multiple_outputs_model):
     saliency = Saliency(multiple_outputs_model)
-    result = saliency([CategoricalScore(1, 2), lambda x: x], np.random.sample((1, 8, 8, 3)))
+    result = saliency([CategoricalScore(1), lambda x: x], np.random.sample((1, 8, 8, 3)))
     assert result.shape == (1, 8, 8)
 
 
 def test__call__if_model_has_multiple_io(multiple_io_model):
     saliency = Saliency(multiple_io_model)
     result = saliency(
-        [CategoricalScore(1, 2), lambda x: x],
+        [CategoricalScore(1), lambda x: x],
         [np.random.sample(
             (1, 8, 8, 3)), np.random.sample((1, 10, 10, 3))])
     assert len(result) == 2

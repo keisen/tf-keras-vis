@@ -5,12 +5,12 @@ from tensorflow.keras.layers import (Conv2D, Dense, GlobalAveragePooling2D, Inpu
 from tensorflow.keras.models import Model
 
 from tf_keras_vis.activation_maximization import ActivationMaximization
-from tf_keras_vis.utils.callbacks import OptimizerCallback
-from tf_keras_vis.utils.losses import CategoricalScore
-from tf_keras_vis.utils.regularizers import L2Norm, TotalVariation
+from tf_keras_vis.activation_maximization.callbacks import Callback
+from tf_keras_vis.utils.regularizers import Norm, TotalVariation2D
+from tf_keras_vis.utils.scores import CategoricalScore
 
 
-class MockCallback(OptimizerCallback):
+class MockCallback(Callback):
     def on_begin(self):
         self.on_begin_was_called = True
 
@@ -81,19 +81,19 @@ def test__call__if_loss_is_None(model):
 
 def test__call__(model):
     activation_maximization = ActivationMaximization(model)
-    result = activation_maximization(CategoricalScore(1, 2), steps=1)
+    result = activation_maximization(CategoricalScore(1), steps=1)
     assert result.shape == (1, 8, 8, 3)
 
 
 def test__call__if_loss_is_list(model):
     activation_maximization = ActivationMaximization(model)
-    result = activation_maximization([CategoricalScore(1, 2)], steps=1)
+    result = activation_maximization([CategoricalScore(1)], steps=1)
     assert result.shape == (1, 8, 8, 3)
 
 
 def test__call__with_seed_input(model):
     activation_maximization = ActivationMaximization(model)
-    result = activation_maximization(CategoricalScore(1, 2),
+    result = activation_maximization(CategoricalScore(1),
                                      seed_input=np.random.sample((8, 8, 3)),
                                      steps=1)
     assert result.shape == (1, 8, 8, 3)
@@ -102,7 +102,7 @@ def test__call__with_seed_input(model):
 def test__call__with_callback(model):
     activation_maximization = ActivationMaximization(model)
     mock = MockCallback()
-    result = activation_maximization(CategoricalScore(1, 2), steps=1, callbacks=mock)
+    result = activation_maximization(CategoricalScore(1), steps=1, callbacks=mock)
     assert result.shape == (1, 8, 8, 3)
     assert mock.on_begin_was_called
     assert mock.on_call_was_called
@@ -111,31 +111,32 @@ def test__call__with_callback(model):
 
 def test__call__with_gradient_modifier(model):
     activation_maximization = ActivationMaximization(model)
-    result = activation_maximization(CategoricalScore(1, 2), steps=1, gradient_modifier=lambda x: x)
+    result = activation_maximization(CategoricalScore(1), steps=1, gradient_modifier=lambda x: x)
     assert result.shape == (1, 8, 8, 3)
 
 
 def test__call__with_mutiple_inputs_model(multiple_inputs_model):
     activation_maximization = ActivationMaximization(multiple_inputs_model)
-    result = activation_maximization(CategoricalScore(1, 2), steps=1, input_modifiers=None)
+    result = activation_maximization(CategoricalScore(1), steps=1, input_modifiers=None)
     assert result[0].shape == (1, 8, 8, 3)
     assert result[1].shape == (1, 10, 10, 3)
 
 
 def test__call__with_mutiple_outputs_model(multiple_outputs_model):
     activation_maximization = ActivationMaximization(multiple_outputs_model)
-    result = activation_maximization(CategoricalScore(1, 2), steps=1, input_modifiers=None)
+    result = activation_maximization(lambda x: x, steps=1, input_modifiers=None)
     assert result.shape == (1, 8, 8, 3)
     activation_maximization = ActivationMaximization(multiple_outputs_model)
-    result = activation_maximization(
-        [CategoricalScore(1, 2), CategoricalScore(1, 2)], steps=1, input_modifiers=None)
+    result = activation_maximization([CategoricalScore(1), lambda x: x],
+                                     steps=1,
+                                     input_modifiers=None)
     assert result.shape == (1, 8, 8, 3)
     activation_maximization = ActivationMaximization(multiple_outputs_model)
-    result = activation_maximization(
-        [CategoricalScore(1, 2), CategoricalScore(1, 2)],
-        steps=1,
-        input_modifiers=None,
-        regularizers=[TotalVariation(10.), L2Norm(10.)])
+    result = activation_maximization([CategoricalScore(1), lambda x: x],
+                                     steps=1,
+                                     input_modifiers=None,
+                                     regularizers=[TotalVariation2D(10.),
+                                                   Norm(10.)])
     assert result.shape == (1, 8, 8, 3)
 
 
@@ -143,8 +144,7 @@ def test__call__with_mutiple_outputs_model_but_losses_is_too_many(multiple_outpu
     activation_maximization = ActivationMaximization(multiple_outputs_model)
     with pytest.raises(ValueError):
         activation_maximization(
-            [CategoricalScore(1, 2),
-             CategoricalScore(1, 2),
-             CategoricalScore(1, 2)],
+            [CategoricalScore(1), CategoricalScore(1),
+             CategoricalScore(1)],
             steps=1,
             input_modifiers=None)
