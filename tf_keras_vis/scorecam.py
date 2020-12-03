@@ -4,12 +4,12 @@ import tensorflow as tf
 import tensorflow.keras.backend as K
 
 from tf_keras_vis.gradcam import Gradcam
-from tf_keras_vis.utils import listify, zoom_factor
+from tf_keras_vis.utils import listify, zoom_factor, normalize
 
 
 class ScoreCAM(Gradcam):
     def __call__(self,
-                 loss,
+                 score,
                  seed_input,
                  penultimate_layer=-1,
                  seek_penultimate_conv_layer=True,
@@ -17,7 +17,8 @@ class ScoreCAM(Gradcam):
                  expand_cam=True,
                  batch_size=32,
                  max_N=None,
-                 training=False):
+                 training=False,
+                 normalize_cam=True):
         """Generate score-weighted class activation maps (CAM) by using gradient-free visualization method.
 
             For details on Score-CAM, see the paper:
@@ -25,8 +26,8 @@ class ScoreCAM(Gradcam):
             (https://arxiv.org/pdf/1910.01279.pdf).
 
         # Arguments
-            loss: A loss function. If the model has multiple outputs, you can use a different
-                loss on each output by passing a list of losses.
+            score: A score function. If the model has multiple outputs, you can use a different
+                score on each output by passing a list of scores.
             seed_input: An N-dim Numpy array. If the model has multiple inputs,
                 you have to pass a list of N-dim Numpy arrays.
             penultimate_layer: A number of integer or a tf.keras.layers.Layer object.
@@ -40,21 +41,23 @@ class ScoreCAM(Gradcam):
                 a model that has multiple inputs).
             batch_size: Integer or None. Number of samples per batch.
                 If unspecified, batch_size will default to 32.
-            max_N: Integer or None. If None, we do NOT recommend, because it takes huge time.
-                If not None, that's setting Integer, run as Faster-ScoreCAM.
+            max_N: Integer or None. Setting None or under Zero is that we do NOT recommend,
+                because it takes huge time. If not None and over Zero of Integer,
+                run as Faster-ScoreCAM.
                 Set larger number, need more time to visualize CAM but to be able to get
                 clearer attention images.
                 (see for details: https://github.com/tabayashi0117/Score-CAM#faster-score-cam)
             training: A bool whether the model's trainig-mode turn on or off.
+            normalize_cam: A bool. If True(default), cam will be normalized.
         # Returns
             The heatmap image or a list of their images that indicate the `seed_input` regions
-                whose change would most contribute  the loss value,
+                whose change would most contribute  the score value,
         # Raises
-            ValueError: In case of invalid arguments for `loss`, or `penultimate_layer`.
+            ValueError: In case of invalid arguments for `score`, or `penultimate_layer`.
         """
 
         # Preparing
-        losses = self._get_losses_for_multiple_outputs(loss)
+        scores = self._get_scores_for_multiple_outputs(score)
         seed_inputs = self._get_seed_inputs_for_multiple_inputs(seed_input)
         penultimate_output_tensor = self._find_penultimate_output(penultimate_layer,
                                                                   seek_penultimate_conv_layer)
@@ -76,7 +79,6 @@ class ScoreCAM(Gradcam):
         channels = penultimate_output.shape[-1]
 
         # Upsampling activation-maps
-        penultimate_output = penultimate_output.numpy()
         input_shapes = [seed_input.shape for seed_input in seed_inputs]
         factors = (zoom_factor(penultimate_output.shape[:-1], input_shape[:-1])
                    for input_shape in input_shapes)
@@ -124,7 +126,7 @@ class ScoreCAM(Gradcam):
                  for prediction in listify(preds))
 
         # Calculating weights
-        weights = ([loss(p) for p in prediction] for loss, prediction in zip(losses, preds))
+        weights = ([score(p) for p in prediction] for score, prediction in zip(scores, preds))
         weights = (np.array(w, dtype=np.float32) for w in weights)
         weights = (np.reshape(w, (channels, -1)) for w in weights)
         weights = np.array(list(weights), dtype=np.float32)
@@ -137,10 +139,14 @@ class ScoreCAM(Gradcam):
             cam = activation_modifier(cam)
 
         if not expand_cam:
+            if normalize_cam:
+                cam = normalize(cam)
             return cam
 
         factors = (zoom_factor(cam.shape, X.shape) for X in seed_inputs)
         cam = [zoom(cam, factor) for factor in factors]
+        if normalize_cam:
+            cam = [normalize(x) for x in cam]
         if len(self.model.inputs) == 1 and not isinstance(seed_input, list):
             cam = cam[0]
         return cam
