@@ -34,7 +34,7 @@ class Gradcam(ModelVisualization):
             seek_penultimate_conv_layer: True to seek the penultimate layter that is a subtype of
                 `keras.layers.convolutional.Conv` class.
                 If False, the penultimate layer is that was elected by penultimate_layer index.
-            normalize_gradient: True to normalize gradients.
+            normalize_gradient: This option is disabled and will be removed at version 0.6.0.
             activation_modifier: A function to modify gradients.
             expand_cam: True to expand cam to same as input image size.
                 ![Note] Even if the model has multiple inputs, this function return only one cam

@@ -48,8 +48,7 @@ class ActivationMaximization(ModelVisualization):
                 a corresponding model input will add to the loss value.
             steps: The number of gradient descent iterations.
             optimizer: A `tf.optimizers.Optimizer` instance.
-            normalize_gradient: True to normalize gradients. Normalization avoids too small or
-                large gradients and ensures a smooth gradient descent process.
+            normalize_gradient: This option is disabled and will be removed at version 0.6.0.
             gradient_modifier: A function to modify gradients. This function is executed before
                 normalizing gradients.
             callbacks: A `tf_keras_vis.callbacks.OptimizerCallback` instance or a list of them.
