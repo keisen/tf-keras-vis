@@ -110,7 +110,11 @@ class ActivationMaximization(ModelVisualization):
             if gradient_modifier is not None:
                 grads = (gradient_modifier(g) for g in grads)
             if normalize_gradient:
-                grads = (K.l2_normalize(g, axis=tuple(range(len(g))[1:])) for g in grads)
+                # XXX `normalize_gradient` option is not working correctly.
+                # XXX So this option will be removed as of version 0.6.0.
+                # XXX For now, disable this option.
+                # grads = (K.l2_normalize(g, axis=tuple(range(len(g))[1:])) for g in grads)
+                pass
             optimizer.apply_gradients(zip(grads, seed_inputs))
 
             for callback in callbacks:

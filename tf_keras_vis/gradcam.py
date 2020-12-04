@@ -64,7 +64,11 @@ class Gradcam(ModelVisualization):
                               penultimate_output,
                               unconnected_gradients=tf.UnconnectedGradients.ZERO)
         if normalize_gradient:
-            grads = K.l2_normalize(grads, axis=tuple(range(len(grads))[1:]))
+            # XXX `normalize_gradient` option is not working correctly.
+            # XXX So this option will be removed as of version 0.6.0.
+            # XXX For now, disable this option.
+            # XXX grads = K.l2_normalize(grads, axis=tuple(range(len(grads))[1:]))
+            pass
         weights = K.mean(grads, axis=tuple(range(grads.ndim)[1:-1]), keepdims=True)
         cam = np.sum(penultimate_output * weights, axis=-1)
         if activation_modifier is not None:
