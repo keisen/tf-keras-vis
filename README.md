@@ -28,11 +28,11 @@ All visualizations have the features as follows:
 
 ## Visualizations
 
-### Visualize Dense Layer
+### Visualizing Dense Layer
 
 <img src='https://github.com/keisen/tf-keras-vis/raw/master/examples/images/visualize-dense-layer.png' width='600px' />
 
-### Visualize Convolutional Filer
+### Visualizing Convolutional Filer
 
 <img src='https://github.com/keisen/tf-keras-vis/raw/master/examples/images/visualize-filters.png' width='600px' />
 
@@ -105,6 +105,7 @@ But please note that tf-keras-vis APIs does NOT have compatibility with keras-vi
 
 
 ## ToDo
+
 * Guide documentations
 * API documentations
 * We're going to add some methods such as below.
@@ -118,7 +119,8 @@ But please note that tf-keras-vis APIs does NOT have compatibility with keras-vi
 * With cascading model, Gradcam and Gradcam++ don't work well, that's, it might occur some error. So we recommend, in this case, to use FasterScoreCAM.
 * `channels-first` models and data is unsupported.
 
-## Used by
+
+## Use Cases
 
 * [chitra](https://github.com/aniketmaurya/chitra)
    * A Deep Learning Computer Vision library for easy data loading, model building and model interpretation with GradCAM/GradCAM++.
