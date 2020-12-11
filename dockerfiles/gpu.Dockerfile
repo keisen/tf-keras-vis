@@ -1,7 +1,7 @@
-FROM tensorflow/tensorflow:2.2.0-gpu
+FROM tensorflow/tensorflow:2.3.1-gpu
 
 # Default ENV Settings
-ARG TF_KERAS_VIS_VERSION=0.5.0
+ARG TF_KERAS_VIS_VERSION=0.6.0
 ARG JUPYTER_ALLOW_IP="0.0.0.0"
 ARG JUPYTER_TOKEN=""
 
@@ -17,7 +17,6 @@ RUN export JUPYTER_HOME=/root/.jupyter                             && \
 # Install essential python libraries
 RUN pip install --no-cache-dir            \
       tf-keras-vis==$TF_KERAS_VIS_VERSION \
-      numpy scipy imageio pillow          \
       jupyterlab matplotlib
 
 CMD [ "jupyter", "lab" ]
