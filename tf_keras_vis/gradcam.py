@@ -73,6 +73,8 @@ class Gradcam(ModelVisualization):
         cam = np.sum(penultimate_output * weights, axis=-1)
         if activation_modifier is not None:
             cam = activation_modifier(cam)
+        if cam.dtype is tf.float16:
+            cam = tf.cast(cam, dtype=tf.float32)
 
         if not expand_cam:
             return cam
@@ -197,10 +199,13 @@ class GradcamPlusPlus(Gradcam):
         cam = K.sum(deep_linearization_weights * penultimate_output, axis=-1)
         if activation_modifier is not None:
             cam = activation_modifier(cam)
+        if cam.dtype is tf.float16:
+            cam = tf.cast(cam, dtype=tf.float32)
 
         if not expand_cam:
             return cam
 
+        # Visualizing
         factors = (zoom_factor(cam.shape, X.shape) for X in seed_inputs)
         cam = [zoom(cam, factor) for factor in factors]
         if len(self.model.inputs) == 1 and not isinstance(seed_input, list):
