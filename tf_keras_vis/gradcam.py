@@ -77,7 +77,7 @@ class Gradcam(ModelVisualization):
         cam = np.sum(penultimate_output * weights, axis=-1)
         if activation_modifier is not None:
             cam = activation_modifier(cam)
-        if cam.dtype is tf.float16:
+        if cam.dtype == tf.float16:
             cam = tf.cast(cam, dtype=tf.float32)
 
         if not expand_cam:
@@ -180,6 +180,7 @@ class GradcamPlusPlus(Gradcam):
 
         score = sum([K.exp(tf.reshape(v, (-1, ))) for v in score_values])
         score = tf.reshape(score, (-1, ) + tuple(np.ones(grads.ndim - 1, np.int)))
+        score = tf.cast(score, grads.dtype)
 
         first_derivative = score * grads
         second_derivative = first_derivative * grads
@@ -213,7 +214,7 @@ class GradcamPlusPlus(Gradcam):
         cam = K.sum(deep_linearization_weights * penultimate_output, axis=-1)
         if activation_modifier is not None:
             cam = activation_modifier(cam)
-        if cam.dtype is tf.float16:
+        if cam.dtype == tf.float16:
             cam = tf.cast(cam, dtype=tf.float32)
 
         if not expand_cam:
