@@ -73,7 +73,7 @@ class Scorecam(Gradcam):
                                                                                training=training)
         policy = global_policy()
         if policy.variable_dtype != policy.compute_dtype:
-            penultimate_output = tf.cast(penultimate_output, policy.compute_dtype)
+            penultimate_output = tf.cast(penultimate_output, policy.variable_dtype)
         # For efficiently visualizing, extract maps that has a large variance.
         # This excellent idea is devised by tabayashi0117.
         # (see for details: https://github.com/tabayashi0117/Score-CAM#faster-score-cam)

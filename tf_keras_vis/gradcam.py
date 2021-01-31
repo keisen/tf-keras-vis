@@ -86,7 +86,7 @@ class Gradcam(ModelVisualization):
             cam = activation_modifier(cam)
         policy = global_policy()
         if policy.variable_dtype != policy.compute_dtype:
-            cam = tf.cast(cam, dtype=policy.compute_dtype)
+            cam = tf.cast(cam, dtype=policy.variable_dtype)
 
         if not expand_cam:
             if normalize_cam:
@@ -190,7 +190,8 @@ class GradcamPlusPlus(Gradcam):
         score = tf.reshape(score, (-1, ) + tuple(np.ones(grads.ndim - 1, np.int)))
         policy = global_policy()
         if policy.variable_dtype != policy.compute_dtype:
-            cam = tf.cast(grads, dtype=policy.compute_dtype)
+            cam = tf.cast(grads, dtype=policy.variable_dtype)
+        score = tf.cast(score, grads.dtype)
 
         first_derivative = score * grads
         second_derivative = first_derivative * grads
@@ -225,7 +226,7 @@ class GradcamPlusPlus(Gradcam):
         if activation_modifier is not None:
             cam = activation_modifier(cam)
         if policy.variable_dtype != policy.compute_dtype:
-            cam = tf.cast(cam, dtype=policy.compute_dtype)
+            cam = tf.cast(cam, dtype=policy.variable_dtype)
 
         if not expand_cam:
             if normalize_cam:
