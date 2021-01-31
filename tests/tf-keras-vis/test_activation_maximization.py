@@ -6,11 +6,17 @@ from tensorflow.keras.models import Model
 
 from tf_keras_vis.activation_maximization import ActivationMaximization
 from tf_keras_vis.activation_maximization.callbacks import Callback
-from tf_keras_vis.utils.regularizers import Norm, TotalVariation2D
+from tf_keras_vis.utils.input_modifiers import InputModifier, Jitter, Rotate
+from tf_keras_vis.utils.regularizers import L2Norm, TotalVariation, Regularizer
 from tf_keras_vis.utils.scores import CategoricalScore
 
 
 class MockCallback(Callback):
+    def __init__(self):
+        self.on_begin_was_called = False
+        self.on_call_was_called = False
+        self.on_end_was_called = False
+
     def on_begin(self):
         self.on_begin_was_called = True
 
@@ -19,6 +25,31 @@ class MockCallback(Callback):
 
     def on_end(self):
         self.on_end_was_called = True
+
+
+class MockInputModifier(InputModifier):
+    def __init__(self):
+        self.seed_input = None
+
+    def __call__(self, seed_input):
+        self.seed_input = seed_input
+
+
+class MockRegularizer(Regularizer):
+    def __init__(self, name):
+        self.name = name
+        self.inputs = None
+
+    def __call__(self, inputs):
+        self.inputs = inputs
+
+
+class MockGradientModifier():
+    def __init__(self):
+        self.gradients = None
+
+    def __call__(self, gradients):
+        self.gradients = gradients
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -40,8 +71,8 @@ def model():
 
 @pytest.fixture(scope="function", autouse=True)
 def multiple_inputs_model():
-    inputs1 = Input((8, 8, 3))
-    inputs2 = Input((10, 10, 3))
+    inputs1 = Input((8, 8, 3), name='input-1')
+    inputs2 = Input((10, 10, 3), name='input-2')
     x1 = Conv2D(2, 3, padding='same', activation='relu')(inputs1)
     x2 = Conv2D(2, 3, activation='relu')(inputs2)
     x = K.concatenate([x1, x2], axis=-1)
@@ -73,21 +104,21 @@ def multiple_io_model():
     return Model(inputs=[inputs1, inputs2], outputs=[x1, x2])
 
 
-def test__call__if_loss_is_None(model):
+def test__call__when_loss_is_None(model):
     activation_maximization = ActivationMaximization(model)
     with pytest.raises(ValueError):
         activation_maximization(None, steps=1)
 
 
-def test__call__(model):
+def test__call__when_loss_is_list(model):
     activation_maximization = ActivationMaximization(model)
-    result = activation_maximization(CategoricalScore(1), steps=1)
+    result = activation_maximization([CategoricalScore(1)], steps=1)
     assert result.shape == (1, 8, 8, 3)
 
 
-def test__call__if_loss_is_list(model):
+def test__call__(model):
     activation_maximization = ActivationMaximization(model)
-    result = activation_maximization([CategoricalScore(1)], steps=1)
+    result = activation_maximization(CategoricalScore(1), steps=1)
     assert result.shape == (1, 8, 8, 3)
 
 
@@ -135,8 +166,8 @@ def test__call__with_mutiple_outputs_model(multiple_outputs_model):
     result = activation_maximization([CategoricalScore(1), lambda x: x],
                                      steps=1,
                                      input_modifiers=None,
-                                     regularizers=[TotalVariation2D(10.),
-                                                   Norm(10.)])
+                                     regularizers=[TotalVariation(10.),
+                                                   L2Norm(10.)])
     assert result.shape == (1, 8, 8, 3)
 
 
@@ -148,3 +179,13 @@ def test__call__with_mutiple_outputs_model_but_losses_is_too_many(multiple_outpu
              CategoricalScore(1)],
             steps=1,
             input_modifiers=None)
+
+
+def test__call__with_inputs_modifiers(multiple_inputs_model):
+    activation_maximization = ActivationMaximization(multiple_inputs_model)
+    result = activation_maximization(
+        [CategoricalScore(1)],
+        steps=1,
+        input_modifiers={'input-1': [Jitter(jitter=8), Rotate(degree=3)]})
+    assert result[0].shape == (1, 8, 8, 3)
+    assert result[1].shape == (1, 10, 10, 3)

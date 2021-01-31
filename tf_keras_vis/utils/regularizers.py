@@ -51,4 +51,4 @@ class Norm(Regularizer):
 @deprecated(version='0.6.0', reason="Please use Norm class instead of L2Norm class.")
 class L2Norm(Norm):
     def __init__(self, weight=10.):
-        super().__init__(weight=weight, lp=2, name='L2Norm')
+        super().__init__(weight=weight, p=2, name='L2Norm')
