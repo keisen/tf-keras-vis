@@ -1,3 +1,4 @@
+from packaging.version import parse as version
 import numpy as np
 import warnings
 import tensorflow as tf
@@ -8,19 +9,25 @@ from tensorflow.python.keras.layers.convolutional import Conv
 from tf_keras_vis import ModelVisualization
 from tf_keras_vis.utils import find_layer, zoom_factor, normalize
 
+if version(tf.version.VERSION) < version("2.4.0"):
+    from tensorflow.keras.mixed_precision.experimental import global_policy
+else:
+    from tensorflow.keras.mixed_precision import global_policy
+
 
 class Gradcam(ModelVisualization):
-    def __call__(self,
-                 score,
-                 seed_input,
-                 penultimate_layer=-1,
-                 seek_penultimate_conv_layer=True,
-                 activation_modifier=lambda cam: K.relu(cam),
-                 training=False,
-                 normalize_gradient=None,
-                 expand_cam=True,
-                 normalize_cam=True,
-                 unconnected_gradients=tf.UnconnectedGradients.NONE):
+    def __call__(
+            self,
+            score,
+            seed_input,
+            penultimate_layer=-1,
+            seek_penultimate_conv_layer=True,
+            activation_modifier=lambda cam: K.relu(cam),
+            training=False,
+            normalize_gradient=None,  # Disabled option.
+            expand_cam=True,
+            normalize_cam=True,
+            unconnected_gradients=tf.UnconnectedGradients.NONE):
         """Generate gradient based class activation maps (CAM) by using positive gradient of
             penultimate_layer with respect to score.
 
@@ -77,8 +84,9 @@ class Gradcam(ModelVisualization):
         cam = np.sum(penultimate_output * weights, axis=-1)
         if activation_modifier is not None:
             cam = activation_modifier(cam)
-        if cam.dtype == tf.float16:
-            cam = tf.cast(cam, dtype=tf.float32)
+        policy = global_policy()
+        if policy.variable_dtype != policy.compute_dtype:
+            cam = tf.cast(cam, dtype=policy.compute_dtype)
 
         if not expand_cam:
             if normalize_cam:
@@ -180,7 +188,9 @@ class GradcamPlusPlus(Gradcam):
 
         score = sum([K.exp(tf.reshape(v, (-1, ))) for v in score_values])
         score = tf.reshape(score, (-1, ) + tuple(np.ones(grads.ndim - 1, np.int)))
-        score = tf.cast(score, grads.dtype)
+        policy = global_policy()
+        if policy.variable_dtype != policy.compute_dtype:
+            cam = tf.cast(grads, dtype=policy.compute_dtype)
 
         first_derivative = score * grads
         second_derivative = first_derivative * grads
@@ -214,8 +224,8 @@ class GradcamPlusPlus(Gradcam):
         cam = K.sum(deep_linearization_weights * penultimate_output, axis=-1)
         if activation_modifier is not None:
             cam = activation_modifier(cam)
-        if cam.dtype == tf.float16:
-            cam = tf.cast(cam, dtype=tf.float32)
+        if policy.variable_dtype != policy.compute_dtype:
+            cam = tf.cast(cam, dtype=policy.compute_dtype)
 
         if not expand_cam:
             if normalize_cam:

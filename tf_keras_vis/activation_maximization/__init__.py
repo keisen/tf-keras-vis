@@ -1,5 +1,7 @@
+import warnings
 from collections import defaultdict
 
+from packaging.version import parse as version
 import numpy as np
 import tensorflow as tf
 import tensorflow.keras.backend as K
@@ -9,20 +11,28 @@ from tf_keras_vis.utils import check_steps, listify
 from tf_keras_vis.utils.input_modifiers import Jitter, Rotate
 from tf_keras_vis.utils.regularizers import Norm, TotalVariation2D
 
+if version(tf.version.VERSION) < version("2.4.0"):
+    from tensorflow.keras.mixed_precision.experimental import global_policy, LossScaleOptimizer
+else:
+    from tensorflow.keras.mixed_precision import global_policy, LossScaleOptimizer
+
 
 class ActivationMaximization(ModelVisualization):
-    def __call__(self,
-                 score,
-                 seed_input=None,
-                 input_range=(0, 255),
-                 input_modifiers=[Jitter(jitter=8), Rotate(degree=3)],
-                 regularizers=[TotalVariation2D(weight=1.),
-                               Norm(weight=1., p=2)],
-                 steps=200,
-                 optimizer=tf.optimizers.RMSprop(1.0, 0.95),
-                 gradient_modifier=None,
-                 callbacks=None,
-                 training=False):
+    def __call__(
+            self,
+            score,
+            seed_input=None,
+            input_range=(0, 255),
+            input_modifiers=[Jitter(jitter=8), Rotate(degree=3)],
+            regularizers=[TotalVariation2D(weight=1.),
+                          Norm(weight=1., p=2)],
+            steps=200,
+            optimizer=tf.optimizers.RMSprop(1.0, 0.95),
+            normalize_gradient=None,  # Disabled option.
+            gradient_modifier=None,
+            callbacks=None,
+            training=False,
+            scale_optimization=True):
         """Generate the model inputs that maximize the output of the given `score` functions.
 
         # Arguments
@@ -52,11 +62,14 @@ class ActivationMaximization(ModelVisualization):
                 a corresponding model input will add to the score value.
             steps: The number of gradient descent iterations.
             optimizer: A `tf.optimizers.Optimizer` instance.
+            normalize_gradient: Note! This option is now disabled.
             gradient_modifier: A function to modify gradients. This function is executed before
                 normalizing gradients.
             callbacks: A `tf_keras_vis.activation_maimization.callbacks.Callback` instance
                 or a list of them.
             training: A bool whether the model's trainig-mode turn on or off.
+            scale_optimization: A bool whether use tf.keras.mixed_precision.LossScaleOptimizer
+                for this maximization.
         # Returns
             An Numpy arrays when the model has a single input and `seed_input` is None or An N-dim
             Numpy Array, Or a list of Numpy arrays when otherwise.
@@ -64,6 +77,10 @@ class ActivationMaximization(ModelVisualization):
             ValueError: In case of invalid arguments for `score`, `input_range`, `input_modifiers`
                 or `regularizers`.
         """
+        if normalize_gradient is not None:
+            warnings.warn(
+                ('`normalize_gradient` option of ActivationMaximization#__call__() is disabled.,'
+                 ' And this will be removed in future.'), DeprecationWarning)
         # scores
         scores = self._get_scores_for_multiple_outputs(score)
 
@@ -81,6 +98,15 @@ class ActivationMaximization(ModelVisualization):
         for callback in callbacks:
             callback.on_begin()
 
+        # optimizer
+        if scale_optimization:
+            policy = global_policy()
+            if policy.variable_dtype != policy.compute_dtype:
+                if version(tf.version.VERSION) < version("2.4.0"):
+                    optimizer = LossScaleOptimizer(optimizer, 'dynamic')
+                else:
+                    optimizer = LossScaleOptimizer(optimizer)
+
         for i in range(check_steps(steps)):
             # Apply input modifiers
             for j, name in enumerate(self.model.input_names):
@@ -88,12 +114,17 @@ class ActivationMaximization(ModelVisualization):
                     seed_inputs[j] = modifier(seed_inputs[j])
 
             seed_inputs = [tf.Variable(X) for X in seed_inputs]
+            if policy.variable_dtype != policy.compute_dtype:
+                seed_inputs = [tf.cast(X, policy.compute_dtype) for X in seed_inputs]
             # Calculate gradients
             with tf.GradientTape(watch_accessed_variables=False) as tape:
                 tape.watch(seed_inputs)
                 outputs = self.model(seed_inputs, training=training)
                 outputs = listify(outputs)
                 score_values = (score(output) for output, score in zip(outputs, scores))
+                if scale_optimization and policy.variable_dtype != policy.compute_dtype:
+                    score_values = (optimizer.get_scaled_loss(score_value)
+                                    for score_value in score_values)
                 score_values = (tf.stack(score_value, axis=0) if isinstance(
                     score_value, (list, tuple)) else score_value for score_value in score_values)
                 score_values = [
@@ -111,6 +142,8 @@ class ActivationMaximization(ModelVisualization):
                                   seed_inputs,
                                   unconnected_gradients=tf.UnconnectedGradients.ZERO)
             grads = listify(grads)
+            if scale_optimization and policy.variable_dtype != policy.compute_dtype:
+                grads = optimizer.get_unscaled_gradients(grads)
             if gradient_modifier is not None:
                 grads = (gradient_modifier(g) for g in grads)
             optimizer.apply_gradients(zip(grads, seed_inputs))

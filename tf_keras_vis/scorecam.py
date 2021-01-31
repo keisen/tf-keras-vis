@@ -1,3 +1,4 @@
+from packaging.version import parse as version
 import numpy as np
 from scipy.ndimage.interpolation import zoom
 import tensorflow as tf
@@ -6,8 +7,13 @@ import tensorflow.keras.backend as K
 from tf_keras_vis.gradcam import Gradcam
 from tf_keras_vis.utils import listify, zoom_factor, normalize
 
+if version(tf.version.VERSION) < version("2.4.0"):
+    from tensorflow.keras.mixed_precision.experimental import global_policy
+else:
+    from tensorflow.keras.mixed_precision import global_policy
 
-class ScoreCAM(Gradcam):
+
+class Scorecam(Gradcam):
     def __call__(self,
                  score,
                  seed_input,
@@ -65,6 +71,9 @@ class ScoreCAM(Gradcam):
         penultimate_output = tf.keras.Model(inputs=self.model.inputs,
                                             outputs=penultimate_output_tensor)(seed_inputs,
                                                                                training=training)
+        policy = global_policy()
+        if policy.variable_dtype != policy.compute_dtype:
+            penultimate_output = tf.cast(penultimate_output, policy.compute_dtype)
         # For efficiently visualizing, extract maps that has a large variance.
         # This excellent idea is devised by tabayashi0117.
         # (see for details: https://github.com/tabayashi0117/Score-CAM#faster-score-cam)
@@ -150,3 +159,6 @@ class ScoreCAM(Gradcam):
         if len(self.model.inputs) == 1 and not isinstance(seed_input, list):
             cam = cam[0]
         return cam
+
+
+ScoreCAM = Scorecam
