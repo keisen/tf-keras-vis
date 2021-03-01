@@ -32,12 +32,12 @@ class BinaryScore(Score):
         self.target_values = [bool(v) for v in listify(target_values)]
 
     def __call__(self, output):
-        score = tf.stack([
-            output[i, ...] * (1.0 if positive else -1.0)
-            for i, positive in range(self.target_values)
-        ])
-        if len(score.shape) > 1:
-            score = K.mean(score, axis=tuple(range(len(score.shape))[1:]))
+        output = tf.reshape(output, (output.shape[0], -1))
+        score = [
+            output[i] * (1.0 if positive else -1.0) for i, positive in range(self.target_values)
+        ]
+        score = tf.concat(score, axis=0)
+        score = K.mean(score, axis=1)
         return score
 
 
@@ -47,23 +47,8 @@ class CategoricalScore(Score):
         self.indices = listify(indices)
 
     def __call__(self, output):
-        score = tf.stack([output[i, ..., index] for i, index in enumerate(self.indices)])
-        if len(score.shape) > 1:
-            score = K.mean(score, axis=tuple(range(len(score.shape))[1:]))
+        output = tf.reshape(output, (output.shape[0], -1, output.shape[-1]))
+        score = [output[i:i + 1, :, index] for i, index in enumerate(self.indices)]
+        score = tf.concat(score, axis=0)
+        score = K.mean(score, axis=1)
         return score
-
-
-class SmoothedCategoricalScore(Score):
-    def __init__(self, indices, noise=0.05):
-        super().__init__('SmoothedCategoricalScore')
-        self.indices = listify(indices)
-        self.noise = noise
-
-    def __call__(self, output):
-        mask = tf.fill(output.shape, (self.noise / (output.shape[-1] - 1.)))
-        noise = K.mean(output * mask, axis=tuple(range(len(output.shape))[1:]))
-        score = tf.stack(
-            [output[i, ..., index] * (1. - self.noise) for i, index in enumerate(self.indices)])
-        if len(score.shape) > 1:
-            score = K.mean(score, axis=tuple(range(len(score.shape))[1:]))
-        return score + noise

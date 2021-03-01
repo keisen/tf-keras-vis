@@ -1,13 +1,14 @@
-from packaging.version import parse as version
-import numpy as np
 import warnings
+
+import numpy as np
 import tensorflow as tf
 import tensorflow.keras.backend as K
+from packaging.version import parse as version
 from scipy.ndimage.interpolation import zoom
 from tensorflow.python.keras.layers.convolutional import Conv
 
 from tf_keras_vis import ModelVisualization
-from tf_keras_vis.utils import find_layer, zoom_factor, normalize
+from tf_keras_vis.utils import find_layer, normalize, zoom_factor
 
 if version(tf.version.VERSION) < version("2.4.0"):
     from tensorflow.keras.mixed_precision.experimental import global_policy
@@ -80,13 +81,17 @@ class Gradcam(ModelVisualization):
         grads = tape.gradient(score_values,
                               penultimate_output,
                               unconnected_gradients=unconnected_gradients)
+
+        policy = global_policy()
+        if policy.variable_dtype != policy.compute_dtype:
+            penultimate_output = tf.cast(penultimate_output, dtype=policy.variable_dtype)
+            grads = tf.cast(grads, dtype=policy.variable_dtype)
+            score_values = [tf.cast(v, dtype=policy.variable_dtype) for v in score_values]
+
         weights = K.mean(grads, axis=tuple(range(grads.ndim)[1:-1]), keepdims=True)
         cam = np.sum(penultimate_output * weights, axis=-1)
         if activation_modifier is not None:
             cam = activation_modifier(cam)
-        policy = global_policy()
-        if policy.variable_dtype != policy.compute_dtype:
-            cam = tf.cast(cam, dtype=policy.variable_dtype)
 
         if not expand_cam:
             if normalize_cam:
@@ -173,6 +178,7 @@ class GradcamPlusPlus(Gradcam):
         seed_inputs = self._get_seed_inputs_for_multiple_inputs(seed_input)
         penultimate_output_tensor = self._find_penultimate_output(penultimate_layer,
                                                                   seek_penultimate_conv_layer)
+
         # Processing gradcam
         model = tf.keras.Model(inputs=self.model.inputs,
                                outputs=self.model.outputs + [penultimate_output_tensor])
@@ -181,17 +187,20 @@ class GradcamPlusPlus(Gradcam):
             tape.watch(seed_inputs)
             outputs = model(seed_inputs, training=training)
             outputs, penultimate_output = outputs[:-1], outputs[-1]
-            score_values = [score(y) for y, score in zip(outputs, scores)]
+            score_values = (score(y) for y, score in zip(outputs, scores))
+            score_values = list(score_values)
         grads = tape.gradient(score_values,
                               penultimate_output,
                               unconnected_gradients=unconnected_gradients)
 
-        score = sum([K.exp(tf.reshape(v, (-1, ))) for v in score_values])
-        score = tf.reshape(score, (-1, ) + tuple(np.ones(grads.ndim - 1, np.int)))
         policy = global_policy()
         if policy.variable_dtype != policy.compute_dtype:
-            cam = tf.cast(grads, dtype=policy.variable_dtype)
-        score = tf.cast(score, grads.dtype)
+            penultimate_output = tf.cast(penultimate_output, dtype=policy.variable_dtype)
+            grads = tf.cast(grads, dtype=policy.variable_dtype)
+            score_values = [tf.cast(v, dtype=policy.variable_dtype) for v in score_values]
+
+        score = sum([tf.math.exp(tf.reshape(v, (-1, ))) for v in score_values])
+        score = tf.reshape(score, (-1, ) + tuple(np.ones(grads.ndim - 1, np.int)))
 
         first_derivative = score * grads
         second_derivative = first_derivative * grads
@@ -225,8 +234,6 @@ class GradcamPlusPlus(Gradcam):
         cam = K.sum(deep_linearization_weights * penultimate_output, axis=-1)
         if activation_modifier is not None:
             cam = activation_modifier(cam)
-        if policy.variable_dtype != policy.compute_dtype:
-            cam = tf.cast(cam, dtype=policy.variable_dtype)
 
         if not expand_cam:
             if normalize_cam:

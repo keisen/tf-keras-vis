@@ -1,10 +1,10 @@
 import warnings
 from collections import defaultdict
 
-from packaging.version import parse as version
 import numpy as np
 import tensorflow as tf
 import tensorflow.keras.backend as K
+from packaging.version import parse as version
 
 from tf_keras_vis import ModelVisualization
 from tf_keras_vis.utils import check_steps, listify
@@ -12,9 +12,9 @@ from tf_keras_vis.utils.input_modifiers import Jitter, Rotate
 from tf_keras_vis.utils.regularizers import Norm, TotalVariation2D
 
 if version(tf.version.VERSION) < version("2.4.0"):
-    from tensorflow.keras.mixed_precision.experimental import global_policy, LossScaleOptimizer
+    from tensorflow.keras.mixed_precision.experimental import global_policy
 else:
-    from tensorflow.keras.mixed_precision import global_policy, LossScaleOptimizer
+    from tensorflow.keras.mixed_precision import global_policy
 
 
 class ActivationMaximization(ModelVisualization):
@@ -31,8 +31,7 @@ class ActivationMaximization(ModelVisualization):
             normalize_gradient=None,  # Disabled option.
             gradient_modifier=None,
             callbacks=None,
-            training=False,
-            scale_optimization=True):
+            training=False):
         """Generate the model inputs that maximize the output of the given `score` functions.
 
         # Arguments
@@ -68,8 +67,6 @@ class ActivationMaximization(ModelVisualization):
             callbacks: A `tf_keras_vis.activation_maimization.callbacks.Callback` instance
                 or a list of them.
             training: A bool whether the model's trainig-mode turn on or off.
-            scale_optimization: A bool whether use tf.keras.mixed_precision.LossScaleOptimizer
-                for this maximization.
         # Returns
             An Numpy arrays when the model has a single input and `seed_input` is None or An N-dim
             Numpy Array, Or a list of Numpy arrays when otherwise.
@@ -98,14 +95,8 @@ class ActivationMaximization(ModelVisualization):
         for callback in callbacks:
             callback.on_begin()
 
-        # optimizer
-        if scale_optimization:
-            policy = global_policy()
-            if policy.variable_dtype != policy.compute_dtype:
-                if version(tf.version.VERSION) < version("2.4.0"):
-                    optimizer = LossScaleOptimizer(optimizer, 'dynamic')
-                else:
-                    optimizer = LossScaleOptimizer(optimizer)
+        # policy
+        policy = global_policy()
 
         for i in range(check_steps(steps)):
             # Apply input modifiers
@@ -113,18 +104,16 @@ class ActivationMaximization(ModelVisualization):
                 for modifier in input_modifiers[name]:
                     seed_inputs[j] = modifier(seed_inputs[j])
 
-            seed_inputs = [tf.Variable(X) for X in seed_inputs]
             if policy.variable_dtype != policy.compute_dtype:
-                seed_inputs = [tf.cast(X, policy.compute_dtype) for X in seed_inputs]
+                seed_inputs = (tf.cast(X, dtype=policy.compute_dtype) for X in seed_inputs)
+            seed_inputs = [tf.Variable(X) for X in seed_inputs]
+
             # Calculate gradients
             with tf.GradientTape(watch_accessed_variables=False) as tape:
                 tape.watch(seed_inputs)
                 outputs = self.model(seed_inputs, training=training)
                 outputs = listify(outputs)
                 score_values = (score(output) for output, score in zip(outputs, scores))
-                if scale_optimization and policy.variable_dtype != policy.compute_dtype:
-                    score_values = (optimizer.get_scaled_loss(score_value)
-                                    for score_value in score_values)
                 score_values = (tf.stack(score_value, axis=0) if isinstance(
                     score_value, (list, tuple)) else score_value for score_value in score_values)
                 score_values = [
@@ -142,11 +131,12 @@ class ActivationMaximization(ModelVisualization):
                                   seed_inputs,
                                   unconnected_gradients=tf.UnconnectedGradients.ZERO)
             grads = listify(grads)
-            if scale_optimization and policy.variable_dtype != policy.compute_dtype:
-                grads = optimizer.get_unscaled_gradients(grads)
             if gradient_modifier is not None:
                 grads = (gradient_modifier(g) for g in grads)
             optimizer.apply_gradients(zip(grads, seed_inputs))
+
+            if policy.variable_dtype != policy.compute_dtype:
+                seed_inputs = [tf.cast(X, dtype=policy.variable_dtype) for X in seed_inputs]
 
             for callback in callbacks:
                 callback(i,
