@@ -1,11 +1,11 @@
 import numpy as np
 import tensorflow as tf
 import tensorflow.keras.backend as K
-from packaging.version import parse as version
 from scipy.ndimage.interpolation import zoom
 
 from tf_keras_vis.gradcam import Gradcam
-from tf_keras_vis.utils import listify, standardize, zoom_factor
+from tf_keras_vis.utils import (is_mixed_precision, listify, standardize,
+                                zoom_factor)
 
 
 class Scorecam(Gradcam):
@@ -66,8 +66,7 @@ class Scorecam(Gradcam):
         penultimate_output = tf.keras.Model(inputs=self.model.inputs,
                                             outputs=penultimate_output_tensor)(seed_inputs,
                                                                                training=training)
-        if version(tf.version.VERSION) >= version("2.4.0") and \
-                self.model.layers[-1].compute_dtype in [tf.float16, tf.bfloat16]:
+        if is_mixed_precision(self.model):
             penultimate_output = tf.cast(penultimate_output, self.model.variable_dtype)
 
         # For efficiently visualizing, extract maps that has a large variance.

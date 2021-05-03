@@ -94,3 +94,9 @@ def find_layer(model, condition, offset=None, reverse=True):
 
 def zoom_factor(from_shape, to_shape):
     return tuple(t / f for f, t in iter(zip(from_shape, to_shape)))
+
+
+def is_mixed_precision(model):
+    return version(tf.version.VERSION) >= version("2.4.0") and (
+        (model.compute_dtype in [tf.float16, tf.bfloat16]) or
+        (model.layers[-1].compute_dtype in [tf.float16, tf.bfloat16]))

@@ -7,7 +7,7 @@ import tensorflow.keras.backend as K
 from packaging.version import parse as version
 
 from tf_keras_vis import ModelVisualization
-from tf_keras_vis.utils import check_steps, listify
+from tf_keras_vis.utils import check_steps, is_mixed_precision, listify
 from tf_keras_vis.utils.input_modifiers import Jitter, Rotate
 from tf_keras_vis.utils.regularizers import Norm, TotalVariation2D
 
@@ -119,9 +119,7 @@ class ActivationMaximization(ModelVisualization):
             else:
                 # FIXME To avoid a error. Please see below for the detail:
                 # https://github.com/tensorflow/tensorflow/issues/48860
-                need_to_cast_input_seeds = self.model.layers[-1].compute_dtype in [
-                    tf.float16, tf.bfloat16
-                ]
+                need_to_cast_input_seeds = is_mixed_precision(self.model)
 
         for i in range(check_steps(steps)):
             # Apply input modifiers

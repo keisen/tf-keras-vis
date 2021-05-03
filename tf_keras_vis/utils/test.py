@@ -1,6 +1,7 @@
 from contextlib import contextmanager
 
 import numpy as np
+import tensorflow as tf
 from tensorflow.keras import backend as K
 from tensorflow.keras.layers import (Conv2D, Dense, GlobalAveragePooling2D,
                                      Input)
@@ -57,6 +58,14 @@ def mock_multiple_io_model():
     x1 = Dense(2, activation='softmax', name='dense-1')(x)
     x2 = Dense(1, name='dense-2')(x)
     return Model(inputs=[input_1, input_2], outputs=[x1, x2])
+
+
+def mock_conv_model_with_flot32_output():
+    inputs = Input((8, 8, 3), name='input-1')
+    x = Conv2D(2, 3, activation='relu', name='conv-1')(inputs)
+    x = GlobalAveragePooling2D()(x)
+    x = Dense(2, dtype=tf.float32, activation='softmax', name='dense-1')(x)
+    return Model(inputs=inputs, outputs=x)
 
 
 def dummy_sample(shape):

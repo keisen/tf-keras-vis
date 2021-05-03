@@ -5,7 +5,9 @@ from tensorflow.keras.models import load_model
 
 from tf_keras_vis.gradcam import Gradcam
 from tf_keras_vis.utils.test import (MockScore, does_not_raise, dummy_sample,
-                                     mock_conv_model, mock_multiple_io_model)
+                                     mock_conv_model,
+                                     mock_conv_model_with_flot32_output,
+                                     mock_multiple_io_model)
 
 if version(tf.version.VERSION) >= version("2.4.0"):
     from tensorflow.keras.mixed_precision import set_global_policy
@@ -184,7 +186,17 @@ class TestGradcamWithMixedPrecision():
         set_global_policy('mixed_float16')
         model = mock_conv_model()
         self._test_for_single_io(model)
-        path = tmpdir.mkdir("sub").join("single_io.h5")
+        path = tmpdir.mkdir("tf-keras-vis").join("single_io.h5")
+        model.save(path)
+        set_global_policy('float32')
+        model = load_model(path)
+        self._test_for_single_io(model)
+
+    def test__call__with_float32_output_model(self, tmpdir):
+        set_global_policy('mixed_float16')
+        model = mock_conv_model_with_flot32_output()
+        self._test_for_single_io(model)
+        path = tmpdir.mkdir("tf-keras-vis").join("float32_output.h5")
         model.save(path)
         set_global_policy('float32')
         model = load_model(path)
@@ -199,7 +211,7 @@ class TestGradcamWithMixedPrecision():
         set_global_policy('mixed_float16')
         model = mock_multiple_io_model()
         self._test_for_multiple_io(model)
-        path = tmpdir.mkdir("sub").join("multiple_io.h5")
+        path = tmpdir.mkdir("tf-keras-vis").join("multiple_io.h5")
         model.save(path)
         set_global_policy('float32')
         model = load_model(path)

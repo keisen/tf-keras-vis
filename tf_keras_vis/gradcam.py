@@ -3,12 +3,12 @@ import warnings
 import numpy as np
 import tensorflow as tf
 import tensorflow.keras.backend as K
-from packaging.version import parse as version
 from scipy.ndimage.interpolation import zoom
 from tensorflow.python.keras.layers.convolutional import Conv
 
 from tf_keras_vis import ModelVisualization
-from tf_keras_vis.utils import find_layer, standardize, zoom_factor
+from tf_keras_vis.utils import (find_layer, is_mixed_precision, standardize,
+                                zoom_factor)
 
 
 class Gradcam(ModelVisualization):
@@ -77,8 +77,7 @@ class Gradcam(ModelVisualization):
                               penultimate_output,
                               unconnected_gradients=unconnected_gradients)
 
-        if version(tf.version.VERSION) >= version("2.4.0") and \
-                self.model.layers[-1].compute_dtype in [tf.float16, tf.bfloat16]:
+        if is_mixed_precision(self.model):
             penultimate_output = tf.cast(penultimate_output, dtype=model.variable_dtype)
             grads = tf.cast(grads, dtype=model.variable_dtype)
             score_values = [tf.cast(v, dtype=model.variable_dtype) for v in score_values]
@@ -188,8 +187,7 @@ class GradcamPlusPlus(Gradcam):
                               penultimate_output,
                               unconnected_gradients=unconnected_gradients)
 
-        if version(tf.version.VERSION) >= version("2.4.0") and \
-                self.model.layers[-1].compute_dtype in [tf.float16, tf.bfloat16]:
+        if is_mixed_precision(self.model):
             penultimate_output = tf.cast(penultimate_output, dtype=model.variable_dtype)
             grads = tf.cast(grads, dtype=model.variable_dtype)
             score_values = [tf.cast(v, dtype=model.variable_dtype) for v in score_values]
