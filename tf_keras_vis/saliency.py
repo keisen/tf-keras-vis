@@ -3,7 +3,7 @@ import tensorflow as tf
 import tensorflow.keras.backend as K
 
 from tf_keras_vis import ModelVisualization
-from tf_keras_vis.utils import check_steps, listify, normalize
+from tf_keras_vis.utils import check_steps, listify, standardize
 
 
 class Saliency(ModelVisualization):
@@ -15,7 +15,7 @@ class Saliency(ModelVisualization):
                  keepdims=False,
                  gradient_modifier=lambda grads: K.abs(grads),
                  training=False,
-                 normalize_saliency=True,
+                 standardize_saliency=True,
                  unconnected_gradients=tf.UnconnectedGradients.NONE):
         """Generate an attention map that appears how output value changes with respect to a small
             change in input image pixels.
@@ -33,7 +33,7 @@ class Saliency(ModelVisualization):
             gradient_modifier: A function to modify gradients. By default, the function modify
                 gradients to `absolute` values.
             training: A bool whether the model's trainig-mode turn on or off.
-            normalize_saliency: A bool. If True(default), saliency map will be normalized.
+            standardize_saliency: A bool. If True(default), saliency map will be standardized.
             unconnected_gradients: Specifies the gradient value returned when the given input
                 tensors are unconnected. Accepted values are constants defined in the class
                 `tf.UnconnectedGradients` and the default value is NONE.
@@ -72,8 +72,8 @@ class Saliency(ModelVisualization):
         # Visualizing
         if not keepdims:
             grads = [np.max(g, axis=-1) for g in grads]
-        if normalize_saliency:
-            grads = [normalize(g) for g in grads]
+        if standardize_saliency:
+            grads = [standardize(g) for g in grads]
         if len(self.model.inputs) == 1 and not isinstance(seed_input, list):
             grads = grads[0]
         return grads
