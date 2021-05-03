@@ -49,11 +49,8 @@ class PrintLogger(Callback):
     def __call__(self, i, values, grads, losses, model_outputs, **kwargs):
         i += 1
         if (i % self.interval == 0):
-            if 'regularizations' in kwargs:
-                tf.print('Steps: {:03d}\tLosses: {},\tRegularizations: {}'.format(
-                    i, self._tolist(losses), self._tolist(kwargs['regularizations'])))
-            else:
-                print('[{:03d}] Losses: {}'.format(i, self._tolist(losses)))
+            tf.print('Steps: {:03d}\tLosses: {},\tRegularizations: {}'.format(
+                i, self._tolist(losses), self._tolist(kwargs['regularizations'])))
 
     def _tolist(self, ary):
         if isinstance(ary, list) or isinstance(ary, (np.ndarray, np.generic)):
@@ -79,24 +76,19 @@ class GifGenerator2D(Callback):
     def on_begin(self):
         self.data = None
 
-    def __call__(self, i, values, grads, losses, model_outputs, normalization=False, **kwargs):
+    def __call__(self, i, values, grads, losses, model_outputs, **kwargs):
         if self.data is None:
             self.data = [[] for i in range(len(values))]
         for n, value in enumerate(values):
             img = Image.fromarray(value[0].astype(np.uint8))  # 1st image in a batch
-            ImageDraw.Draw(img).text(
-                (10, 10),
-                "Step {}".format(i + 1),
-                # fill=(0, 0, 0),
-                font=ImageFont.load_default())
-            if normalization:
-                self.data[n].append(normalize(np.asarray(img)))
-            else:
-                self.data[n].append(np.asarray(img))
+            ImageDraw.Draw(img).text((10, 10),
+                                     "Step {}".format(i + 1),
+                                     font=ImageFont.load_default())
+            self.data[n].append(np.asarray(img))
 
     def on_end(self):
+        path = self.path if self.path.endswith('.gif') else '{}.gif'.format(self.path)
         for i in range(len(self.data)):
-            path = '{}.{}.gif'.format(self.path, i)
             writer = None
             try:
                 writer = imageio.get_writer(path, mode='I', loop=0)
