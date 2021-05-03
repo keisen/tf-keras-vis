@@ -12,20 +12,20 @@ class ModelVisualization(ABC):
         """Create Visualization class instance that analize the model for debugging.
 
         # Arguments
-            model: The `tf.keras.Model` instance. This model will be cloned by
-                `tf.keras.models.clone_model` function and then will be modified by
-                `model_modifier` according to needs.
+            model: The `tf.keras.Model` instance. When `model_modifier` is NOT None,
+                This model will be cloned by `tf.keras.models.clone_model` function
+                and then will be modified by `model_modifier` according to needs.
             model_modifier: A function that modify `model` instance. For example, in
                 ActivationMaximization usually, this function is used to replace the softmax
                 function that was applied to the model outputs.
-            clone: A bool. When False, the model won't be cloned.
+            clone: A bool. When False, the model won't be cloned.  Note that, although when True,
+                   the model won't be clone if `model_modifier` is None.
         """
-        if clone:
-            self.model = tf.keras.models.clone_model(model)
-            self.model.set_weights(model.get_weights())
-        else:
-            self.model = model
+        self.model = model
         if model_modifier is not None:
+            if clone:
+                self.model = tf.keras.models.clone_model(self.model)
+                self.model.set_weights(model.get_weights())
             new_model = model_modifier(self.model)
             if new_model is not None:
                 self.model = new_model
@@ -43,6 +43,9 @@ class ModelVisualization(ABC):
         scores = listify(score)
         if len(scores) == 1 and len(scores) < len(self.model.outputs):
             scores = scores * len(self.model.outputs)
+        for score in scores:
+            if not callable(score):
+                raise ValueError('Score object must be callable! [{}]'.format(score))
         if len(scores) != len(self.model.outputs):
             raise ValueError(('The model has {} outputs, '
                               'but the number of score-functions you passed is {}.').format(
