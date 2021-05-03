@@ -23,7 +23,7 @@ def change_activation(model):
 
 def test__init__(model):
     mock = MockVisualizer(model)
-    assert mock.model != model
+    assert mock.model == model
     assert np.array_equal(mock.model.get_weights()[0], model.get_weights()[0])
 
 
@@ -32,11 +32,30 @@ def test__init__if_clone_is_False(model):
     assert mock.model == model
 
 
+def test__init__if_clone_is_True(model):
+    mock = MockVisualizer(model, clone=True)
+    assert mock.model == model
+
+
 def test__init__if_set_model_modifier(model):
     mock = MockVisualizer(model, change_activation)
     assert mock.model != model
     assert mock.model.layers[-1].activation == tf.keras.activations.linear
     assert model.layers[-1].activation == tf.keras.activations.softmax
+
+
+def test__init__if_set_model_modifier_and_clone_is_True(model):
+    mock = MockVisualizer(model, change_activation, clone=True)
+    assert mock.model != model
+    assert mock.model.layers[-1].activation == tf.keras.activations.linear
+    assert model.layers[-1].activation == tf.keras.activations.softmax
+
+
+def test__init__if_set_model_modifier_and_clone_is_False(model):
+    mock = MockVisualizer(model, change_activation, clone=False)
+    assert mock.model == model
+    assert mock.model.layers[-1].activation == tf.keras.activations.linear
+    assert model.layers[-1].activation == tf.keras.activations.linear
 
 
 def test__init__if_set_model_modifier_that_return_other_model(model):
