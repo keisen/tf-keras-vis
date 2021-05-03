@@ -7,8 +7,7 @@ from scipy.ndimage.interpolation import zoom
 from tensorflow.python.keras.layers.convolutional import Conv
 
 from tf_keras_vis import ModelVisualization
-from tf_keras_vis.utils import (find_layer, is_mixed_precision, standardize,
-                                zoom_factor)
+from tf_keras_vis.utils import (find_layer, is_mixed_precision, standardize, zoom_factor)
 
 
 class Gradcam(ModelVisualization):
@@ -72,7 +71,10 @@ class Gradcam(ModelVisualization):
             tape.watch(seed_inputs)
             outputs = model(seed_inputs, training=training)
             outputs, penultimate_output = outputs[:-1], outputs[-1]
-            score_values = [score(y) for y, score in zip(outputs, scores)]
+            score_values = (score(y) for y, score in zip(outputs, scores))
+            score_values = (tf.math.reduce_mean(score, axis=tuple(range(len(score.shape)))[1:])
+                            for score in score_values)
+            score_values = list(score_values)
         grads = tape.gradient(score_values,
                               penultimate_output,
                               unconnected_gradients=unconnected_gradients)
@@ -182,6 +184,8 @@ class GradcamPlusPlus(Gradcam):
             outputs = model(seed_inputs, training=training)
             outputs, penultimate_output = outputs[:-1], outputs[-1]
             score_values = (score(y) for y, score in zip(outputs, scores))
+            score_values = (tf.math.reduce_mean(score, axis=tuple(range(len(score.shape)))[1:])
+                            for score in score_values)
             score_values = list(score_values)
         grads = tape.gradient(score_values,
                               penultimate_output,
@@ -193,7 +197,7 @@ class GradcamPlusPlus(Gradcam):
             score_values = [tf.cast(v, dtype=model.variable_dtype) for v in score_values]
 
         score = sum([tf.math.exp(tf.reshape(v, (-1, ))) for v in score_values])
-        score_shape = (-1, ) + tuple(np.ones(grads.ndim - 2, np.int)) + (grads.shape[-1], )
+        score_shape = (-1, ) + tuple(np.ones(grads.ndim - 1, np.int))
         score = tf.reshape(score, score_shape)
 
         first_derivative = score * grads
