@@ -61,4 +61,10 @@ class ModelVisualization(ABC):
         seed_inputs = (x if tf.is_tensor(x) else tf.constant(x) for x in seed_inputs)
         seed_inputs = (tf.expand_dims(x, axis=0) if len(x.shape) == len(tensor.shape[1:]) else x
                        for x, tensor in zip(seed_inputs, self.model.inputs))
-        return list(seed_inputs)
+        seed_inputs = list(seed_inputs)
+        for i, (x, tensor) in enumerate(zip(seed_inputs, self.model.inputs)):
+            if len(x.shape) != len(tensor.shape):
+                raise ValueError(("seed_input's shape is invalid. model-input index: {},"
+                                  " model-input shape: {},"
+                                  " seed_input shape: {}.".format(i, tensor.shape, x.shape)))
+        return seed_inputs
