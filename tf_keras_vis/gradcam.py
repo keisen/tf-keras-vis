@@ -8,12 +8,7 @@ from scipy.ndimage.interpolation import zoom
 from tensorflow.python.keras.layers.convolutional import Conv
 
 from tf_keras_vis import ModelVisualization
-from tf_keras_vis.utils import find_layer, normalize, zoom_factor
-
-if version(tf.version.VERSION) < version("2.4.0"):
-    from tensorflow.keras.mixed_precision.experimental import global_policy
-else:
-    from tensorflow.keras.mixed_precision import global_policy
+from tf_keras_vis.utils import find_layer, standardize, zoom_factor
 
 
 class Gradcam(ModelVisualization):
@@ -27,7 +22,7 @@ class Gradcam(ModelVisualization):
             training=False,
             normalize_gradient=None,  # Disabled option.
             expand_cam=True,
-            normalize_cam=True,
+            standardize_cam=True,
             unconnected_gradients=tf.UnconnectedGradients.NONE):
         """Generate gradient based class activation maps (CAM) by using positive gradient of
             penultimate_layer with respect to score.
@@ -52,7 +47,7 @@ class Gradcam(ModelVisualization):
                 value (That's, when `expand_cam` is True, multiple cam images are generated from
                 a model that has multiple inputs).
             training: A bool whether the model's trainig-mode turn on or off.
-            normalize_cam: A bool. If True(default), cam will be normalized.
+            standardize_cam: A bool. If True(default), cam will be standardized.
             unconnected_gradients: Specifies the gradient value returned when the given input
                 tensors are unconnected. Accepted values are constants defined in the class
                 `tf.UnconnectedGradients` and the default value is NONE.
@@ -82,11 +77,11 @@ class Gradcam(ModelVisualization):
                               penultimate_output,
                               unconnected_gradients=unconnected_gradients)
 
-        policy = global_policy()
-        if policy.variable_dtype != policy.compute_dtype:
-            penultimate_output = tf.cast(penultimate_output, dtype=policy.variable_dtype)
-            grads = tf.cast(grads, dtype=policy.variable_dtype)
-            score_values = [tf.cast(v, dtype=policy.variable_dtype) for v in score_values]
+        if version(tf.version.VERSION) >= version("2.4.0") and \
+                self.model.layers[-1].compute_dtype in [tf.float16, tf.bfloat16]:
+            penultimate_output = tf.cast(penultimate_output, dtype=model.variable_dtype)
+            grads = tf.cast(grads, dtype=model.variable_dtype)
+            score_values = [tf.cast(v, dtype=model.variable_dtype) for v in score_values]
 
         weights = K.mean(grads, axis=tuple(range(grads.ndim)[1:-1]), keepdims=True)
         cam = np.sum(penultimate_output * weights, axis=-1)
@@ -94,15 +89,15 @@ class Gradcam(ModelVisualization):
             cam = activation_modifier(cam)
 
         if not expand_cam:
-            if normalize_cam:
-                cam = normalize(cam)
+            if standardize_cam:
+                cam = standardize(cam)
             return cam
 
         # Visualizing
         factors = (zoom_factor(cam.shape, X.shape) for X in seed_inputs)
         cam = [zoom(cam, factor) for factor in factors]
-        if normalize_cam:
-            cam = [normalize(x) for x in cam]
+        if standardize_cam:
+            cam = [standardize(x) for x in cam]
         if len(self.model.inputs) == 1 and not isinstance(seed_input, list):
             cam = cam[0]
         return cam
@@ -139,7 +134,7 @@ class GradcamPlusPlus(Gradcam):
                  activation_modifier=lambda cam: K.relu(cam),
                  expand_cam=True,
                  training=False,
-                 normalize_cam=True,
+                 standardize_cam=True,
                  unconnected_gradients=tf.UnconnectedGradients.NONE):
         """Generate gradient based class activation maps (CAM) by using positive gradient of
             penultimate_layer with respect to score.
@@ -163,7 +158,7 @@ class GradcamPlusPlus(Gradcam):
                 value (That's, when `expand_cam` is True, multiple cam images are generated from
                 a model that has multiple inputs).
             training: A bool whether the model's trainig-mode turn on or off.
-            normalize_cam: A bool. If True(default), cam will be normalized.
+            standardize_cam: A bool. If True(default), cam will be standardized.
             unconnected_gradients: Specifies the gradient value returned when the given input
                 tensors are unconnected. Accepted values are constants defined in the class
                 `tf.UnconnectedGradients` and the default value is NONE.
@@ -193,14 +188,15 @@ class GradcamPlusPlus(Gradcam):
                               penultimate_output,
                               unconnected_gradients=unconnected_gradients)
 
-        policy = global_policy()
-        if policy.variable_dtype != policy.compute_dtype:
-            penultimate_output = tf.cast(penultimate_output, dtype=policy.variable_dtype)
-            grads = tf.cast(grads, dtype=policy.variable_dtype)
-            score_values = [tf.cast(v, dtype=policy.variable_dtype) for v in score_values]
+        if version(tf.version.VERSION) >= version("2.4.0") and \
+                self.model.layers[-1].compute_dtype in [tf.float16, tf.bfloat16]:
+            penultimate_output = tf.cast(penultimate_output, dtype=model.variable_dtype)
+            grads = tf.cast(grads, dtype=model.variable_dtype)
+            score_values = [tf.cast(v, dtype=model.variable_dtype) for v in score_values]
 
         score = sum([tf.math.exp(tf.reshape(v, (-1, ))) for v in score_values])
-        score = tf.reshape(score, (-1, ) + tuple(np.ones(grads.ndim - 1, np.int)))
+        score_shape = (-1, ) + tuple(np.ones(grads.ndim - 2, np.int)) + (grads.shape[-1], )
+        score = tf.reshape(score, score_shape)
 
         first_derivative = score * grads
         second_derivative = first_derivative * grads
@@ -236,15 +232,15 @@ class GradcamPlusPlus(Gradcam):
             cam = activation_modifier(cam)
 
         if not expand_cam:
-            if normalize_cam:
-                cam = normalize(cam)
+            if standardize_cam:
+                cam = standardize(cam)
             return cam
 
         # Visualizing
         factors = (zoom_factor(cam.shape, X.shape) for X in seed_inputs)
         cam = [zoom(cam, factor) for factor in factors]
-        if normalize_cam:
-            cam = [normalize(x) for x in cam]
+        if standardize_cam:
+            cam = [standardize(x) for x in cam]
         if len(self.model.inputs) == 1 and not isinstance(seed_input, list):
             cam = cam[0]
         return cam

@@ -11,10 +11,8 @@ from tf_keras_vis.utils import check_steps, listify
 from tf_keras_vis.utils.input_modifiers import Jitter, Rotate
 from tf_keras_vis.utils.regularizers import Norm, TotalVariation2D
 
-if version(tf.version.VERSION) < version("2.4.0"):
-    from tensorflow.keras.mixed_precision.experimental import global_policy
-else:
-    from tensorflow.keras.mixed_precision import global_policy
+if version(tf.version.VERSION) >= version("2.4.0"):
+    from tensorflow.keras.mixed_precision import LossScaleOptimizer
 
 
 class ActivationMaximization(ModelVisualization):
@@ -27,7 +25,7 @@ class ActivationMaximization(ModelVisualization):
             regularizers=[TotalVariation2D(weight=1.),
                           Norm(weight=1., p=2)],
             steps=200,
-            optimizer=tf.optimizers.RMSprop(1.0, 0.95),
+            optimizer=None,  # When None, the default is tf.optimizers.RMSprop(1.0, 0.95)
             normalize_gradient=None,  # Disabled option.
             gradient_modifier=None,
             callbacks=None,
@@ -78,6 +76,11 @@ class ActivationMaximization(ModelVisualization):
             warnings.warn(
                 ('`normalize_gradient` option of ActivationMaximization#__call__() is disabled.,'
                  ' And this will be removed in future.'), DeprecationWarning)
+
+        # optimizer
+        if optimizer is None:
+            optimizer = tf.optimizers.RMSprop(1.0, 0.95)
+
         # scores
         scores = self._get_scores_for_multiple_outputs(score)
 
@@ -95,8 +98,30 @@ class ActivationMaximization(ModelVisualization):
         for callback in callbacks:
             callback.on_begin()
 
-        # policy
-        policy = global_policy()
+        # check model policy
+        if version(tf.version.VERSION) < version("2.4.0"):
+            use_loss_scale_optimizer = False
+            need_to_cast_input_seeds = False
+        else:
+            use_loss_scale_optimizer = self.model.variable_dtype != self.model.compute_dtype
+            if use_loss_scale_optimizer:
+                need_to_cast_input_seeds = True
+                try:
+                    optimizer = LossScaleOptimizer(optimizer)
+                except ValueError as e:
+                    raise ValueError(
+                        ('An `optimizer` instance may have been used twice'
+                         ' under mixed_precision poicy.'
+                         ' You may be able to avoid this error'
+                         ' by creating new optimizer instance each calling __call__().'
+                         ' Please see following for the detail:'
+                         ' https://github.com/tensorflow/tensorflow/issues/48862')) from e
+            else:
+                # FIXME To avoid a error. Please see below for the detail:
+                # https://github.com/tensorflow/tensorflow/issues/48860
+                need_to_cast_input_seeds = self.model.layers[-1].compute_dtype in [
+                    tf.float16, tf.bfloat16
+                ]
 
         for i in range(check_steps(steps)):
             # Apply input modifiers
@@ -104,8 +129,10 @@ class ActivationMaximization(ModelVisualization):
                 for modifier in input_modifiers[name]:
                     seed_inputs[j] = modifier(seed_inputs[j])
 
-            if policy.variable_dtype != policy.compute_dtype:
-                seed_inputs = (tf.cast(X, dtype=policy.compute_dtype) for X in seed_inputs)
+            if need_to_cast_input_seeds:
+                # seed_inputs = (tf.cast(X, dtype=self.model.compute_dtype) for X in seed_inputs)
+                seed_inputs = (tf.cast(X, dtype=self.model.layers[-1].compute_dtype)
+                               for X in seed_inputs)
             seed_inputs = [tf.Variable(X) for X in seed_inputs]
 
             # Calculate gradients
@@ -127,16 +154,20 @@ class ActivationMaximization(ModelVisualization):
                     (-1. * score_value) + sum([v for _, v in regularizations])
                     for score_value in score_values
                 ]
+                if use_loss_scale_optimizer:
+                    regularized_score_values = [
+                        optimizer.get_scaled_loss(score_value)
+                        for score_value in regularized_score_values
+                    ]
             grads = tape.gradient(regularized_score_values,
                                   seed_inputs,
                                   unconnected_gradients=tf.UnconnectedGradients.ZERO)
             grads = listify(grads)
+            if use_loss_scale_optimizer:
+                grads = optimizer.get_unscaled_gradients(grads)
             if gradient_modifier is not None:
                 grads = (gradient_modifier(g) for g in grads)
             optimizer.apply_gradients(zip(grads, seed_inputs))
-
-            if policy.variable_dtype != policy.compute_dtype:
-                seed_inputs = [tf.cast(X, dtype=policy.variable_dtype) for X in seed_inputs]
 
             for callback in callbacks:
                 callback(i,
@@ -194,7 +225,13 @@ class ActivationMaximization(ModelVisualization):
         # Do expand_dims when tensor doesn't have the dim for samples
         seed_inputs = (tf.expand_dims(X, axis=0) if len(X.shape) < len(input_tensor.shape) else X
                        for X, input_tensor in zip(seed_inputs, self.model.inputs))
-        return list(seed_inputs)
+        seed_inputs = list(seed_inputs)
+        if len(seed_inputs) != len(self.model.inputs):
+            raise ValueError(
+                ("The lengths of seed_inputs and model's inputs don't match."
+                 " seed_inputs: {}, model's inputs: {}").format(len(seed_inputs),
+                                                                len(self.model.inputs)))
+        return seed_inputs
 
     def _get_input_modifiers(self, input_modifier):
         input_modifiers = self._get_dict(input_modifier, keys=self.model.input_names)

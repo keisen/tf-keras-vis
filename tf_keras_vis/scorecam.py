@@ -1,16 +1,11 @@
-from packaging.version import parse as version
 import numpy as np
-from scipy.ndimage.interpolation import zoom
 import tensorflow as tf
 import tensorflow.keras.backend as K
+from packaging.version import parse as version
+from scipy.ndimage.interpolation import zoom
 
 from tf_keras_vis.gradcam import Gradcam
-from tf_keras_vis.utils import listify, zoom_factor, normalize
-
-if version(tf.version.VERSION) < version("2.4.0"):
-    from tensorflow.keras.mixed_precision.experimental import global_policy
-else:
-    from tensorflow.keras.mixed_precision import global_policy
+from tf_keras_vis.utils import listify, standardize, zoom_factor
 
 
 class Scorecam(Gradcam):
@@ -24,7 +19,7 @@ class Scorecam(Gradcam):
                  batch_size=32,
                  max_N=None,
                  training=False,
-                 normalize_cam=True):
+                 standardize_cam=True):
         """Generate score-weighted class activation maps (CAM) by using gradient-free visualization method.
 
             For details on Score-CAM, see the paper:
@@ -54,7 +49,7 @@ class Scorecam(Gradcam):
                 clearer attention images.
                 (see for details: https://github.com/tabayashi0117/Score-CAM#faster-score-cam)
             training: A bool whether the model's trainig-mode turn on or off.
-            normalize_cam: A bool. If True(default), cam will be normalized.
+            standardize_cam: A bool. If True(default), cam will be standardized.
         # Returns
             The heatmap image or a list of their images that indicate the `seed_input` regions
                 whose change would most contribute  the score value,
@@ -71,9 +66,10 @@ class Scorecam(Gradcam):
         penultimate_output = tf.keras.Model(inputs=self.model.inputs,
                                             outputs=penultimate_output_tensor)(seed_inputs,
                                                                                training=training)
-        policy = global_policy()
-        if policy.variable_dtype != policy.compute_dtype:
-            penultimate_output = tf.cast(penultimate_output, policy.variable_dtype)
+        if version(tf.version.VERSION) >= version("2.4.0") and \
+                self.model.layers[-1].compute_dtype in [tf.float16, tf.bfloat16]:
+            penultimate_output = tf.cast(penultimate_output, self.model.variable_dtype)
+
         # For efficiently visualizing, extract maps that has a large variance.
         # This excellent idea is devised by tabayashi0117.
         # (see for details: https://github.com/tabayashi0117/Score-CAM#faster-score-cam)
@@ -137,6 +133,8 @@ class Scorecam(Gradcam):
         # Calculating weights
         weights = ([score(p) for p in prediction] for score, prediction in zip(scores, preds))
         weights = (np.array(w, dtype=np.float32) for w in weights)
+        weights = (np.mean(w, axis=tuple(range(len(w.shape)))[1:]) if len(w.shape) > 2 else w
+                   for w in weights)
         weights = (np.reshape(w, (channels, -1)) for w in weights)
         weights = np.array(list(weights), dtype=np.float32)
         weights = np.sum(weights, axis=0)
@@ -148,14 +146,14 @@ class Scorecam(Gradcam):
             cam = activation_modifier(cam)
 
         if not expand_cam:
-            if normalize_cam:
-                cam = normalize(cam)
+            if standardize_cam:
+                cam = standardize(cam)
             return cam
 
         factors = (zoom_factor(cam.shape, X.shape) for X in seed_inputs)
         cam = [zoom(cam, factor) for factor in factors]
-        if normalize_cam:
-            cam = [normalize(x) for x in cam]
+        if standardize_cam:
+            cam = [standardize(x) for x in cam]
         if len(self.model.inputs) == 1 and not isinstance(seed_input, list):
             cam = cam[0]
         return cam

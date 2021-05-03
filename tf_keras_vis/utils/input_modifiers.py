@@ -51,6 +51,8 @@ class Rotate(InputModifier):
     def __call__(self, seed_input):
         if tf.is_tensor(seed_input):
             seed_input = seed_input.numpy()
+        if seed_input.dtype == np.float16:
+            seed_input = seed_input.astype(np.float32)
         seed_input = rotate(seed_input,
                             np.random.uniform(-self.rg, self.rg),
                             axes=tuple(range(len(seed_input.shape))[1:-1]),
