@@ -97,6 +97,16 @@ def zoom_factor(from_shape, to_shape):
 
 
 def is_mixed_precision(model):
-    return version(tf.version.VERSION) >= version("2.4.0") and (
-        (model.compute_dtype in [tf.float16, tf.bfloat16]) or
-        (model.layers[-1].compute_dtype in [tf.float16, tf.bfloat16]))
+    return version(tf.version.VERSION) >= version("2.4.0") and any(
+        (layer.variable_dtype != layer.compute_dtype) and
+        (layer.compute_dtype in [tf.float16, tf.bfloat16]) for layer in model.layers)
+
+
+def lower_precision_dtype(model):
+    if is_mixed_precision(model):
+        layers = model.layers
+        layers = [model] + layers
+        layers = filter(lambda l: l.compute_dtype in [tf.float16, tf.bfloat16], layers)
+        layers = list(layers)
+        return layers[0].compute_dtype
+    return None

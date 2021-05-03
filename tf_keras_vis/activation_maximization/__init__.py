@@ -7,7 +7,7 @@ import tensorflow.keras.backend as K
 from packaging.version import parse as version
 
 from tf_keras_vis import ModelVisualization
-from tf_keras_vis.utils import check_steps, is_mixed_precision, listify
+from tf_keras_vis.utils import (check_steps, is_mixed_precision, listify, lower_precision_dtype)
 from tf_keras_vis.utils.input_modifiers import Jitter, Rotate
 from tf_keras_vis.utils.regularizers import Norm, TotalVariation2D
 
@@ -98,28 +98,20 @@ class ActivationMaximization(ModelVisualization):
         for callback in callbacks:
             callback.on_begin()
 
-        # check model policy
-        if version(tf.version.VERSION) < version("2.4.0"):
-            use_loss_scale_optimizer = False
-            need_to_cast_input_seeds = False
-        else:
-            use_loss_scale_optimizer = self.model.variable_dtype != self.model.compute_dtype
-            if use_loss_scale_optimizer:
-                need_to_cast_input_seeds = True
-                try:
-                    optimizer = LossScaleOptimizer(optimizer)
-                except ValueError as e:
-                    raise ValueError(
-                        ('An `optimizer` instance may have been used twice'
-                         ' under mixed_precision poicy.'
-                         ' You may be able to avoid this error'
-                         ' by creating new optimizer instance each calling __call__().'
-                         ' Please see following for the detail:'
-                         ' https://github.com/tensorflow/tensorflow/issues/48862')) from e
-            else:
-                # FIXME To avoid a error. Please see below for the detail:
-                # https://github.com/tensorflow/tensorflow/issues/48860
-                need_to_cast_input_seeds = is_mixed_precision(self.model)
+        need_to_cast_input_seeds = False
+        use_loss_scale_optimizer = False
+        if is_mixed_precision(self.model):
+            need_to_cast_input_seeds = True
+            use_loss_scale_optimizer = True
+            try:
+                optimizer = LossScaleOptimizer(optimizer)
+            except ValueError as e:
+                raise ValueError(('An `optimizer` instance may have been used twice'
+                                  ' under mixed_precision poicy.'
+                                  ' You may be able to avoid this error'
+                                  ' by creating new optimizer instance each calling __call__().'
+                                  ' Please see following for the detail:'
+                                  ' https://github.com/tensorflow/tensorflow/issues/48862')) from e
 
         for i in range(check_steps(steps)):
             # Apply input modifiers
@@ -128,8 +120,7 @@ class ActivationMaximization(ModelVisualization):
                     seed_inputs[j] = modifier(seed_inputs[j])
 
             if need_to_cast_input_seeds:
-                # seed_inputs = (tf.cast(X, dtype=self.model.compute_dtype) for X in seed_inputs)
-                seed_inputs = (tf.cast(X, dtype=self.model.layers[-1].compute_dtype)
+                seed_inputs = (tf.cast(X, dtype=lower_precision_dtype(self.model))
                                for X in seed_inputs)
             seed_inputs = [tf.Variable(X) for X in seed_inputs]
 
