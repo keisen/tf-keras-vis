@@ -22,7 +22,7 @@ def mock_dense_model():
 
 def mock_conv_model():
     inputs = Input((8, 8, 3), name='input-1')
-    x = Conv2D(2, 3, activation='relu', name='conv-1')(inputs)
+    x = Conv2D(6, 3, activation='relu', name='conv-1')(inputs)
     x = GlobalAveragePooling2D()(x)
     x = Dense(2, activation='softmax', name='dense-1')(x)
     return Model(inputs=inputs, outputs=x)
@@ -31,8 +31,8 @@ def mock_conv_model():
 def mock_multiple_inputs_model():
     input_1 = Input((8, 8, 3), name='input-1')
     input_2 = Input((10, 10, 3), name='input-2')
-    x1 = Conv2D(2, 3, padding='same', activation='relu', name='conv-1')(input_1)
-    x2 = Conv2D(2, 3, activation='relu', name='conv-2')(input_2)
+    x1 = Conv2D(6, 3, padding='same', activation='relu', name='conv-1')(input_1)
+    x2 = Conv2D(6, 3, activation='relu', name='conv-2')(input_2)
     x = K.concatenate([x1, x2], axis=-1)
     x = GlobalAveragePooling2D()(x)
     x = Dense(2, activation='softmax', name='dense-1')(x)
@@ -41,7 +41,7 @@ def mock_multiple_inputs_model():
 
 def mock_multiple_outputs_model():
     inputs = Input((8, 8, 3), name='input-1')
-    x = Conv2D(2, 3, activation='relu', name='conv-1')(inputs)
+    x = Conv2D(6, 3, activation='relu', name='conv-1')(inputs)
     x = GlobalAveragePooling2D()(x)
     x1 = Dense(2, activation='softmax', name='dense-1')(x)
     x2 = Dense(1, name='dense-2')(x)
@@ -51,8 +51,8 @@ def mock_multiple_outputs_model():
 def mock_multiple_io_model():
     input_1 = Input((8, 8, 3), name='input-1')
     input_2 = Input((10, 10, 3), name='input-2')
-    x1 = Conv2D(2, 3, padding='same', activation='relu', name='conv-1')(input_1)
-    x2 = Conv2D(2, 3, activation='relu', name='conv-2')(input_2)
+    x1 = Conv2D(6, 3, padding='same', activation='relu', name='conv-1')(input_1)
+    x2 = Conv2D(6, 3, activation='relu', name='conv-2')(input_2)
     x = K.concatenate([x1, x2], axis=-1)
     x = GlobalAveragePooling2D()(x)
     x1 = Dense(2, activation='softmax', name='dense-1')(x)
@@ -62,7 +62,7 @@ def mock_multiple_io_model():
 
 def mock_conv_model_with_flot32_output():
     inputs = Input((8, 8, 3), name='input-1')
-    x = Conv2D(2, 3, activation='relu', name='conv-1')(inputs)
+    x = Conv2D(6, 3, activation='relu', name='conv-1')(inputs)
     x = GlobalAveragePooling2D()(x)
     x = Dense(2, dtype=tf.float32, activation='softmax', name='dense-1')(x)
     return Model(inputs=inputs, outputs=x)
