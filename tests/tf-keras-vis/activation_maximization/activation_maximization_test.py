@@ -5,8 +5,10 @@ from tensorflow.keras.models import load_model
 
 from tf_keras_vis.activation_maximization import ActivationMaximization
 from tf_keras_vis.utils.input_modifiers import Jitter, Rotate
-from tf_keras_vis.utils.test import (MockCallback, MockScore, does_not_raise, dummy_sample,
-                                     mock_conv_model, mock_conv_model_with_flot32_output,
+from tf_keras_vis.utils.test import (MockCallback, MockListOfScore, MockScore,
+                                     MockTupleOfScore, does_not_raise,
+                                     dummy_sample, mock_conv_model,
+                                     mock_conv_model_with_flot32_output,
                                      mock_multiple_io_model)
 
 if version(tf.version.VERSION) >= version("2.4.0"):
@@ -17,6 +19,8 @@ class TestActivationMaximization():
     @pytest.mark.parametrize("scores,expectation", [
         (None, pytest.raises(ValueError)),
         (MockScore(), does_not_raise()),
+        (MockTupleOfScore(), does_not_raise()),
+        (MockListOfScore(), does_not_raise()),
         ([MockScore()], does_not_raise()),
     ])
     def test__call__if_score_is_(self, scores, expectation, conv_model):
@@ -63,6 +67,8 @@ class TestActivationMaximizationWithMultipleInputsModel():
     @pytest.mark.parametrize("scores,expectation", [
         (None, pytest.raises(ValueError)),
         (MockScore(), does_not_raise()),
+        (MockTupleOfScore(), does_not_raise()),
+        (MockListOfScore(), does_not_raise()),
         ([MockScore()], does_not_raise()),
     ])
     def test__call__if_score_is_(self, scores, expectation, multiple_inputs_model):
@@ -98,6 +104,8 @@ class TestActivationMaximizationWithMultipleOutputsModel():
         ([MockScore()], does_not_raise()),
         ([MockScore(), None], pytest.raises(ValueError)),
         ([MockScore(), MockScore()], does_not_raise()),
+        ([MockTupleOfScore(), MockTupleOfScore()], does_not_raise()),
+        ([MockListOfScore(), MockListOfScore()], does_not_raise()),
     ])
     def test__call__if_score_is_(self, scores, expectation, multiple_outputs_model):
         activation_maximization = ActivationMaximization(multiple_outputs_model)
@@ -127,6 +135,8 @@ class TestActivationMaximizationWithMultipleIOModel():
         ([MockScore()], does_not_raise()),
         ([MockScore(), None], pytest.raises(ValueError)),
         ([MockScore(), MockScore()], does_not_raise()),
+        ([MockTupleOfScore(), MockTupleOfScore()], does_not_raise()),
+        ([MockListOfScore(), MockListOfScore()], does_not_raise()),
     ])
     def test__call__if_score_is_(self, scores, expectation, multiple_io_model):
         activation_maximization = ActivationMaximization(multiple_io_model)

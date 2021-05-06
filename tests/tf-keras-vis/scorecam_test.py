@@ -4,8 +4,9 @@ from packaging.version import parse as version
 from tensorflow.keras.models import load_model
 
 from tf_keras_vis.scorecam import Scorecam as Gradcam
-from tf_keras_vis.utils.test import (MockScore, does_not_raise, dummy_sample,
-                                     mock_conv_model,
+from tf_keras_vis.utils.test import (MockListOfScore, MockScore,
+                                     MockTupleOfScore, does_not_raise,
+                                     dummy_sample, mock_conv_model,
                                      mock_conv_model_with_flot32_output,
                                      mock_multiple_io_model)
 
@@ -25,6 +26,8 @@ class TestScorecam():
     @pytest.mark.parametrize("scores,expectation", [
         (None, pytest.raises(ValueError)),
         (MockScore(), does_not_raise()),
+        (MockTupleOfScore(), does_not_raise()),
+        (MockListOfScore(), does_not_raise()),
         ([MockScore()], does_not_raise()),
     ])
     def test__call__if_score_is_(self, scores, expectation, conv_model):
@@ -88,6 +91,8 @@ class TestScorecamWithMultipleInputsModel():
     @pytest.mark.parametrize("scores,expectation", [
         (None, pytest.raises(ValueError)),
         (MockScore(), does_not_raise()),
+        (MockTupleOfScore(), does_not_raise()),
+        (MockListOfScore(), does_not_raise()),
         ([MockScore()], does_not_raise()),
     ])
     def test__call__if_score_is_(self, scores, expectation, multiple_inputs_model):
@@ -121,6 +126,8 @@ class TestScorecamWithMultipleOutputsModel():
         ([None, None], pytest.raises(ValueError)),
         ([MockScore(), None], pytest.raises(ValueError)),
         ([MockScore(), MockScore()], does_not_raise()),
+        ([MockTupleOfScore(), MockTupleOfScore()], does_not_raise()),
+        ([MockListOfScore(), MockListOfScore()], does_not_raise()),
     ])
     def test__call__if_score_is_(self, scores, expectation, multiple_outputs_model):
         gradcam = Gradcam(multiple_outputs_model)
@@ -157,6 +164,8 @@ class TestScorecamWithMultipleIOModel():
         ([None, None], pytest.raises(ValueError)),
         ([MockScore(), None], pytest.raises(ValueError)),
         ([MockScore(), MockScore()], does_not_raise()),
+        ([MockTupleOfScore(), MockTupleOfScore()], does_not_raise()),
+        ([MockListOfScore(), MockListOfScore()], does_not_raise()),
     ])
     def test__call__if_score_is_(self, scores, expectation, multiple_io_model):
         gradcam = Gradcam(multiple_io_model)

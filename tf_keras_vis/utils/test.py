@@ -112,6 +112,26 @@ class MockScore(Score):
         return output
 
 
+class MockTupleOfScore(Score):
+    def __init__(self, name='noname'):
+        self.name = name
+        self.output = None
+
+    def __call__(self, output):
+        self.output = output
+        return tuple(o for o in output)
+
+
+class MockListOfScore(Score):
+    def __init__(self, name='noname'):
+        self.name = name
+        self.output = None
+
+    def __call__(self, output):
+        self.output = output
+        return list(o for o in output)
+
+
 class MockRegularizer(Regularizer):
     def __init__(self, name='noname'):
         self.name = name
