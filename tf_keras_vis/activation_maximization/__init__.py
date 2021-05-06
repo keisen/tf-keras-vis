@@ -129,13 +129,7 @@ class ActivationMaximization(ModelVisualization):
                 tape.watch(seed_inputs)
                 outputs = self.model(seed_inputs, training=training)
                 outputs = listify(outputs)
-                score_values = (score(output) for output, score in zip(outputs, scores))
-                score_values = (tf.stack(score_value, axis=0) if isinstance(
-                    score_value, (list, tuple)) else score_value for score_value in score_values)
-                score_values = [
-                    K.mean(tf.reshape(score_value, (X.shape[0], -1)), axis=1)
-                    for score_value, X in zip(score_values, seed_inputs)
-                ]
+                score_values = self._calculate_scores(outputs, scores)
                 # Calculate regularization values
                 regularizations = [(regularizer.name, regularizer(seed_inputs))
                                    for regularizer in regularizers]

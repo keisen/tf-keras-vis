@@ -68,3 +68,21 @@ class ModelVisualization(ABC):
                                   " model-input shape: {},"
                                   " seed_input shape: {}.".format(i, tensor.shape, x.shape)))
         return seed_inputs
+
+    def _calculate_scores(self, outputs, score_functions):
+        score_values = (func(output) for output, func in zip(outputs, score_functions))
+        score_values = (self._mean_score_value(score) for score in score_values)
+        score_values = list(score_values)
+        return score_values
+
+    def _mean_score_value(self, score):
+        if not tf.is_tensor(score):
+            if type(score) in [list, tuple]:
+                if len(score) > 0 and tf.is_tensor(score[0]):
+                    score = tf.stack(score)
+                else:
+                    score = tf.constant(score)
+            else:
+                score = tf.constant(score)
+        score = tf.math.reduce_mean(score, axis=tuple(range(score.ndim))[1:])
+        return score

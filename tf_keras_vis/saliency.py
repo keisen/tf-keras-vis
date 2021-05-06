@@ -84,10 +84,7 @@ class Saliency(ModelVisualization):
             tape.watch(seed_inputs)
             outputs = self.model(seed_inputs, training=training)
             outputs = listify(outputs)
-            score_values = (score(output) for output, score in zip(outputs, scores))
-            score_values = (tf.math.reduce_mean(score, axis=tuple(range(len(score.shape)))[1:])
-                            for score in score_values)
-            score_values = list(score_values)
+            score_values = self._calculate_scores(outputs, scores)
         grads = tape.gradient(score_values,
                               seed_inputs,
                               unconnected_gradients=unconnected_gradients)

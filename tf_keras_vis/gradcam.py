@@ -7,7 +7,8 @@ from scipy.ndimage.interpolation import zoom
 from tensorflow.python.keras.layers.convolutional import Conv
 
 from tf_keras_vis import ModelVisualization
-from tf_keras_vis.utils import (find_layer, is_mixed_precision, standardize, zoom_factor)
+from tf_keras_vis.utils import (find_layer, is_mixed_precision, standardize,
+                                zoom_factor)
 
 
 class Gradcam(ModelVisualization):
@@ -71,10 +72,7 @@ class Gradcam(ModelVisualization):
             tape.watch(seed_inputs)
             outputs = model(seed_inputs, training=training)
             outputs, penultimate_output = outputs[:-1], outputs[-1]
-            score_values = (score(y) for y, score in zip(outputs, scores))
-            score_values = (tf.math.reduce_mean(score, axis=tuple(range(len(score.shape)))[1:])
-                            for score in score_values)
-            score_values = list(score_values)
+            score_values = self._calculate_scores(outputs, scores)
         grads = tape.gradient(score_values,
                               penultimate_output,
                               unconnected_gradients=unconnected_gradients)
@@ -183,10 +181,7 @@ class GradcamPlusPlus(Gradcam):
             tape.watch(seed_inputs)
             outputs = model(seed_inputs, training=training)
             outputs, penultimate_output = outputs[:-1], outputs[-1]
-            score_values = (score(y) for y, score in zip(outputs, scores))
-            score_values = (tf.math.reduce_mean(score, axis=tuple(range(len(score.shape)))[1:])
-                            for score in score_values)
-            score_values = list(score_values)
+            score_values = self._calculate_scores(outputs, scores)
         grads = tape.gradient(score_values,
                               penultimate_output,
                               unconnected_gradients=unconnected_gradients)
