@@ -1,9 +1,13 @@
 import numpy as np
 import tensorflow as tf
 import tensorflow.keras.backend as K
+from packaging.version import parse as version
 
 from tf_keras_vis import ModelVisualization
-from tf_keras_vis.utils import check_steps, listify, standardize
+from tf_keras_vis.utils import (check_steps, is_mixed_precision, listify, standardize)
+
+if version(tf.version.VERSION) >= version("2.4.0"):
+    from tensorflow.keras.mixed_precision import LossScaleOptimizer
 
 
 class Saliency(ModelVisualization):
@@ -80,14 +84,25 @@ class Saliency(ModelVisualization):
 
     def _get_gradients(self, seed_inputs, scores, gradient_modifier, training,
                        unconnected_gradients):
+        # When mixed precision enabled
+        mixed_precision_enabled = is_mixed_precision(self.model)
+        if mixed_precision_enabled:
+            optimizer = LossScaleOptimizer(tf.keras.optimizers.RMSprop())
+
         with tf.GradientTape(watch_accessed_variables=False, persistent=True) as tape:
             tape.watch(seed_inputs)
             outputs = self.model(seed_inputs, training=training)
             outputs = listify(outputs)
             score_values = self._calculate_scores(outputs, scores)
+            if mixed_precision_enabled:
+                score_values = [
+                    optimizer.get_scaled_loss(score_value) for score_value in score_values
+                ]
         grads = tape.gradient(score_values,
                               seed_inputs,
                               unconnected_gradients=unconnected_gradients)
+        if is_mixed_precision(self.model):
+            grads = optimizer.get_unscaled_gradients(grads)
         if gradient_modifier is not None:
             grads = [gradient_modifier(g) for g in grads]
         return grads

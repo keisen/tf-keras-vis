@@ -3,12 +3,15 @@ import warnings
 import numpy as np
 import tensorflow as tf
 import tensorflow.keras.backend as K
+from packaging.version import parse as version
 from scipy.ndimage.interpolation import zoom
 from tensorflow.python.keras.layers.convolutional import Conv
 
 from tf_keras_vis import ModelVisualization
-from tf_keras_vis.utils import (find_layer, is_mixed_precision, standardize,
-                                zoom_factor)
+from tf_keras_vis.utils import (find_layer, is_mixed_precision, standardize, zoom_factor)
+
+if version(tf.version.VERSION) >= version("2.4.0"):
+    from tensorflow.keras.mixed_precision import LossScaleOptimizer
 
 
 class Gradcam(ModelVisualization):
@@ -68,18 +71,29 @@ class Gradcam(ModelVisualization):
         # Processing gradcam
         model = tf.keras.Model(inputs=self.model.inputs,
                                outputs=self.model.outputs + [penultimate_output_tensor])
+
+        # When mixed precision enabled
+        mixed_precision_enabled = is_mixed_precision(model)
+        if mixed_precision_enabled:
+            optimizer = LossScaleOptimizer(tf.keras.optimizers.RMSprop())
+
         with tf.GradientTape(watch_accessed_variables=False) as tape:
             tape.watch(seed_inputs)
             outputs = model(seed_inputs, training=training)
             outputs, penultimate_output = outputs[:-1], outputs[-1]
             score_values = self._calculate_scores(outputs, scores)
+            if mixed_precision_enabled:
+                score_values = [
+                    optimizer.get_scaled_loss(score_value) for score_value in score_values
+                ]
         grads = tape.gradient(score_values,
                               penultimate_output,
                               unconnected_gradients=unconnected_gradients)
 
-        if is_mixed_precision(self.model):
-            penultimate_output = tf.cast(penultimate_output, dtype=model.variable_dtype)
+        if mixed_precision_enabled:
+            grads = optimizer.get_unscaled_gradients(grads)
             grads = tf.cast(grads, dtype=model.variable_dtype)
+            penultimate_output = tf.cast(penultimate_output, dtype=model.variable_dtype)
             score_values = [tf.cast(v, dtype=model.variable_dtype) for v in score_values]
 
         weights = K.mean(grads, axis=tuple(range(grads.ndim)[1:-1]), keepdims=True)
@@ -176,19 +190,28 @@ class GradcamPlusPlus(Gradcam):
         # Processing gradcam
         model = tf.keras.Model(inputs=self.model.inputs,
                                outputs=self.model.outputs + [penultimate_output_tensor])
+        # When mixed precision enabled
+        mixed_precision_enabled = is_mixed_precision(model)
+        if mixed_precision_enabled:
+            optimizer = LossScaleOptimizer(tf.keras.optimizers.RMSprop())
 
         with tf.GradientTape(watch_accessed_variables=False) as tape:
             tape.watch(seed_inputs)
             outputs = model(seed_inputs, training=training)
             outputs, penultimate_output = outputs[:-1], outputs[-1]
             score_values = self._calculate_scores(outputs, scores)
+            if mixed_precision_enabled:
+                score_values = [
+                    optimizer.get_scaled_loss(score_value) for score_value in score_values
+                ]
         grads = tape.gradient(score_values,
                               penultimate_output,
                               unconnected_gradients=unconnected_gradients)
 
-        if is_mixed_precision(self.model):
-            penultimate_output = tf.cast(penultimate_output, dtype=model.variable_dtype)
+        if is_mixed_precision(model):
+            grads = optimizer.get_unscaled_gradients(grads)
             grads = tf.cast(grads, dtype=model.variable_dtype)
+            penultimate_output = tf.cast(penultimate_output, dtype=model.variable_dtype)
             score_values = [tf.cast(v, dtype=model.variable_dtype) for v in score_values]
 
         score = sum([tf.math.exp(tf.reshape(v, (-1, ))) for v in score_values])
