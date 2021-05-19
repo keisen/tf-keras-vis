@@ -79,7 +79,7 @@ class ModelVisualization(ABC):
         if not tf.is_tensor(score):
             if type(score) in [list, tuple]:
                 if len(score) > 0 and tf.is_tensor(score[0]):
-                    score = tf.stack(score)
+                    score = tf.stack(score, axis=0)
                 else:
                     score = tf.constant(score)
             else:

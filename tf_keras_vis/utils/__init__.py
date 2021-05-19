@@ -103,10 +103,11 @@ def is_mixed_precision(model):
 
 
 def lower_precision_dtype(model):
-    if is_mixed_precision(model):
+    if version(tf.version.VERSION) >= version("2.4.0"):
         layers = model.layers
-        layers = [model] + layers
-        layers = filter(lambda l: l.compute_dtype in [tf.float16, tf.bfloat16], layers)
+        layers = filter(
+            lambda l: (l.variable_dtype != l.compute_dtype) and
+            (l.compute_dtype in [tf.float16, tf.bfloat16]), layers)
         layers = list(layers)
         return layers[0].compute_dtype
-    return None
+    return model.dtype  # pragma: no cover

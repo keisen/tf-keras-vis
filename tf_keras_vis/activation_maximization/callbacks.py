@@ -5,8 +5,6 @@ import numpy as np
 import tensorflow as tf
 from PIL import Image, ImageDraw, ImageFont
 
-from tf_keras_vis.utils import normalize
-
 
 class Callback(ABC):
     """Abstract class for defining callbacks.
@@ -16,17 +14,18 @@ class Callback(ABC):
         """
         pass
 
-    def __call__(self, i, values, grads, losses, model_outputs, **kwargs):
-        """This function will be called within `tf_keras_vis.ModelVisualization` instance.
+    def __call__(self, i, values, grads, scores, model_outputs, **kwargs):
+        """This function will be called within
+            `tf_keras_vis.activation_maximization.ActivationMaximization` instance.
 
         # Arguments:
             i: The optimizer iteration.
             values: The current `values`.
             grads: The gradient of input images with respect to `values`.
-            losses: A list of loss values with respect to each the model outputs.
+            scores: A list of score values with respect to each the model outputs.
             model_outputs: A list of the model outputs.
             kwargs: Optional named arguments that will be used different ways by each
-                `tf_keras_vis.ModelVisualization`.
+                `tf_keras_vis.activation_maximization.ActivationMaximization`.
         """
         pass
 
@@ -46,11 +45,11 @@ class PrintLogger(Callback):
         """
         self.interval = interval
 
-    def __call__(self, i, values, grads, losses, model_outputs, **kwargs):
+    def __call__(self, i, values, grads, scores, model_outputs, **kwargs):
         i += 1
         if (i % self.interval == 0):
-            tf.print('Steps: {:03d}\tLosses: {},\tRegularizations: {}'.format(
-                i, self._tolist(losses), self._tolist(kwargs['regularizations'])))
+            tf.print('Steps: {:03d}\tScores: {},\tRegularizations: {}'.format(
+                i, self._tolist(scores), self._tolist(kwargs['regularizations'])))
 
     def _tolist(self, ary):
         if isinstance(ary, list) or isinstance(ary, (np.ndarray, np.generic)):
@@ -76,7 +75,7 @@ class GifGenerator2D(Callback):
     def on_begin(self):
         self.data = None
 
-    def __call__(self, i, values, grads, losses, model_outputs, **kwargs):
+    def __call__(self, i, values, grads, scores, model_outputs, **kwargs):
         if self.data is None:
             self.data = [[] for i in range(len(values))]
         for n, value in enumerate(values):

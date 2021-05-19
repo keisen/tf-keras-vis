@@ -68,8 +68,12 @@ def mock_conv_model_with_flot32_output():
     return Model(inputs=inputs, outputs=x)
 
 
-def dummy_sample(shape):
-    return np.random.sample(shape)
+def dummy_sample(shape, dtype=np.float32):
+    length = np.prod(shape)
+    values = np.array(list(range(length)))
+    values = np.reshape(values, shape)
+    values = values.astype(dtype)
+    return values
 
 
 @contextmanager

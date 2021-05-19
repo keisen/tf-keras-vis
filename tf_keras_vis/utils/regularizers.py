@@ -30,7 +30,7 @@ class TotalVariation2D(Regularizer):
             reason="Please use TotalVariation2D class instead of TotalVariation class.")
 class TotalVariation(TotalVariation2D):
     def __init__(self, weight=10.):
-        super().__init__(weight=weight, name='TotalVariation')
+        super().__init__(weight=weight, name='TotalVariation')  # pragma: no cover
 
 
 class Norm(Regularizer):
@@ -50,4 +50,4 @@ class Norm(Regularizer):
 @deprecated(version='0.6.0', reason="Please use Norm class instead of L2Norm class.")
 class L2Norm(Norm):
     def __init__(self, weight=10.):
-        super().__init__(weight=weight, p=2, name='L2Norm')
+        super().__init__(weight=weight, p=2, name='L2Norm')  # pragma: no cover

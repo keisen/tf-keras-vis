@@ -1,15 +1,9 @@
 import numpy as np
 import pytest
 import tensorflow as tf
-from tensorflow.keras.layers import Dense
-from tensorflow.keras.models import Sequential
 
 from tf_keras_vis import ModelVisualization
-
-
-@pytest.fixture(scope="function", autouse=True)
-def model():
-    return Sequential([Dense(5, input_shape=(3, )), Dense(2, activation='softmax')])
+from tf_keras_vis.utils.test import dummy_sample
 
 
 class MockVisualizer(ModelVisualization):
@@ -17,49 +11,47 @@ class MockVisualizer(ModelVisualization):
         pass
 
 
-def change_activation(model):
-    model.layers[-1].activation = tf.keras.activations.linear
+class TestModelVisualization():
+    def _replace_activation(self, returns=False):
+        def func(model):
+            model.layers[-1].activation = tf.keras.activations.linear
+            if returns:
+                return model
 
+        return func
 
-def test__init__(model):
-    mock = MockVisualizer(model)
-    assert mock.model == model
-    assert np.array_equal(mock.model.get_weights()[0], model.get_weights()[0])
+    @pytest.mark.parametrize("modifier,clone,expected_same,expected_activation", [
+        (None, False, True, tf.keras.activations.softmax),
+        (None, True, True, tf.keras.activations.softmax),
+        ('not-return', False, True, tf.keras.activations.linear),
+        ('not-return', True, False, tf.keras.activations.linear),
+        ('return', False, True, tf.keras.activations.linear),
+        ('return', True, False, tf.keras.activations.linear),
+    ])
+    def test__init__(self, modifier, clone, expected_same, expected_activation, conv_model):
+        if modifier == 'return':
+            mock = MockVisualizer(conv_model,
+                                  model_modifier=self._replace_activation(returns=True),
+                                  clone=clone)
+        elif modifier == 'not-return':
+            mock = MockVisualizer(conv_model,
+                                  model_modifier=self._replace_activation(returns=False),
+                                  clone=clone)
+        else:
+            mock = MockVisualizer(conv_model, clone=clone)
+        assert (mock.model is conv_model) == expected_same
+        assert mock.model.layers[-1].activation == expected_activation
+        assert np.array_equal(mock.model.get_weights()[0], conv_model.get_weights()[0])
 
-
-def test__init__if_clone_is_False(model):
-    mock = MockVisualizer(model, clone=False)
-    assert mock.model == model
-
-
-def test__init__if_clone_is_True(model):
-    mock = MockVisualizer(model, clone=True)
-    assert mock.model == model
-
-
-def test__init__if_set_model_modifier(model):
-    mock = MockVisualizer(model, change_activation)
-    assert mock.model != model
-    assert mock.model.layers[-1].activation == tf.keras.activations.linear
-    assert model.layers[-1].activation == tf.keras.activations.softmax
-
-
-def test__init__if_set_model_modifier_and_clone_is_True(model):
-    mock = MockVisualizer(model, change_activation, clone=True)
-    assert mock.model != model
-    assert mock.model.layers[-1].activation == tf.keras.activations.linear
-    assert model.layers[-1].activation == tf.keras.activations.softmax
-
-
-def test__init__if_set_model_modifier_and_clone_is_False(model):
-    mock = MockVisualizer(model, change_activation, clone=False)
-    assert mock.model == model
-    assert mock.model.layers[-1].activation == tf.keras.activations.linear
-    assert model.layers[-1].activation == tf.keras.activations.linear
-
-
-def test__init__if_set_model_modifier_that_return_other_model(model):
-    another_model = Sequential([Dense(5, input_shape=(3, ))])
-    mock = MockVisualizer(model, lambda m: another_model)
-    assert mock.model != model
-    assert mock.model == another_model
+    @pytest.mark.parametrize("score,expected_shape", [
+        (dummy_sample((2, 32, 32, 3)), (2, )),
+        ((dummy_sample((32, 32, 3)), dummy_sample((32, 32, 3))), (2, )),
+        ([dummy_sample((32, 32, 3)), dummy_sample((32, 32, 3))], (2, )),
+        (tf.constant(dummy_sample((2, 32, 32, 3))), (2, )),
+        ((tf.constant(dummy_sample((32, 32, 3))), tf.constant(dummy_sample((32, 32, 3)))), (2, )),
+        ([tf.constant(dummy_sample((32, 32, 3))),
+          tf.constant(dummy_sample((32, 32, 3)))], (2, )),
+    ])
+    def test_mean_score_value(self, score, expected_shape, conv_model):
+        actual = MockVisualizer(conv_model)._mean_score_value(score)
+        assert actual.shape == expected_shape
