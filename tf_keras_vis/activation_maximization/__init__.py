@@ -29,7 +29,8 @@ class ActivationMaximization(ModelVisualization):
             normalize_gradient=None,  # Disabled option.
             gradient_modifier=None,
             callbacks=None,
-            training=False):
+            training=False,
+            unconnected_gradients=tf.UnconnectedGradients.NONE):
         """Generate the model inputs that maximize the output of the given `score` functions.
 
         # Arguments
@@ -65,6 +66,9 @@ class ActivationMaximization(ModelVisualization):
             callbacks: A `tf_keras_vis.activation_maimization.callbacks.Callback` instance
                 or a list of them.
             training: A bool whether the model's trainig-mode turn on or off.
+            unconnected_gradients: Specifies the gradient value returned when the given input
+                tensors are unconnected. Accepted values are constants defined in the class
+                `tf.UnconnectedGradients` and the default value is NONE.
         # Returns
             An Numpy arrays when the model has a single input and `seed_input` is None or An N-dim
             Numpy Array, Or a list of Numpy arrays when otherwise.
@@ -80,6 +84,17 @@ class ActivationMaximization(ModelVisualization):
         # optimizer
         if optimizer is None:
             optimizer = tf.optimizers.RMSprop(1.0, 0.95)
+        mixed_precision_enabled = is_mixed_precision(self.model)
+        if mixed_precision_enabled:
+            try:
+                # Wrap optimizer
+                optimizer = LossScaleOptimizer(optimizer)
+            except ValueError as e:
+                raise ValueError(
+                    ('An `optimizer` instance may have been used twice'
+                     ' under mixed_precision policy.'
+                     ' You may be able to avoid this error'
+                     ' by creating new optimizer instance each calling __call__().')) from e
 
         # scores
         scores = self._get_scores_for_multiple_outputs(score)
@@ -98,28 +113,13 @@ class ActivationMaximization(ModelVisualization):
         for callback in callbacks:
             callback.on_begin()
 
-        need_to_cast_input_seeds = False
-        use_loss_scale_optimizer = False
-        if is_mixed_precision(self.model):
-            need_to_cast_input_seeds = True
-            use_loss_scale_optimizer = True
-            try:
-                optimizer = LossScaleOptimizer(optimizer)
-            except ValueError as e:
-                raise ValueError(('An `optimizer` instance may have been used twice'
-                                  ' under mixed_precision poicy.'
-                                  ' You may be able to avoid this error'
-                                  ' by creating new optimizer instance each calling __call__().'
-                                  ' Please see following for the detail:'
-                                  ' https://github.com/tensorflow/tensorflow/issues/48862')) from e
-
         for i in range(check_steps(steps)):
             # Apply input modifiers
             for j, name in enumerate(self.model.input_names):
                 for modifier in input_modifiers[name]:
                     seed_inputs[j] = modifier(seed_inputs[j])
 
-            if need_to_cast_input_seeds:
+            if mixed_precision_enabled:
                 seed_inputs = (tf.cast(X, dtype=lower_precision_dtype(self.model))
                                for X in seed_inputs)
             seed_inputs = [tf.Variable(X) for X in seed_inputs]
@@ -137,16 +137,16 @@ class ActivationMaximization(ModelVisualization):
                     (-1. * score_value) + sum([v for _, v in regularizations])
                     for score_value in score_values
                 ]
-                if use_loss_scale_optimizer:
+                if mixed_precision_enabled:
                     regularized_score_values = [
                         optimizer.get_scaled_loss(score_value)
                         for score_value in regularized_score_values
                     ]
             grads = tape.gradient(regularized_score_values,
                                   seed_inputs,
-                                  unconnected_gradients=tf.UnconnectedGradients.ZERO)
+                                  unconnected_gradients=unconnected_gradients)
             grads = listify(grads)
-            if use_loss_scale_optimizer:
+            if mixed_precision_enabled:
                 grads = optimizer.get_unscaled_gradients(grads)
             if gradient_modifier is not None:
                 grads = (gradient_modifier(g) for g in grads)
