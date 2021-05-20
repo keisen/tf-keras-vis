@@ -91,10 +91,9 @@ class ActivationMaximization(ModelVisualization):
                 optimizer = LossScaleOptimizer(optimizer)
             except ValueError as e:
                 raise ValueError(
-                    ('An `optimizer` instance may have been used twice'
-                     ' under mixed_precision policy.'
-                     ' You may be able to avoid this error'
-                     ' by creating new optimizer instance each calling __call__().')) from e
+                    ("The same `optimizer` instance should be NOT used twice or more."
+                     " You can be able to avoid this error by creating new optimizer instance"
+                     " each calling __call__().")) from e
 
         # scores
         scores = self._get_scores_for_multiple_outputs(score)
