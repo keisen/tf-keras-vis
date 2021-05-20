@@ -18,8 +18,8 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    python_requires='>=3.6, <3.9',
-    install_requires=['scipy==1.4.*', 'pillow==7.1.*', 'deprecated', 'imageio', 'packaging'],
+    python_requires='>=3.6, <3.10',
+    install_requires=['scipy', 'pillow', 'deprecated', 'imageio', 'packaging'],
     extras_require={
         'develop': ['flake8', 'isort', 'yapf', 'pytest<6.0', 'pytest-pep8', 'pytest-cov'],
         'examples': ['jupyterlab==2.*', 'jedi==0.17.*', 'matplotlib'],
