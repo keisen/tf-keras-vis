@@ -17,10 +17,7 @@ RUN export JUPYTER_HOME=/etc/jupyter                               && \
                 {'shell_command': ['/bin/bash']}" >> $JUPYTER_CONF
 
 # Install essential python libraries
-RUN pip install --no-cache-dir --upgrade pip                && \
-    pip install --no-cache-dir --upgrade setuptools         && \
-    pip install --no-cache-dir                              && \
-      tf-keras-vis[develop,examples]==$TF_KERAS_VIS_VERSION && \
-      jupyterlab==2.*
+RUN pip install --no-cache-dir \
+      tf-keras-vis[develop,examples]==$TF_KERAS_VIS_VERSION
 
-CMD [ "jupyter", "lab" ]
+CMD jupyter lab
