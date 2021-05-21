@@ -61,10 +61,9 @@ class CategoricalScore(Score):
             raise ValueError('indices is required. [{}]'.format(indices))
 
     def __call__(self, output):
-        if output.ndim < 3:
-            raise ValueError(
-                "output ndims must be 3 or more (batch_size, ..., channels), but was {}".format(
-                    output.ndim))
+        if output.ndim < 2:
+            raise ValueError("output ndims must be 2 or more (batch_size, ..., channels), "
+                             "but was {}".format(output.ndim))
         if output.shape[-1] <= max(self.indices):
             raise ValueError("Invalid index value. indices: {}, output.shape: {}".format(
                 self.indices, output.shape))

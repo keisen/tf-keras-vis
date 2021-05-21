@@ -1,14 +1,13 @@
+from tf_keras_vis.utils.scores import CategoricalScore
 import pytest
 import tensorflow as tf
 from packaging.version import parse as version
 from tensorflow.keras.models import load_model
 
 from tf_keras_vis.saliency import Saliency
-from tf_keras_vis.utils.test import (MockListOfScore, MockScore,
-                                     MockTupleOfScore, does_not_raise,
+from tf_keras_vis.utils.test import (MockListOfScore, MockScore, MockTupleOfScore, does_not_raise,
                                      dummy_sample, mock_conv_model,
-                                     mock_conv_model_with_flot32_output,
-                                     mock_multiple_io_model)
+                                     mock_conv_model_with_flot32_output, mock_multiple_io_model)
 
 if version(tf.version.VERSION) >= version("2.4.0"):
     from tensorflow.keras.mixed_precision import set_global_policy
@@ -65,6 +64,18 @@ class TestSaliency():
         saliency = Saliency(dense_model)
         result = saliency(MockScore(), dummy_sample((3, )), keepdims=True)
         assert result.shape == (1, 3)
+
+    def test__call__with_categorical_score(self, conv_model):
+        # Release v.0.6.0@dev(May 22 2021):
+        #   Add this case to test Saliency with CategoricalScore.
+        def model_modifier(model):
+            model.layers[-1].activation = tf.keras.activations.linear
+
+        score = CategoricalScore([1, 1, 0, 1])
+        X = dummy_sample((4, 8, 8, 3))
+        saliency = Saliency(conv_model, model_modifier=model_modifier, clone=False)
+        result = saliency(score, X)
+        assert result.shape == (4, 8, 8)
 
 
 class TestSaliencyWithMultipleInputsModel():
