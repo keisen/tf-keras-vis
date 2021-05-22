@@ -19,7 +19,8 @@ class Scorecam(Gradcam):
                  max_N=None,
                  training=False,
                  standardize_cam=True):
-        """Generate score-weighted class activation maps (CAM) by using gradient-free visualization method.
+        """Generate score-weighted class activation maps (CAM)
+            by using gradient-free visualization method.
 
             For details on Score-CAM, see the paper:
             [Score-CAM: Score-Weighted Visual Explanations for Convolutional Neural Networks ]
@@ -98,7 +99,8 @@ class Scorecam(Gradcam):
                                       keepdims=True)
                                for activation_map in upsampled_activation_maps)
         normalized_activation_maps = (
-            (activation_map - min_activation_map) / (max_activation_map - min_activation_map)
+            (activation_map - min_activation_map) /
+            (max_activation_map - min_activation_map + K.epsilon())
             for activation_map, min_activation_map, max_activation_map in zip(
                 upsampled_activation_maps, min_activation_maps, max_activation_maps))
 
