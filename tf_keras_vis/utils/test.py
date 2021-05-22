@@ -20,6 +20,14 @@ def mock_dense_model():
     return Model(inputs=inputs, outputs=x)
 
 
+def mock_conv_model_with_sigmoid_output():
+    inputs = Input((8, 8, 3), name='input-1')
+    x = Conv2D(6, 3, activation='relu', name='conv-1')(inputs)
+    x = GlobalAveragePooling2D()(x)
+    x = Dense(1, activation='sigmoid', name='dense-1')(x)
+    return Model(inputs=inputs, outputs=x)
+
+
 def mock_conv_model():
     inputs = Input((8, 8, 3), name='input-1')
     x = Conv2D(6, 3, activation='relu', name='conv-1')(inputs)

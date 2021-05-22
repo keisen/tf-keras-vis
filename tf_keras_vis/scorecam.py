@@ -4,8 +4,7 @@ import tensorflow.keras.backend as K
 from scipy.ndimage.interpolation import zoom
 
 from tf_keras_vis.gradcam import Gradcam
-from tf_keras_vis.utils import (is_mixed_precision, listify, standardize,
-                                zoom_factor)
+from tf_keras_vis.utils import (is_mixed_precision, listify, standardize, zoom_factor)
 
 
 class Scorecam(Gradcam):
@@ -132,11 +131,10 @@ class Scorecam(Gradcam):
         # Calculating weights
         weights = ([score(p) for p in prediction] for score, prediction in zip(scores, preds))
         weights = (np.array(w, dtype=np.float32) for w in weights)
-        weights = (np.mean(w, axis=tuple(range(len(w.shape)))[1:]) for w in weights)
-        weights = (np.reshape(w, (channels, -1)) for w in weights)
+        weights = (np.reshape(w, (penultimate_output.shape[0], -1, channels)) for w in weights)
+        weights = (np.mean(w, axis=1) for w in weights)
         weights = np.array(list(weights), dtype=np.float32)
         weights = np.sum(weights, axis=0)
-        weights = np.transpose(weights, (1, 0))
 
         # Generate cam
         cam = K.batch_dot(penultimate_output, weights)
