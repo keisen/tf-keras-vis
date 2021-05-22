@@ -3,6 +3,8 @@ import os
 import numpy as np
 import tensorflow as tf
 import tensorflow.keras.backend as K
+from deprecated import deprecated
+from packaging.version import parse as version
 
 MAX_STEPS = 'TF_KERAS_VIS_MAX_STEPS'
 
@@ -16,7 +18,7 @@ def check_steps(steps):
 
 
 def num_of_gpus():
-    if tf.__version__.startswith('2.0.'):
+    if version(tf.version.VERSION) < version("2.1.0"):
         list_physical_devices = tf.config.experimental.list_physical_devices
         list_logical_devices = tf.config.experimental.list_logical_devices
     else:
@@ -56,13 +58,19 @@ def listify(value, return_empty_list_if_none=True, convert_tuple_to_list=True):
     return value
 
 
-def normalize(array, value_range=(1., 0.)):
+def standardize(array, value_range=(1., 0.)):
     max_value = np.max(array, axis=tuple(range(array.ndim)[1:]), keepdims=True)
     min_value = np.min(array, axis=tuple(range(array.ndim)[1:]), keepdims=True)
     normalized_array = (array - min_value) / (max_value - min_value + K.epsilon())
+    return normalized_array
+
+
+@deprecated(version='0.6.0', reason="Inappropriate naming")
+def normalize(array, value_range=(1., 0.)):
     if value_range is None:
-        return normalized_array
+        return standardize(array)
     else:
+        normalized_array = standardize(array)
         high, low = value_range
         return (high - low) * normalized_array + low
 
@@ -86,3 +94,20 @@ def find_layer(model, condition, offset=None, reverse=True):
 
 def zoom_factor(from_shape, to_shape):
     return tuple(t / f for f, t in iter(zip(from_shape, to_shape)))
+
+
+def is_mixed_precision(model):
+    return version(tf.version.VERSION) >= version("2.4.0") and any(
+        (layer.variable_dtype != layer.compute_dtype) and
+        (layer.compute_dtype in [tf.float16, tf.bfloat16]) for layer in model.layers)
+
+
+def lower_precision_dtype(model):
+    if version(tf.version.VERSION) >= version("2.4.0"):
+        layers = model.layers
+        layers = filter(
+            lambda l: (l.variable_dtype != l.compute_dtype) and
+            (l.compute_dtype in [tf.float16, tf.bfloat16]), layers)
+        layers = list(layers)
+        return layers[0].compute_dtype
+    return model.dtype  # pragma: no cover

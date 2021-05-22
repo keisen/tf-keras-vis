@@ -105,10 +105,13 @@ venv.bak/
 
 # Add by keisen
 *.swp
-examples/core*
-examples/sandbox.ipynb
-examples/workspace.ipynb
+/examples/core*
+/examples/sandbox.ipynb
+/examples/workspace.ipynb
 /*.ipynb
 .node-version
 *.nbconvert.ipynb
+Untitled.ipynb
 /temp/
+.DS_Store
+/dockerfiles/docker-compose.yml

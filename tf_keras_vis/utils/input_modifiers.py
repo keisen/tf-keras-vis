@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 import tensorflow as tf
-from tensorflow.keras.preprocessing.image import random_rotation
+from scipy.ndimage import rotate
 
 
 class InputModifier(ABC):
@@ -13,7 +13,7 @@ class InputModifier(ABC):
         """Implement modification to the input before processing gradient descent.
 
         # Arguments:
-            seed_input: An N-dim numpy array.
+            seed_input: A tf.Tensor.
         # Returns:
             The modified `seed_input`.
         """
@@ -21,43 +21,43 @@ class InputModifier(ABC):
 
 
 class Jitter(InputModifier):
-    def __init__(self, jitter=0.05):
+    def __init__(self, jitter=8):
         """Implements an input modifier that introduces random jitter.
             Jitter has been shown to produce crisper activation maximization images.
 
         # Arguments:
-            jitter: The amount of jitter to apply, scalar or sequence. If a scalar, same jitter is
-                applied to all image dims. If sequence, `jitter` should contain a value per image
-                dim. A value between `[0., 1.]` is interpreted as a percentage of the image
-                dimension. (Default value: 0.05)
+            jitter: Integer. The amount of jitter to apply.
         """
-        self.jitter = None
-        self._jitter = jitter
+        self.jitter = int(jitter)
 
     def __call__(self, seed_input):
-        if self.jitter is None:
-            self.jitter = [
-                dim * self._jitter if self._jitter < 1. else self._jitter
-                for dim in seed_input.shape[1:-1]
-            ]
-        return tf.roll(seed_input, [np.random.randint(-j, j + 1) for j in self.jitter],
-                       tuple(range(len(seed_input.shape))[1:-1]))
+        ndim = len(seed_input.shape)
+        seed_input = tf.roll(seed_input,
+                             shift=tuple(np.random.randint(-self.jitter, self.jitter, ndim - 2)),
+                             axis=tuple(range(ndim)[1:-1]))
+        return seed_input
 
 
 class Rotate(InputModifier):
-    def __init__(self, degree=1.):
+    def __init__(self, degree=3.):
         """Implements an input modifier that introduces random rotation.
             Rotate has been shown to produce crisper activation maximization images.
 
         # Arguments:
-            degree: The amount of rotation to apply.
+            degree: Integer or float. The amount of rotation to apply.
         """
-        self.rg = degree
+        self.rg = float(degree)
 
     def __call__(self, seed_input):
         if tf.is_tensor(seed_input):
             seed_input = seed_input.numpy()
-        seed_input = np.array([
-            random_rotation(x, self.rg, row_axis=0, col_axis=1, channel_axis=2) for x in seed_input
-        ])
+        if seed_input.dtype == np.float16:
+            seed_input = seed_input.astype(np.float32)
+        seed_input = rotate(seed_input,
+                            np.random.uniform(-self.rg, self.rg),
+                            axes=tuple(range(len(seed_input.shape))[1:-1]),
+                            reshape=False,
+                            mode='nearest',
+                            order=1,
+                            prefilter=True)
         return tf.constant(seed_input)
