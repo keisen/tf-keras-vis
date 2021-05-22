@@ -121,7 +121,7 @@ But please note that tf-keras-vis APIs does NOT have compatibility with keras-vi
 * With cascading model, Gradcam and Gradcam++ don't work well, that's, it might occur some error. So we recommend, in this case, to use FasterScoreCAM.
 * `channels-first` models and data is unsupported.
 * With a `mixed-precision` model that has a layer which are set float32 dtype exlicitly, ActivationMaximization may raise a error.
-   * See [the testcase](https://github.com/keisen/tf-keras-vis/blob/47561f827b0ea89e0faab356ca3a9621b8662381/tests/tf-keras-vis/activation_maximization/activation_maximization_test.py#L188-L197) for details.
+* With a `mixed-precision` model, Regurarization values that is calculated by ActivationMaximization may be NaN.
 
 
 ## Use Cases

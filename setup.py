@@ -21,7 +21,7 @@ setup(
     python_requires='>=3.6, <3.10',
     install_requires=['scipy', 'pillow', 'deprecated', 'imageio', 'packaging'],
     extras_require={
-        'develop': ['flake8', 'isort', 'yapf', 'pytest<6.0', 'pytest-pep8', 'pytest-cov'],
+        'develop': ['flake8', 'isort', 'yapf', 'pytest', 'pytest-pycodestyle', 'pytest-cov'],
         'examples': ['jupyterlab==2.*', 'jedi==0.17.*', 'matplotlib'],
     },
     include_package_data=True,
