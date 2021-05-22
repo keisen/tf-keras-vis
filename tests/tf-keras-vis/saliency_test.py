@@ -1,13 +1,16 @@
-from tf_keras_vis.utils.scores import CategoricalScore
+import numpy as np
 import pytest
 import tensorflow as tf
 from packaging.version import parse as version
 from tensorflow.keras.models import load_model
 
 from tf_keras_vis.saliency import Saliency
-from tf_keras_vis.utils.test import (MockListOfScore, MockScore, MockTupleOfScore, does_not_raise,
+from tf_keras_vis.utils.scores import BinaryScore, CategoricalScore
+from tf_keras_vis.utils.test import (MockListOfScore, MockScore,
+                                     MockTupleOfScore, does_not_raise,
                                      dummy_sample, mock_conv_model,
-                                     mock_conv_model_with_flot32_output, mock_multiple_io_model)
+                                     mock_conv_model_with_flot32_output,
+                                     mock_multiple_io_model)
 
 if version(tf.version.VERSION) >= version("2.4.0"):
     from tensorflow.keras.mixed_precision import set_global_policy
@@ -65,17 +68,51 @@ class TestSaliency():
         result = saliency(MockScore(), dummy_sample((3, )), keepdims=True)
         assert result.shape == (1, 3)
 
-    def test__call__with_categorical_score(self, conv_model):
+    @pytest.mark.parametrize("score_class,modefier_enabled,clone_enabled,"
+                             "batch_size,expectation", [
+                                 (BinaryScore, False, False, 0, does_not_raise()),
+                                 (BinaryScore, False, False, 1, does_not_raise()),
+                                 (BinaryScore, False, False, 5, does_not_raise()),
+                                 (BinaryScore, False, True, 5, does_not_raise()),
+                                 (BinaryScore, True, False, 5, does_not_raise()),
+                                 (BinaryScore, True, True, 5, does_not_raise()),
+                                 (CategoricalScore, False, False, 0, does_not_raise()),
+                                 (CategoricalScore, False, False, 1, does_not_raise()),
+                                 (CategoricalScore, False, False, 5, does_not_raise()),
+                                 (CategoricalScore, False, True, 5, does_not_raise()),
+                                 (CategoricalScore, True, False, 5, does_not_raise()),
+                                 (CategoricalScore, True, True, 5, does_not_raise()),
+                             ])
+    def test__call__with_categorical_score(self, score_class, modefier_enabled, clone_enabled,
+                                           batch_size, expectation, conv_model, conv_sigmoid_model):
         # Release v.0.6.0@dev(May 22 2021):
-        #   Add this case to test Saliency with CategoricalScore.
+        #   Add this case to test Saliency with ScoreClasses.
         def model_modifier(model):
             model.layers[-1].activation = tf.keras.activations.linear
 
-        score = CategoricalScore([1, 1, 0, 1])
-        X = dummy_sample((4, 8, 8, 3))
-        saliency = Saliency(conv_model, model_modifier=model_modifier, clone=False)
-        result = saliency(score, X)
-        assert result.shape == (4, 8, 8)
+        if score_class is BinaryScore:
+            model = conv_sigmoid_model
+        else:
+            model = conv_model
+
+        score_targets = np.random.randint(0, 1, max(batch_size, 1))
+        score = score_class(list(score_targets))
+
+        seed_input_shape = (8, 8, 3)
+        if batch_size > 0:
+            seed_input_shape = (batch_size, ) + seed_input_shape
+        seed_input = dummy_sample(seed_input_shape)
+
+        with expectation:
+            saliency = Saliency(model,
+                                model_modifier=model_modifier if modefier_enabled else None,
+                                clone=clone_enabled)
+            result = saliency(score, seed_input=seed_input)
+            if modefier_enabled and clone_enabled:
+                assert model is not saliency.model
+            else:
+                assert model is saliency.model
+            assert result.shape == (max(batch_size, 1), 8, 8)
 
 
 class TestSaliencyWithMultipleInputsModel():
