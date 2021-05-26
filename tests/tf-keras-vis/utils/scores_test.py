@@ -25,13 +25,13 @@ class TestBinaryScore():
         (None, None, pytest.raises(ValueError)),
         (0, [False], does_not_raise()),
         (1, [True], does_not_raise()),
-        (100, None, pytest.raises(ValueError)),
-        (-1, None, pytest.raises(ValueError)),
+        (100, [True], does_not_raise()),
+        (-1, [True], does_not_raise()),
         (1.0, [True], does_not_raise()),
         ([None], None, pytest.raises(ValueError)),
         ([0, 0], [False, False], does_not_raise()),
         ([0, 1, 0], [False, True, False], does_not_raise()),
-        ([-1, 0], None, pytest.raises(ValueError)),
+        ([-1, 0], [True, False], does_not_raise()),
     ])
     def test__init__(self, target_values, expected, expectation):
         with expectation:

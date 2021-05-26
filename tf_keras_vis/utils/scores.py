@@ -29,9 +29,9 @@ class BinaryScore(Score):
             they will be casted to bool.
         '''
         super().__init__('BinaryScore')
-        self.target_values = listify(target_values)
-        if len(list(filter(lambda v: not self._is_valid(v), self.target_values))) > 0:
-            raise ValueError("Only allow bool or [0, 1]. target_values: [{}]".format(target_values))
+        self.target_values = listify(target_values, return_empty_list_if_none=False)
+        if None in self.target_values:
+            raise ValueError("Can't accept None value. [{}]".format(target_values))
         self.target_values = [bool(v) for v in self.target_values]
         if len(self.target_values) == 0:
             raise ValueError('target_values is required. [{}]'.format(target_values))
@@ -47,14 +47,11 @@ class BinaryScore(Score):
         score = [val if positive else 1.0 - val for val, positive in zip(output, target_values)]
         return score
 
-    def _is_valid(self, value):
-        return value in [False, True, 0, 1]
-
 
 class CategoricalScore(Score):
     def __init__(self, indices):
         super().__init__('CategoricalScore')
-        self.indices = listify(indices)
+        self.indices = listify(indices, return_empty_list_if_none=False)
         if None in self.indices:
             raise ValueError("Can't accept None. indices: [{}]".format(indices))
         if len(self.indices) == 0:
@@ -62,7 +59,7 @@ class CategoricalScore(Score):
 
     def __call__(self, output):
         if output.ndim < 2:
-            raise ValueError("output ndims must be 2 or more (batch_size, ..., channels), "
+            raise ValueError("output ndim must be 2 or more (batch_size, ..., channels), "
                              "but was {}".format(output.ndim))
         if output.shape[-1] <= max(self.indices):
             raise ValueError("Invalid index value. indices: {}, output.shape: {}".format(
