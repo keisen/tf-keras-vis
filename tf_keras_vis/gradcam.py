@@ -61,7 +61,7 @@ class Gradcam(ModelVisualization):
             ValueError: In case of invalid arguments for `score`, or `penultimate_layer`.
         """
         if normalize_gradient is not None:
-            warnings.warn(('`normalize_gradient` option of GradCAM#__call__() is disabled.,'
+            warnings.warn(('`normalize_gradient` option is disabled.,'
                            ' And this will be removed in future.'), DeprecationWarning)
         # Preparing
         scores = self._get_scores_for_multiple_outputs(score)
