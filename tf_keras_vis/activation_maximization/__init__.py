@@ -160,6 +160,7 @@ class ActivationMaximization(ModelVisualization):
             cliped_value = cliped_value[0]
 
         return cliped_value
+
     def _get_optimizer(self, optimizer, mixed_precision_model):
         if optimizer is None:
             optimizer = tf.optimizers.RMSprop(1.0, 0.95)
