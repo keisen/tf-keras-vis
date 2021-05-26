@@ -10,5 +10,3 @@ from tf_keras_vis.utils.scores import \
 from tf_keras_vis.utils.scores import \
     InactiveScore as InactiveLoss  # noqa: F401 E402
 from tf_keras_vis.utils.scores import Score as Loss  # noqa: F401 E402
-from tf_keras_vis.utils.scores import \
-    SmoothedCategoricalScore as SmoothedCategoricalLoss  # noqa: F401 E402 E501
