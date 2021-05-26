@@ -81,19 +81,11 @@ class ActivationMaximization(ModelVisualization):
                 ('`normalize_gradient` option of ActivationMaximization#__call__() is disabled.,'
                  ' And this will be removed in future.'), DeprecationWarning)
 
+        # Check model
+        mixed_precision_model = is_mixed_precision(self.model)
+
         # optimizer
-        if optimizer is None:
-            optimizer = tf.optimizers.RMSprop(1.0, 0.95)
-        mixed_precision_enabled = is_mixed_precision(self.model)
-        if mixed_precision_enabled:
-            try:
-                # Wrap optimizer
-                optimizer = LossScaleOptimizer(optimizer)
-            except ValueError as e:
-                raise ValueError(
-                    ("The same `optimizer` instance should be NOT used twice or more."
-                     " You can be able to avoid this error by creating new optimizer instance"
-                     " each calling __call__().")) from e
+        optimizer = self._get_optimizer(optimizer, mixed_precision_model)
 
         # scores
         scores = self._get_scores_for_multiple_outputs(score)
@@ -118,7 +110,7 @@ class ActivationMaximization(ModelVisualization):
                 for modifier in input_modifiers[name]:
                     seed_inputs[j] = modifier(seed_inputs[j])
 
-            if mixed_precision_enabled:
+            if mixed_precision_model:
                 seed_inputs = (tf.cast(X, dtype=lower_precision_dtype(self.model))
                                for X in seed_inputs)
             seed_inputs = [tf.Variable(X) for X in seed_inputs]
@@ -136,7 +128,7 @@ class ActivationMaximization(ModelVisualization):
                     (-1. * score_value) + sum([v for _, v in regularizations])
                     for score_value in score_values
                 ]
-                if mixed_precision_enabled:
+                if mixed_precision_model:
                     regularized_score_values = [
                         optimizer.get_scaled_loss(score_value)
                         for score_value in regularized_score_values
@@ -145,7 +137,7 @@ class ActivationMaximization(ModelVisualization):
                                   seed_inputs,
                                   unconnected_gradients=unconnected_gradients)
             grads = listify(grads)
-            if mixed_precision_enabled:
+            if mixed_precision_model:
                 grads = optimizer.get_unscaled_gradients(grads)
             if gradient_modifier is not None:
                 grads = (gradient_modifier(g) for g in grads)
@@ -168,6 +160,20 @@ class ActivationMaximization(ModelVisualization):
             cliped_value = cliped_value[0]
 
         return cliped_value
+
+    def _get_optimizer(self, optimizer, mixed_precision_model):
+        if optimizer is None:
+            optimizer = tf.optimizers.RMSprop(1.0, 0.95)
+        if mixed_precision_model:
+            try:
+                # Wrap optimizer
+                optimizer = LossScaleOptimizer(optimizer)
+            except ValueError as e:
+                raise ValueError(
+                    ("The same `optimizer` instance should be NOT used twice or more."
+                     " You can be able to avoid this error by creating new optimizer instance"
+                     " each calling __call__().")) from e
+        return optimizer
 
     def _get_input_ranges(self, input_range):
         input_ranges = listify(input_range,

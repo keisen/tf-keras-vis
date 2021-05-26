@@ -85,8 +85,8 @@ class Saliency(ModelVisualization):
     def _get_gradients(self, seed_inputs, scores, gradient_modifier, training,
                        unconnected_gradients):
         # When mixed precision enabled
-        mixed_precision_enabled = is_mixed_precision(self.model)
-        if mixed_precision_enabled:
+        mixed_precision_model = is_mixed_precision(self.model)
+        if mixed_precision_model:
             optimizer = LossScaleOptimizer(tf.keras.optimizers.RMSprop())
 
         with tf.GradientTape(watch_accessed_variables=False, persistent=True) as tape:
@@ -94,14 +94,14 @@ class Saliency(ModelVisualization):
             outputs = self.model(seed_inputs, training=training)
             outputs = listify(outputs)
             score_values = self._calculate_scores(outputs, scores)
-            if mixed_precision_enabled:
+            if mixed_precision_model:
                 score_values = [
                     optimizer.get_scaled_loss(score_value) for score_value in score_values
                 ]
         grads = tape.gradient(score_values,
                               seed_inputs,
                               unconnected_gradients=unconnected_gradients)
-        if is_mixed_precision(self.model):
+        if mixed_precision_model:
             grads = optimizer.get_unscaled_gradients(grads)
         if gradient_modifier is not None:
             grads = [gradient_modifier(g) for g in grads]
