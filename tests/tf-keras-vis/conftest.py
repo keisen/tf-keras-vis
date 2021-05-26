@@ -1,11 +1,8 @@
 import pytest
 
-from tf_keras_vis.utils.test import (mock_conv_model,
-                                     mock_conv_model_with_sigmoid_output,
-                                     mock_dense_model,
-                                     mock_multiple_inputs_model,
-                                     mock_multiple_io_model,
-                                     mock_multiple_outputs_model)
+from tf_keras_vis.utils.test import (mock_conv_model, mock_conv_model_with_sigmoid_output,
+                                     mock_dense_model, mock_multiple_inputs_model,
+                                     mock_multiple_io_model, mock_multiple_outputs_model)
 
 
 @pytest.fixture

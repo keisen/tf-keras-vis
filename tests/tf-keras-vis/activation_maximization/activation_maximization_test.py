@@ -9,7 +9,7 @@ from tf_keras_vis.utils.input_modifiers import Jitter, Rotate2D
 from tf_keras_vis.utils.regularizers import Norm, TotalVariation2D
 from tf_keras_vis.utils.test import (MockCallback, MockListOfScore, MockScore, MockTupleOfScore,
                                      does_not_raise, dummy_sample, mock_conv_model,
-                                     mock_conv_model_with_flot32_output, mock_multiple_io_model)
+                                     mock_conv_model_with_float32_output, mock_multiple_io_model)
 
 if version(tf.version.VERSION) >= version("2.4.0"):
     from tensorflow.keras.mixed_precision import set_global_policy
@@ -209,7 +209,7 @@ class TestActivationMaximizationWithMixedPrecision():
 
     def test__call__with_float32_output_model(self, tmpdir):
         set_global_policy('mixed_float16')
-        model = mock_conv_model_with_flot32_output()
+        model = mock_conv_model_with_float32_output()
         self._test_for_single_io(model)
         path = tmpdir.mkdir("tf-keras-vis").join("float32_output.h5")
         model.save(path)

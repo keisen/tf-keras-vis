@@ -68,7 +68,7 @@ def mock_multiple_io_model():
     return Model(inputs=[input_1, input_2], outputs=[x1, x2])
 
 
-def mock_conv_model_with_flot32_output():
+def mock_conv_model_with_float32_output():
     inputs = Input((8, 8, 3), name='input-1')
     x = Conv2D(6, 3, activation='relu', name='conv-1')(inputs)
     x = GlobalAveragePooling2D()(x)

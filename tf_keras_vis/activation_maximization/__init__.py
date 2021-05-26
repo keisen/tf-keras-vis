@@ -171,11 +171,11 @@ class ActivationMaximization(ModelVisualization):
         for callback in callbacks:
             callback.on_end()
 
-        cliped_value = self._apply_clip(seed_inputs, input_ranges)
+        clipped_value = self._apply_clip(seed_inputs, input_ranges)
         if len(self.model.inputs) == 1 and (seed_input is None or not isinstance(seed_input, list)):
-            cliped_value = cliped_value[0]
+            clipped_value = clipped_value[0]
 
-        return cliped_value
+        return clipped_value
 
     def _get_optimizer(self, optimizer, mixed_precision_model):
         if optimizer is None:
