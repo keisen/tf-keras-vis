@@ -14,7 +14,7 @@ class Callback(ABC):
         """
         pass
 
-    def __call__(self, i, values, grads, scores, model_outputs, **kwargs):
+    def __call__(self, i, values, grads, score_values, outputs, regularizer_values, overall_score):
         """This function will be called within
             `tf_keras_vis.activation_maximization.ActivationMaximization` instance.
 
@@ -45,11 +45,11 @@ class PrintLogger(Callback):
         """
         self.interval = interval
 
-    def __call__(self, i, values, grads, scores, model_outputs, **kwargs):
+    def __call__(self, i, values, grads, score_values, outputs, regularizer_values, overall_score):
         i += 1
         if (i % self.interval == 0):
-            tf.print('Steps: {:03d}\tScores: {},\tRegularizations: {}'.format(
-                i, self._tolist(scores), self._tolist(kwargs['regularizations'])))
+            tf.print('Steps: {:03d}\tScores: {},\tRegularization: {}'.format(
+                i, self._tolist(score_values), self._tolist(regularizer_values)))
 
     def _tolist(self, ary):
         if isinstance(ary, list) or isinstance(ary, (np.ndarray, np.generic)):
@@ -75,7 +75,7 @@ class GifGenerator2D(Callback):
     def on_begin(self):
         self.data = None
 
-    def __call__(self, i, values, grads, scores, model_outputs, **kwargs):
+    def __call__(self, i, values, grads, score_values, outputs, regularizer_values, overall_score):
         if self.data is None:
             self.data = [[] for i in range(len(values))]
         for n, value in enumerate(values):

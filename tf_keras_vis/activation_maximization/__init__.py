@@ -165,7 +165,7 @@ class ActivationMaximization(ModelVisualization):
                          grads,
                          score_values,
                          outputs,
-                         regularizations=regularizer_values,
+                         regularizer_values=regularizer_values,
                          overall_score=regularized_score_values)
 
         for callback in callbacks:
