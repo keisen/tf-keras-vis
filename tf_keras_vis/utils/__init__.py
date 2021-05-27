@@ -26,7 +26,7 @@ def get_num_of_steps_allowed(steps):
     Returns:
         int: The number of steps allowed.
     """
-    return min(max(steps, 0), int(os.environ[MAX_STEPS])) if MAX_STEPS in os.environ else steps
+    return min(steps, int(os.environ[MAX_STEPS])) if MAX_STEPS in os.environ else steps
 
 
 def num_of_gpus():
