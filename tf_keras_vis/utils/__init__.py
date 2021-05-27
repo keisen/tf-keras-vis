@@ -9,12 +9,16 @@ from packaging.version import parse as version
 MAX_STEPS = 'TF_KERAS_VIS_MAX_STEPS'
 
 
+@deprecated(version='0.7.0', reason="Inappropriate naming")
 def check_steps(steps):
+    return get_num_of_steps_allowed(steps)
+
+
+def get_num_of_steps_allowed(steps):
     """
     Load max-steps value that is for avoiding timeout on travis-ci when testing Notebook.
     """
-    max_steps = int(os.environ[MAX_STEPS]) if MAX_STEPS in os.environ else steps
-    return min(steps, max_steps)
+    return min(max(steps, 0), int(os.environ[MAX_STEPS])) if MAX_STEPS in os.environ else steps
 
 
 def num_of_gpus():

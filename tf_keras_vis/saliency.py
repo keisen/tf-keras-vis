@@ -4,7 +4,7 @@ import tensorflow.keras.backend as K
 from packaging.version import parse as version
 
 from tf_keras_vis import ModelVisualization
-from tf_keras_vis.utils import (check_steps, is_mixed_precision, listify, standardize)
+from tf_keras_vis.utils import get_num_of_steps_allowed, is_mixed_precision, listify, standardize
 
 if version(tf.version.VERSION) >= version("2.4.0"):
     from tensorflow.keras.mixed_precision import LossScaleOptimizer
@@ -48,12 +48,13 @@ class Saliency(ModelVisualization):
         # Raises
             ValueError: In case of invalid arguments for `score`, or `seed_input`.
         """
+
         # Preparing
         scores = self._get_scores_for_multiple_outputs(score)
         seed_inputs = self._get_seed_inputs_for_multiple_inputs(seed_input)
         # Processing saliency
         if smooth_samples > 0:
-            smooth_samples = check_steps(smooth_samples)
+            smooth_samples = get_num_of_steps_allowed(smooth_samples)
             seed_inputs = (tf.tile(X, (smooth_samples, ) + tuple(np.ones(X.ndim - 1, np.int)))
                            for X in seed_inputs)
             seed_inputs = (tf.reshape(X, (smooth_samples, -1) + tuple(X.shape[1:]))

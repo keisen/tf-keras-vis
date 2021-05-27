@@ -7,7 +7,8 @@ import tensorflow.keras.backend as K
 from packaging.version import parse as version
 
 from tf_keras_vis import ModelVisualization
-from tf_keras_vis.utils import (check_steps, is_mixed_precision, listify, lower_precision_dtype)
+from tf_keras_vis.utils import (get_num_of_steps_allowed, is_mixed_precision, listify,
+                                lower_precision_dtype)
 from tf_keras_vis.utils.input_modifiers import Jitter, Rotate2D
 from tf_keras_vis.utils.regularizers import Norm, TotalVariation2D
 
@@ -105,7 +106,7 @@ class ActivationMaximization(ModelVisualization):
             callback.on_begin()
 
         variables = None
-        for i in range(check_steps(steps)):
+        for i in range(get_num_of_steps_allowed(steps)):
             # Apply input modifiers
             for j, name in enumerate(self.model.input_names):
                 for modifier in input_modifiers[name]:

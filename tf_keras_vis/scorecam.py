@@ -1,10 +1,13 @@
+from typing import Union
+
 import numpy as np
 import tensorflow as tf
 import tensorflow.keras.backend as K
 from scipy.ndimage.interpolation import zoom
 
 from tf_keras_vis.gradcam import Gradcam
-from tf_keras_vis.utils import (is_mixed_precision, listify, standardize, zoom_factor)
+from tf_keras_vis.utils import (get_num_of_steps_allowed, is_mixed_precision, listify, standardize,
+                                zoom_factor)
 
 
 class Scorecam(Gradcam):
@@ -56,7 +59,6 @@ class Scorecam(Gradcam):
         # Raises
             ValueError: In case of invalid arguments for `score`, or `penultimate_layer`.
         """
-
         # Preparing
         scores = self._get_scores_for_multiple_outputs(score)
         seed_inputs = self._get_seed_inputs_for_multiple_inputs(seed_input)
@@ -72,6 +74,7 @@ class Scorecam(Gradcam):
         # For efficiently visualizing, extract maps that has a large variance.
         # This excellent idea is devised by tabayashi0117.
         # (see for details: https://github.com/tabayashi0117/Score-CAM#faster-score-cam)
+        max_N = get_num_of_steps_allowed(max_N)
         if max_N is not None and max_N > -1:
             activation_map_std = tf.math.reduce_std(penultimate_output,
                                                     axis=tuple(
