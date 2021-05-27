@@ -95,24 +95,11 @@ If you have ever used [keras-vis](https://github.com/raghakot/keras-vis), you ma
 Actually tf-keras-vis derived from keras-vis, and both provided visualization methods are almost the same.
 But please note that tf-keras-vis APIs does NOT have compatibility with keras-vis.
 
-### Guides (ToDo)
 
-* Visualizing multiple attention or activation images at once utilizing batch-system of model
-* Define various score functions
-* Visualizing attentions with multiple inputs models
-* Visualizing attentions with multiple outputs models
-* Advanced score functions
-* Tuning Activation Maximization
-* Visualizing attentions for N-dim image inputs
+## Use Cases
 
-
-## ToDo
-
-* Guide documentations
-* API documentations
-* We're going to add some methods such as below.
-   - Deep Dream
-   - Style transfer
+* [chitra](https://github.com/aniketmaurya/chitra)
+   * A Deep Learning Computer Vision library for easy data loading, model building and model interpretation with GradCAM/GradCAM++.
 
 
 ## Known Issues
@@ -124,7 +111,17 @@ But please note that tf-keras-vis APIs does NOT have compatibility with keras-vi
 * With a `mixed-precision` model, Regurarization values that is calculated by ActivationMaximization may be NaN.
 
 
-## Use Cases
+## ToDo
 
-* [chitra](https://github.com/aniketmaurya/chitra)
-   * A Deep Learning Computer Vision library for easy data loading, model building and model interpretation with GradCAM/GradCAM++.
+* Guides
+   * Visualizing multiple attention or activation images at once utilizing batch-system of model
+   * Define various score functions
+   * Visualizing attentions with multiple inputs models
+   * Visualizing attentions with multiple outputs models
+   * Advanced score functions
+   * Tuning Activation Maximization
+   * Visualizing attentions for N-dim image inputs
+* API documentations
+* We're going to add some methods such as below.
+   - Deep Dream
+   - Style transfer
