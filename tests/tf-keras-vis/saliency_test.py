@@ -6,11 +6,9 @@ from tensorflow.keras.models import load_model
 
 from tf_keras_vis.saliency import Saliency
 from tf_keras_vis.utils.scores import BinaryScore, CategoricalScore
-from tf_keras_vis.utils.test import (MockListOfScore, MockScore,
-                                     MockTupleOfScore, does_not_raise,
+from tf_keras_vis.utils.test import (MockListOfScore, MockScore, MockTupleOfScore, does_not_raise,
                                      dummy_sample, mock_conv_model,
-                                     mock_conv_model_with_float32_output,
-                                     mock_multiple_io_model)
+                                     mock_conv_model_with_float32_output, mock_multiple_io_model)
 
 if version(tf.version.VERSION) >= version("2.4.0"):
     from tensorflow.keras.mixed_precision import set_global_policy
@@ -68,7 +66,7 @@ class TestSaliency():
         result = saliency(MockScore(), dummy_sample((8, )), keepdims=True)
         assert result.shape == (1, 8)
 
-    @pytest.mark.parametrize("score_class,modefier_enabled,clone_enabled,"
+    @pytest.mark.parametrize("score_class,modifier_enabled,clone_enabled,"
                              "batch_size,expectation", [
                                  (BinaryScore, False, False, 0, does_not_raise()),
                                  (BinaryScore, False, False, 1, does_not_raise()),
@@ -83,7 +81,7 @@ class TestSaliency():
                                  (CategoricalScore, True, False, 5, does_not_raise()),
                                  (CategoricalScore, True, True, 5, does_not_raise()),
                              ])
-    def test__call__with_categorical_score(self, score_class, modefier_enabled, clone_enabled,
+    def test__call__with_categorical_score(self, score_class, modifier_enabled, clone_enabled,
                                            batch_size, expectation, conv_model, conv_sigmoid_model):
         # Release v.0.6.0@dev(May 22 2021):
         #   Add this case to test Saliency with ScoreClasses.
@@ -105,10 +103,10 @@ class TestSaliency():
 
         with expectation:
             saliency = Saliency(model,
-                                model_modifier=model_modifier if modefier_enabled else None,
+                                model_modifier=model_modifier if modifier_enabled else None,
                                 clone=clone_enabled)
             result = saliency(score, seed_input=seed_input)
-            if modefier_enabled and clone_enabled:
+            if modifier_enabled and clone_enabled:
                 assert model is not saliency.model
             else:
                 assert model is saliency.model

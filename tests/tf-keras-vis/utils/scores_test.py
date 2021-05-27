@@ -2,8 +2,7 @@ import numpy as np
 import pytest
 import tensorflow as tf
 
-from tf_keras_vis.utils.scores import (BinaryScore, CategoricalScore,
-                                       InactiveScore)
+from tf_keras_vis.utils.scores import BinaryScore, CategoricalScore, InactiveScore
 from tf_keras_vis.utils.test import does_not_raise, dummy_sample
 
 
@@ -28,6 +27,7 @@ class TestBinaryScore():
         (100, [True], does_not_raise()),
         (-1, [True], does_not_raise()),
         (1.0, [True], does_not_raise()),
+        ([], None, pytest.raises(ValueError)),
         ([None], None, pytest.raises(ValueError)),
         ([0, 0], [False, False], does_not_raise()),
         ([0, 1, 0], [False, True, False], does_not_raise()),
@@ -63,6 +63,7 @@ class TestCategoricalScore():
         (5, [5], does_not_raise()),
         ((1, ), [1], does_not_raise()),
         ([3], [3], does_not_raise()),
+        ([], None, pytest.raises(ValueError)),
         ([None], None, pytest.raises(ValueError)),
         ([2, None], None, pytest.raises(ValueError)),
         ((0, 8, 3), [0, 8, 3], does_not_raise()),

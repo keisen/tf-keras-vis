@@ -1,8 +1,7 @@
 import os
 
 from tf_keras_vis.activation_maximization import ActivationMaximization
-from tf_keras_vis.activation_maximization.callbacks import (GifGenerator2D,
-                                                            PrintLogger)
+from tf_keras_vis.activation_maximization.callbacks import GifGenerator2D, PrintLogger
 from tf_keras_vis.utils.test import MockScore
 
 
@@ -17,7 +16,7 @@ class TestPrintLogger():
         result = activation_maximization(MockScore(), steps=1, callbacks=PrintLogger(1))
         assert result.shape == (1, 8, 8, 3)
 
-    def test__call__without_regularizations(self, conv_model):
+    def test__call__without_regularizers(self, conv_model):
         activation_maximization = ActivationMaximization(conv_model)
         result = activation_maximization(MockScore(),
                                          steps=1,

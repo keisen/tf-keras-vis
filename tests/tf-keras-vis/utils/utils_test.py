@@ -2,7 +2,7 @@ import pytest
 import tensorflow as tf
 from packaging.version import parse as version
 
-from tf_keras_vis.utils import num_of_gpus, find_layer
+from tf_keras_vis.utils import find_layer, num_of_gpus
 
 
 class TestUtils():

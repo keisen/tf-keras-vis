@@ -4,11 +4,9 @@ from packaging.version import parse as version
 from tensorflow.keras.models import load_model
 
 from tf_keras_vis.gradcam import GradcamPlusPlus as Gradcam
-from tf_keras_vis.utils.test import (MockListOfScore, MockScore,
-                                     MockTupleOfScore, does_not_raise,
+from tf_keras_vis.utils.test import (MockListOfScore, MockScore, MockTupleOfScore, does_not_raise,
                                      dummy_sample, mock_conv_model,
-                                     mock_conv_model_with_float32_output,
-                                     mock_multiple_io_model)
+                                     mock_conv_model_with_float32_output, mock_multiple_io_model)
 
 if version(tf.version.VERSION) >= version("2.4.0"):
     from tensorflow.keras.mixed_precision import set_global_policy
@@ -62,7 +60,7 @@ class TestGradcamPlusPlus():
         (1, True, does_not_raise()),
         ('conv-1', True, does_not_raise()),
         (0, True, pytest.raises(ValueError)),
-        ('inupt-1', True, pytest.raises(ValueError)),
+        ('input-1', True, pytest.raises(ValueError)),
         (MockScore(), True, pytest.raises(ValueError)),
         (mock_conv_model().layers[-1], False, pytest.raises(ValueError)),
     ])
