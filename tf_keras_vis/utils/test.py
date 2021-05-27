@@ -3,8 +3,7 @@ from contextlib import contextmanager
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras import backend as K
-from tensorflow.keras.layers import (Conv2D, Dense, GlobalAveragePooling2D,
-                                     Input)
+from tensorflow.keras.layers import Conv2D, Dense, GlobalAveragePooling2D, Input
 from tensorflow.keras.models import Model
 
 from tf_keras_vis.activation_maximization.callbacks import Callback

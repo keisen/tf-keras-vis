@@ -13,21 +13,29 @@ class InputModifier(ABC):
     def __call__(self, seed_input):
         """Implement modification to the input before processing gradient descent.
 
-        # Arguments:
-            seed_input: A tf.Tensor.
-        # Returns:
-            The modified `seed_input`.
+        Args:
+            seed_input (tf.Tensor): A value to input to model.
+
+        Raises:
+            NotImplementedError: This method must be overwritten.
         """
         raise NotImplementedError()
 
 
 class Jitter(InputModifier):
-    def __init__(self, jitter=8):
-        """Implements an input modifier that introduces random jitter.
-            Jitter has been shown to produce crisper activation maximization images.
+    """An input modifier that introduces random jitter.
+        Jitter has been shown to produce crisper activation maximization images.
 
-        # Arguments:
-            jitter: Integer. The amount of jitter to apply.
+    Attributes:
+        jitter (int): The amount of jitter to apply.
+    Todo:
+        * Write examples
+    """
+    def __init__(self, jitter=8):
+        """Constructor.
+
+        Args:
+            jitter (int, optional): The amount of jitter to apply. Defaults to 8.
         """
         self.jitter = int(jitter)
 
@@ -43,12 +51,18 @@ class Jitter(InputModifier):
 
 
 class Rotate2D(InputModifier):
-    def __init__(self, degree=3.0):
-        """Implements an input modifier that introduces random rotation.
-            Rotate has been shown to produce crisper activation maximization images.
+    """An input modifier that introduces random rotation.
 
-        # Arguments:
-            degree: Integer or float. The amount of rotation to apply.
+    Args:
+        degree (float): The amount of rotation to apply.
+    Todo:
+        * Write examples
+    """
+    def __init__(self, degree=3.0):
+        """Constructor.
+
+        Args:
+            degree (int|float, optional): The amount of rotation to apply. Defaults to 3.0.
         """
         self.degree = float(degree)
 

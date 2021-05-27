@@ -7,19 +7,24 @@ from tf_keras_vis.utils import listify
 
 class ModelVisualization(ABC):
     """Visualization class for Keras models.
+
+    Attributes:
+        model (tf.keras.Model): The target model instance.
     """
     def __init__(self, model, model_modifier=None, clone=True):
-        """Create Visualization class instance that analize the model for debugging.
+        """Create Visualization class instance that analyze the model for debugging.
 
-        # Arguments
-            model: The `tf.keras.Model` instance. When `model_modifier` is NOT None,
+        Args:
+            model (tf.keras.Model): When `model_modifier` is NOT None,
                 This model will be cloned by `tf.keras.models.clone_model` function
                 and then will be modified by `model_modifier` according to needs.
-            model_modifier: A function that modify `model` instance. For example, in
-                ActivationMaximization usually, this function is used to replace the softmax
-                function that was applied to the model outputs.
-            clone: A bool. When False, the model won't be cloned.  Note that, although when True,
-                   the model won't be clone if `model_modifier` is None.
+            model_modifier (function, optional): A function that modify `model` instance.
+                For example, in ActivationMaximization usually,
+                this function is used to replace the softmax
+                function that was applied to the model outputs. Defaults to None.
+            clone (bool, optional): When False, the model won't be cloned.
+                Note that, although when True, the model won't be clone
+                if `model_modifier` is None. Defaults to True.
         """
         self.model = model
         if model_modifier is not None:
@@ -32,10 +37,10 @@ class ModelVisualization(ABC):
 
     @abstractmethod
     def __call__(self):
-        """Analize the model.
+        """Analyze the model.
 
-        # Returns
-            Results of analizing the model.
+        Raises:
+            NotImplementedError: The `__call__()` of subclass should be called, not this.
         """
         raise NotImplementedError()
 

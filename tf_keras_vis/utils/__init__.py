@@ -15,8 +15,16 @@ def check_steps(steps):
 
 
 def get_num_of_steps_allowed(steps):
-    """
-    Load max-steps value that is for avoiding timeout on travis-ci when testing Notebook.
+    """Get the number of steps to restrict iteration logics.
+
+        This is for avoiding timeout on Github Actions when testing Notebook.
+        If there is an environment variable `TF_KERAS_VIS_MAX_STEPS`,
+        the number of steps will restrict to `TF_KERAS_VIS_MAX_STEPS` value.
+    Args:
+        steps (int): Current steps.
+
+    Returns:
+        int: The number of steps allowed.
     """
     return min(max(steps, 0), int(os.environ[MAX_STEPS])) if MAX_STEPS in os.environ else steps
 

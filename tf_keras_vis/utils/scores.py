@@ -6,16 +6,41 @@ from tf_keras_vis.utils import listify
 
 
 class Score(ABC):
-    def __init__(self, name):
+    """Abstract class for defining a score function.
+    """
+    def __init__(self, name=None):
+        """Constructor.
+
+        Args:
+            name (name, optional): Instance name. Defaults to None.
+        """
         self.name = name
 
     @abstractmethod
     def __call__(self, output):
+        """Implement collecting scores that are used in visualization modules.
+
+        Args:
+            output (tf.Tensor): a Model output value.
+
+        Raises:
+            NotImplementedError: This method must be overwritten.
+        """
         raise NotImplementedError()
 
 
 class InactiveScore(Score):
+    """A score function that deactivate model output passed to `__call__()`.
+
+    With a multiple output model, you can use this
+    if you want a output to be excluded from targets of calculating gradients.
+
+    Todo:
+        * Write examples
+    """
     def __init__(self):
+        """Constructor.
+        """
         super().__init__('InactiveScore')
 
     def __call__(self, output):
@@ -23,11 +48,22 @@ class InactiveScore(Score):
 
 
 class BinaryScore(Score):
+    """A score function that collects the scores from model output
+        which is for binary classification.
+
+    Todo:
+        * Write examples
+    """
     def __init__(self, target_values):
-        '''
-        target_values: bool values.  When the type of values is not bool,
-            they will be casted to bool.
-        '''
+        """Constructor.
+
+        Args:
+            target_values (list): A list of bool values.
+                When the type of target_values is not bool, they will be casted to bool.
+
+        Raises:
+            ValueError: When target_values is None or an empty list.
+        """
         super().__init__('BinaryScore')
         self.target_values = listify(target_values, return_empty_list_if_none=False)
         if None in self.target_values:
@@ -49,7 +85,21 @@ class BinaryScore(Score):
 
 
 class CategoricalScore(Score):
+    """A score function that collects the scores from model output
+        which is for categorical classification.
+
+    Todo:
+        * Write examples
+    """
     def __init__(self, indices):
+        """Constructor.
+
+        Args:
+            indices (int|list): An integer or a list of them.
+
+        Raises:
+            ValueError: When indices is None or an empty list.
+        """
         super().__init__('CategoricalScore')
         self.indices = listify(indices, return_empty_list_if_none=False)
         if None in self.indices:

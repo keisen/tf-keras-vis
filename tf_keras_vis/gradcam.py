@@ -1,4 +1,5 @@
 import warnings
+from typing import Union
 
 import numpy as np
 import tensorflow as tf
@@ -8,58 +9,82 @@ from scipy.ndimage.interpolation import zoom
 from tensorflow.python.keras.layers.convolutional import Conv
 
 from tf_keras_vis import ModelVisualization
-from tf_keras_vis.utils import (find_layer, is_mixed_precision, standardize, zoom_factor)
+from tf_keras_vis.utils import find_layer, is_mixed_precision, standardize, zoom_factor
 
 if version(tf.version.VERSION) >= version("2.4.0"):
     from tensorflow.keras.mixed_precision import LossScaleOptimizer
 
 
 class Gradcam(ModelVisualization):
+    """Grad-CAM
+
+        For details on Grad-CAM, see the paper:
+        [Grad-CAM: Why did you say that?
+        Visual Explanations from Deep Networks via Gradient-based Localization]
+        (https://arxiv.org/pdf/1610.02391v1.pdf).
+
+    Todo:
+        * Write examples
+    """
     def __call__(
             self,
             score,
             seed_input,
-            penultimate_layer=-1,
+            penultimate_layer=None,
             seek_penultimate_conv_layer=True,
             activation_modifier=lambda cam: K.relu(cam),
             training=False,
             normalize_gradient=None,  # Disabled option.
             expand_cam=True,
             standardize_cam=True,
-            unconnected_gradients=tf.UnconnectedGradients.NONE):
+            unconnected_gradients=tf.UnconnectedGradients.NONE) -> Union[np.array, list]:
         """Generate gradient based class activation maps (CAM) by using positive gradient of
             penultimate_layer with respect to score.
 
-            For details on Grad-CAM, see the paper:
-            [Grad-CAM: Why did you say that? Visual Explanations from Deep Networks via
-            Gradient-based Localization](https://arxiv.org/pdf/1610.02391v1.pdf).
-
-        # Arguments
-            score: A score function. If the model has multiple outputs, you can use a different
+        Args:
+            score (tf_keras_vis.utils.scores.Score|function|list):
+                A function to specify visualizing target.
+                If the model has multiple outputs, you can use a different
                 score function on each output by passing a list of score functions.
-            seed_input: An N-dim Numpy array. If the model has multiple inputs,
-                you have to pass a list of N-dim Numpy arrays.
-            penultimate_layer: A number of integer or a tf.keras.layers.Layer object.
-            seek_penultimate_conv_layer: True to seek the penultimate layter that is a subtype of
+            seed_input (tf.Tensor|np.array|list): A tensor or a list of them to input in the model.
+                If the model has multiple inputs, you have to pass a list.
+            penultimate_layer (int|str|tf.keras.layers.Layer, optional):
+                A value to represent an index or a name of tf.keras.layers.Layer instance.
+                When not None or -1, it will be the offset layer
+                when seeking the penultimate `convolutional` layter.
+                Defaults to None.
+            seek_penultimate_conv_layer (bool, optional):
+                When True to seek the penultimate `convolutional` layter that is a subtype of
                 `keras.layers.convolutional.Conv` class.
-                If False, the penultimate layer is that was elected by penultimate_layer index.
-            activation_modifier: A function to modify gradients.
-            normalize_gradient: Note! This option is now disabled.
-            expand_cam: True to expand cam to same as input image size.
-                ![Note] Even if the model has multiple inputs, this function return only one cam
-                value (That's, when `expand_cam` is True, multiple cam images are generated from
-                a model that has multiple inputs).
-            training: A bool whether the model's trainig-mode turn on or off.
-            standardize_cam: A bool. If True(default), cam will be standardized.
-            unconnected_gradients: Specifies the gradient value returned when the given input
-                tensors are unconnected. Accepted values are constants defined in the class
-                `tf.UnconnectedGradients` and the default value is NONE.
-        # Returns
-            The heatmap image or a list of their images that indicate the `seed_input` regions
-                whose change would most contribute  the score value,
-        # Raises
+                When False, `penultimate_layer` (or last layer when `penultimate_layer` is None)
+                will be elected as the penultimate `convolutional` layter.
+                Defaults to True.
+            activation_modifier (function, optional):  A function to modify activation.
+                Defaults to lambdacam:K.relu(cam).
+            training (bool, optional): A bool that indicates
+                whether the model's training-mode on or off.
+                Defaults to False.
+            normalize_gradient (bool, optional):
+                ![Note] This option is now disabled and **deprecated**. Defaults to None.
+            expand_cam (bool, optional): True to expand cam to same as input image size.
+                ![Note] When True, even if the model has multiple inputs,
+                this function return only a cam value
+                (That's, when `expand_cam` is True,
+                multiple cam images are generated from a model that has multiple inputs).
+            standardize_cam (bool, optional): When True, cam will be standardized.
+                Defaults to True.
+            unconnected_gradients (tf.UnconnectedGradients, optional):
+                Specifies the gradient value returned when the given input tensors are unconnected.
+                Defaults to tf.UnconnectedGradients.NONE.
+
+        Returns:
+            np.array|list: The class activation maps that indicate the `seed_input` regions
+                whose change would most contribute the score value.
+
+        Raises:
             ValueError: In case of invalid arguments for `score`, or `penultimate_layer`.
         """
+
         if normalize_gradient is not None:
             warnings.warn(('`normalize_gradient` option is disabled.,'
                            ' And this will be removed in future.'), DeprecationWarning)

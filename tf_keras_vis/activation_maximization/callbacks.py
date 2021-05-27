@@ -15,17 +15,18 @@ class Callback(ABC):
         pass
 
     def __call__(self, i, values, grads, score_values, outputs, regularizer_values, overall_score):
-        """This function will be called within
-            `tf_keras_vis.activation_maximization.ActivationMaximization` instance.
+        """his function will be called within
+            `tf_keras_vis.activation_maximization.ActivationMaximization#__call__()`.
 
-        # Arguments:
-            i: The optimizer iteration.
-            values: The current `values`.
-            grads: The gradient of input images with respect to `values`.
-            scores: A list of score values with respect to each the model outputs.
-            model_outputs: A list of the model outputs.
-            kwargs: Optional named arguments that will be used different ways by each
-                `tf_keras_vis.activation_maximization.ActivationMaximization`.
+        Args:
+            i (int): The current number of optimizer iteration.
+            values (list): The current `values`.
+            grads (list): The gradient of input images with respect to `values`.
+            score_values (list): A list of score values with respect to each the model outputs.
+            outputs (list): A list of the model outputs.
+            regularizer_values (list): A list of regularizer values.
+            overall_score (list): A list of overall scores that includes
+                score values and regularizer values.
         """
         pass
 
@@ -37,11 +38,18 @@ class Callback(ABC):
 
 class PrintLogger(Callback):
     """Callback to print values during optimization.
+
+    Attributes:
+        interval (int): An integer that appears the interval of printing.
+    Todo:
+        * Write examples
     """
     def __init__(self, interval=10):
-        """
-        # Arguments:
-            interval: An integer that appears the interval of printing.
+        """Constructor.
+
+        Args:
+            interval (int, optional): An integer that appears the interval of printing.
+                Defaults to 10.
         """
         self.interval = interval
 
@@ -64,11 +72,17 @@ class PrintLogger(Callback):
 
 class GifGenerator2D(Callback):
     """Callback to construct gif of optimized image.
+
+    Attributes:
+        path (str): The file path to save gif.
+    Todo:
+        * Write examples
     """
     def __init__(self, path):
-        """
-        # Arguments:
-            path: The file path to save gif.
+        """Constructor.
+
+        Args:
+            path (str): The file path to save gif.
         """
         self.path = path
 

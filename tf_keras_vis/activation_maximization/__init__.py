@@ -1,5 +1,6 @@
 import warnings
 from collections import defaultdict
+from typing import Union
 
 import numpy as np
 import tensorflow as tf
@@ -17,63 +18,103 @@ if version(tf.version.VERSION) >= version("2.4.0"):
 
 
 class ActivationMaximization(ModelVisualization):
-    def __call__(
-            self,
-            score,
-            seed_input=None,
-            input_range=(0, 255),
-            input_modifiers=[Jitter(jitter=8), Rotate2D(degree=3)],
-            regularizers=[TotalVariation2D(weight=1.),
-                          Norm(weight=1., p=2)],
-            steps=200,
-            optimizer=None,  # When None, the default is tf.optimizers.RMSprop(1.0, 0.999)
-            normalize_gradient=None,  # Disabled option.
-            gradient_modifier=None,
-            callbacks=None,
-            training=False,
-            unconnected_gradients=tf.UnconnectedGradients.NONE):
+    """ActivationMaximization
+
+    Todo:
+        * Write examples
+    """
+    def __call__(self,
+                 score,
+                 seed_input=None,
+                 input_range=(0, 255),
+                 input_modifiers=[Jitter(jitter=8), Rotate2D(degree=3)],
+                 regularizers=[TotalVariation2D(weight=1.0),
+                               Norm(weight=1.0, p=2)],
+                 steps=200,
+                 optimizer=None,  # When None, the default is tf.optimizers.RMSprop(1.0, 0.999)
+                 normalize_gradient=None,  # Disabled option.
+                 gradient_modifier=None,
+                 callbacks=None,
+                 training=False,
+                 unconnected_gradients=tf.UnconnectedGradients.NONE) -> Union[np.array, list]:
         """Generate the model inputs that maximize the output of the given `score` functions.
 
-        # Arguments
-            score: A score function or a list of score functions.
-                If the model has multiple outputs, you can use a different function
-                on each output by passing a list of functions. The score value that will be
-                maximized will be the mean of all individual score functions
-                (and sum of all regularization values).
-            seed_input: `None`(default), an N-dim Numpy array or a list of N-dim Numpy arrays.
+        Args:
+            score (tf_keras_vis.utils.scores.Score|function|list):
+                A function to specify visualizing target.
+                If the model has multiple outputs, you can use a different
+                score function on each output by passing a list of score functions.
+            seed_input (tf.Tensor|np.array|list, optional): A tensor or a list of them.
                 When `None`, the seed_input value will be generated with randome uniform noise.
-                If the model has multiple inputs, you have to pass a list of N-dim Numpy arrays.
-            input_range: A tuple that specifies the input range as a `(min, max)` tuple
-                or a list of the tuple. If the model has multiple inputs, you can use
-                a different input range on each input by passing as list of input ranges.
-                When `None` or a `(None, None)` tuple, the range of a input value
+                If the model has multiple inputs, you have to pass a list of tensor.
+                Defaults to None.
+            input_range (tuple, optional): A tuple that specifies the input range
+                as a `(min, max)` tuple or a list of the tuple. If the model has multiple inputs,
+                you can use a different input range on each input by passing as list of input
+                ranges. For example::
+
+                input_range = [
+                    (0, 255),     # For 1st input tensor
+                    (-1.0, 1.0),  # For 2nd input tensor
+                    ...
+                ]
+
+                When `None` or a `(None, None)` tuple, an input tensor
                 (i.e., the result of this function) will be no applied any limitation.
-            input_modifiers: A input modifier function, a list of input modifier functions,
-                or a dictionary that has a list of input_modifiers functions.
-                You can also use a instance of `tf_keras-vis.utils.input_modifiers.InputModifier`'s
-                subclass, instead of a function. If the model has multiple inputs, you have to pass
-                a dictionary of input modifier functions or instances on each model inputs:
-                such as `input_modifiers={'input_a': [ input_modifier_a_1, input_modifier_a_2 ],
-                'input_b': input_modifier_b, ... }`.
-            regularizers: A regularization function or a list of regularization functions. You can
-                also use a instance of `tf_keras-vis.utils.regularizers.Regularizer`'s subclass,
-                instead of a function. A regularization value will be calculated with
-                a corresponding model input will add to the score value.
-            steps: The number of gradient descent iterations.
-            optimizer: A `tf.optimizers.Optimizer` instance.
-            normalize_gradient: Note! This option is now disabled.
-            gradient_modifier: A function to modify gradients. This function is executed before
-                normalizing gradients.
-            callbacks: A `tf_keras_vis.activation_maimization.callbacks.Callback` instance
-                or a list of them.
-            training: A bool whether the model's trainig-mode turn on or off.
-            unconnected_gradients: Specifies the gradient value returned when the given input
-                tensors are unconnected. Accepted values are constants defined in the class
-                `tf.UnconnectedGradients` and the default value is NONE.
-        # Returns
-            An Numpy arrays when the model has a single input and `seed_input` is None or An N-dim
-            Numpy Array, Or a list of Numpy arrays when otherwise.
-        # Raises
+                Defaults to (0, 255).
+            input_modifiers
+                (function|tf_keras_vis.utils.input_modifiers.InputModifier|list|dict, optional):
+                A function, a tf_keras_vis.utils.input_modifiers.InputModifier instance,
+                a list of them or a dictionary that has a list of them on each input.
+                If the model has multiple inputs, you have to pass a dictionary of list or
+                input modifiers on each model inputs::
+
+                input_modifiers = {
+                    "input_1st": [
+                        input_modifier_for_1st_1,
+                        input_modifier_for_1st_2,
+                    ],
+                    "input_2nd": input_modifier_for_2nd,
+                    ...
+                }
+
+                Defaults to [Jitter(jitter=8), Rotate(degree=3)].
+            regularizers (function|tf_keras_vis.utils.regularizers.Regularizer|list, optional):
+                A function, tf_keras_vis.utils.regularizers.Regularizer instance or a list of them.
+                If the model has multiple inputs, you can pass a list of list of regularizers
+                on each model inputs::
+
+                regularizers = [
+                    [Norm(weight=1., p=2)],                               # For 1st input tensor
+                    [TotalVariation2D(weight=1.), Norm(weight=1., p=2)],  # For 2nd input tensor
+                    ...
+                ]
+
+                Defaults to [TotalVariation2D(weight=1.0), Norm(weight=1.0, p=2)].
+            steps (int, optional): The number of gradient descent iterations. Defaults to 200.
+            optimizer (tf.keras.optimizers.Optimizer, optional):
+                A `tf.optimizers.Optimizer` instance.
+                When None, `tf.optimizers.RMSprop(1.0, 0.95)` will be automatically created.
+                Defaults to None.
+            normalize_gradient (bool, optional): ![Note] This option is now disabled.
+                Defaults to None.
+            gradient_modifier (function, optional): A function to modify gradients.
+                This function is executed before normalizing gradients. Defaults to None.
+            callbacks (tf_keras_vis.activation_maximization.callbacks.Callback|list, optional):
+                A `tf_keras_vis.activation_maximization.callbacks.Callback` instance
+                or a list of them. Defaults to None.
+            training (bool, optional): A bool that indicates
+                whether the model's training-mode on or off. Defaults to False.
+            unconnected_gradients (tf.UnconnectedGradients, optional):
+                Specifies the gradient value returned when the given input tensors are unconnected.
+                Defaults to tf.UnconnectedGradients.NONE.
+
+        Returns:
+            np.array|list: An Numpy arrays when the model has a single input and
+            `seed_input` is None or has a single sample.
+            A list of Numpy arrays when otherwise.
+
+        Raises:
             ValueError: In case of invalid arguments for `score`, `input_range`, `input_modifiers`
                 or `regularizers`.
         """

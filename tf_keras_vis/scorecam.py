@@ -11,52 +11,74 @@ from tf_keras_vis.utils import (get_num_of_steps_allowed, is_mixed_precision, li
 
 
 class Scorecam(Gradcam):
+    """Score-CAM and Faster Score-CAM
+
+        For details on Score-CAM, see the paper:
+        [Score-CAM: Score-Weighted Visual Explanations for Convolutional Neural Networks ]
+        (https://arxiv.org/pdf/1910.01279.pdf).
+
+        For details on Faster Score-CAM, see the web site:
+        https://github.com/tabayashi0117/Score-CAM#faster-score-cam
+    Todo:
+        * Write examples
+    """
     def __call__(self,
                  score,
                  seed_input,
                  penultimate_layer=-1,
                  seek_penultimate_conv_layer=True,
                  activation_modifier=lambda cam: K.relu(cam),
-                 expand_cam=True,
                  batch_size=32,
                  max_N=None,
                  training=False,
-                 standardize_cam=True):
+                 expand_cam=True,
+                 standardize_cam=True) -> Union[np.array, list]:
         """Generate score-weighted class activation maps (CAM)
             by using gradient-free visualization method.
 
-            For details on Score-CAM, see the paper:
-            [Score-CAM: Score-Weighted Visual Explanations for Convolutional Neural Networks ]
-            (https://arxiv.org/pdf/1910.01279.pdf).
-
-        # Arguments
-            score: A score function. If the model has multiple outputs, you can use a different
-                score on each output by passing a list of scores.
-            seed_input: An N-dim Numpy array. If the model has multiple inputs,
-                you have to pass a list of N-dim Numpy arrays.
-            penultimate_layer: A number of integer or a tf.keras.layers.Layer object.
-            seek_penultimate_conv_layer: True to seek the penultimate layter that is a subtype of
+        Args:
+            score (tf_keras_vis.utils.scores.Score|function|list):
+                A function to specify visualizing target.
+                If the model has multiple outputs, you can use a different
+                score function on each output by passing a list of score functions.
+            seed_input (tf.Tensor|np.array|list): A tensor or a list of them to input in the model.
+                If the model has multiple inputs, you have to pass a list.
+            penultimate_layer (int|str|tf.keras.layers.Layer, optional):
+                A value to represent an index or a name of tf.keras.layers.Layer instance.
+                When not None or -1, it will be the offset layer
+                when seeking the penultimate `convolutional` layter.
+                Defaults to None.
+            seek_penultimate_conv_layer (bool, optional):
+                When True to seek the penultimate `convolutional` layter that is a subtype of
                 `keras.layers.convolutional.Conv` class.
-                If False, the penultimate layer is that was elected by penultimate_layer index.
-            activation_modifier: A function to modify activations.
-            expand_cam: True to expand cam to same as input image size.
-                ![Note] Even if the model has multiple inputs, this function return only one cam
-                value (That's, when `expand_cam` is True, multiple cam images are generated from
-                a model that has multiple inputs).
-            batch_size: Integer or None. Number of samples per batch.
-                If unspecified, batch_size will default to 32.
-            max_N: Integer or None. Setting None or under Zero is that we do NOT recommend,
-                because it takes huge time. If not None and over Zero of Integer,
-                run as Faster-ScoreCAM.
-                Set larger number, need more time to visualize CAM but to be able to get
-                clearer attention images.
+                When False, `penultimate_layer` (or last layer when `penultimate_layer` is None)
+                will be elected as the penultimate `convolutional` layter.
+                Defaults to True.
+            activation_modifier (function, optional): A function to modify activation.
+                Defaults to lambdacam:K.relu(cam).
+            batch_size (int, optional): The number of samples per batch. Defaults to 32.
+            max_N (int, optional): Setting None or under Zero is that we do NOT recommend,
+                because it takes a long time to calculate CAM. When over Zero of Integer,
+                run as Faster-ScoreCAM. Set larger number, need more time to visualize CAM
+                but to be able to get clearer attention images.
                 (see for details: https://github.com/tabayashi0117/Score-CAM#faster-score-cam)
-            training: A bool whether the model's trainig-mode turn on or off.
-            standardize_cam: A bool. If True(default), cam will be standardized.
-        # Returns
-            The heatmap image or a list of their images that indicate the `seed_input` regions
-                whose change would most contribute  the score value,
-        # Raises
+                Defaults to None.
+            training (bool, optional): A bool that indicates
+                whether the model's training-mode on or off.
+                Defaults to False.
+            expand_cam (bool, optional): True to expand cam to same as input image size.
+                ![Note] When True, even if the model has multiple inputs,
+                this function return only a cam value
+                (That's, when `expand_cam` is True,
+                multiple cam images are generated from a model that has multiple inputs).
+            standardize_cam (bool, optional): When True, cam will be standardized.
+                Defaults to True.
+
+        Returns:
+            np.array|list: The class activation maps that indicate the `seed_input` regions
+                whose change would most contribute the score value.
+
+        Raises:
             ValueError: In case of invalid arguments for `score`, or `penultimate_layer`.
         """
         # Preparing

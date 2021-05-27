@@ -1,3 +1,5 @@
+from typing import Union
+
 import numpy as np
 import tensorflow as tf
 import tensorflow.keras.backend as K
@@ -11,6 +13,18 @@ if version(tf.version.VERSION) >= version("2.4.0"):
 
 
 class Saliency(ModelVisualization):
+    """Vanilla Saliency and Smooth-Grad
+
+        For details on Vanilla Saliency, see the paper:
+        [Deep Inside Convolutional Networks: Visualising Image Classification Models
+        and Saliency Maps](https://arxiv.org/pdf/1312.6034)
+
+        For details on Smooth-Grad, see the paper:
+        [SmoothGrad: removing noise by adding noise](https://arxiv.org/pdf/1706.03825)
+
+    Todo:
+        * Write examples
+    """
     def __call__(self,
                  score,
                  seed_input,
@@ -20,32 +34,39 @@ class Saliency(ModelVisualization):
                  gradient_modifier=lambda grads: K.abs(grads),
                  training=False,
                  standardize_saliency=True,
-                 unconnected_gradients=tf.UnconnectedGradients.NONE):
+                 unconnected_gradients=tf.UnconnectedGradients.NONE) -> Union[np.array, list]:
         """Generate an attention map that appears how output value changes with respect to a small
             change in input image pixels.
-            See details: https://arxiv.org/pdf/1706.03825.pdf
 
-        # Arguments
-            score: A score function. If the model has multiple outputs, you can use a different
+        Args:
+            score (tf_keras_vis.utils.scores.Score|function|list):
+                A function to specify visualizing target.
+                If the model has multiple outputs, you can use a different
                 score function on each output by passing a list of score functions.
-            seed_input: An N-dim Numpy array. If the model has multiple inputs,
-                you have to pass a list of N-dim Numpy arrays.
-            smooth_samples: The number of calculating gradients iterations. If set to zero,
-                the noise for smoothing won't be generated.
-            smooth_noise: Noise level that is recommended no tweaking when there is no reason.
-            keepdims: A boolean that whether to keep the channels-dim or not.
-            gradient_modifier: A function to modify gradients. By default, the function modify
-                gradients to `absolute` values.
-            training: A bool whether the model's trainig-mode turn on or off.
-            standardize_saliency: A bool. If True(default), saliency map will be standardized.
-            unconnected_gradients: Specifies the gradient value returned when the given input
-                tensors are unconnected. Accepted values are constants defined in the class
-                `tf.UnconnectedGradients` and the default value is NONE.
-        # Returns
-            The heatmap image indicating the `seed_input` regions whose change would most contribute
-            towards maximizing the score value, Or a list of their images.
-            A list of Numpy arrays that the model inputs that maximize the out of `score`.
-        # Raises
+            seed_input (tf.Tensor|np.array|list): A tensor or a list of them to input in the model.
+                If the model has multiple inputs, you have to pass a list.
+            smooth_samples (int, optional): The number of calculating gradients iterations.
+                If set to zero, the noise for smoothing won't be generated, that's,
+                this method will work as Vanilla Saliency. Defaults to 0.
+            smooth_noise (float, optional): Noise level. Defaults to 0.20.
+            keepdims (bool, optional): A boolean that whether to keep the channels-dim or not.
+                Defaults to False.
+            gradient_modifier (function, optional): A function to modify gradients.
+                Defaults to lambdagrads:K.abs(grads).
+            training (bool, optional): A bool whether the model's training-mode turn on or off.
+                Defaults to False.
+            standardize_saliency (bool, optional): A bool. If True(default),
+                saliency map will be standardized. Defaults to True.
+            unconnected_gradients (tf.UnconnectedGradients, optional):
+                Specifies the gradient value returned when the given input tensors are unconnected.
+                Defaults to tf.UnconnectedGradients.NONE.
+
+        Returns:
+            np.array|list: The heatmap image indicating the `seed_input` regions
+                whose change would most contribute towards maximizing the score value,
+                Or a list of their images.
+
+        Raises:
             ValueError: In case of invalid arguments for `score`, or `seed_input`.
         """
 
