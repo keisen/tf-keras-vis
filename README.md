@@ -23,7 +23,11 @@ All visualizations have the features as follows:
 * Support **N-dim image inputs**, that's, not only support pictures but also such as 3D images.
 * Support **batchwise** processing, so, be able to efficiently process multiple input images.
 * Support the model that have either **multiple inputs** or **multiple outputs**, or both.
-* Support Optimizers embedded in tf.keras to process Activation maximization.
+* Support the **mixed-precision** model. [ * ](#known-issues)
+
+And in Activation maximization,
+
+* Support Optimizers that are built to tf.keras.
 
 
 ## Visualizations
