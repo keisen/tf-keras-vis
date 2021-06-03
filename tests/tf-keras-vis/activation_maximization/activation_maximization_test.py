@@ -4,12 +4,11 @@ from packaging.version import parse as version
 from tensorflow.keras.models import load_model
 
 from tf_keras_vis.activation_maximization import ActivationMaximization
-from tf_keras_vis.utils.input_modifiers import Jitter, Rotate
-from tf_keras_vis.utils.test import (MockCallback, MockListOfScore, MockScore,
-                                     MockTupleOfScore, does_not_raise,
-                                     dummy_sample, mock_conv_model,
-                                     mock_conv_model_with_flot32_output,
-                                     mock_multiple_io_model)
+from tf_keras_vis.utils.input_modifiers import Jitter, Rotate2D
+from tf_keras_vis.utils.regularizers import Norm, TotalVariation2D
+from tf_keras_vis.utils.test import (MockCallback, MockListOfScore, MockScore, MockTupleOfScore,
+                                     does_not_raise, dummy_sample, mock_conv_model,
+                                     mock_conv_model_with_flot32_output, mock_multiple_io_model)
 
 if version(tf.version.VERSION) >= version("2.4.0"):
     from tensorflow.keras.mixed_precision import set_global_policy
@@ -166,8 +165,9 @@ class TestActivationMaximizationWithMultipleIOModel():
     def test__call__with_inputs_modifiers(self, multiple_io_model):
         activation_maximization = ActivationMaximization(multiple_io_model)
         result = activation_maximization(
-            MockScore(), steps=3, input_modifiers={'input-1': [Jitter(jitter=8),
-                                                               Rotate(degree=3)]})
+            MockScore(),
+            steps=3,
+            input_modifiers={'input-1': [Jitter(jitter=8), Rotate2D(degree=3)]})
         assert result[0].shape == (1, 8, 8, 3)
         assert result[1].shape == (1, 10, 10, 3)
 
@@ -227,3 +227,57 @@ class TestActivationMaximizationWithMixedPrecision():
         with pytest.raises(ValueError):
             result = activation_maximization(MockScore(), steps=3, optimizer=optimizer)
             assert result.shape == (1, 8, 8, 3)
+
+
+class TestActivationMaximizationWithDenseModel():
+    @pytest.mark.parametrize("scores,expectation", [
+        (None, pytest.raises(ValueError)),
+        (MockScore(), does_not_raise()),
+        (MockTupleOfScore(), does_not_raise()),
+        (MockListOfScore(), does_not_raise()),
+        ([MockScore()], does_not_raise()),
+    ])
+    def test__call__if_score_is_(self, scores, expectation, dense_model):
+        activation_maximization = ActivationMaximization(dense_model)
+        with expectation:
+            result = activation_maximization(scores,
+                                             input_modifiers=[],
+                                             regularizers=[Norm(10.)],
+                                             steps=3)
+            assert result.shape == (1, 8)
+
+    @pytest.mark.parametrize("seed_input,expected", [
+        ([dummy_sample((8, ))], [(1, 8)]),
+        (dummy_sample((1, 8)), (1, 8)),
+        ([dummy_sample((1, 8))], [(1, 8)]),
+    ])
+    def test__call__if_seed_input_is_(self, seed_input, expected, dense_model):
+        activation_maximization = ActivationMaximization(dense_model)
+        result = activation_maximization(MockScore(),
+                                         seed_input=seed_input,
+                                         input_modifiers=[],
+                                         regularizers=[Norm(10.)],
+                                         steps=3)
+        if type(expected) is list:
+            assert type(result) == list
+            result = result[0]
+            expected = expected[0]
+        assert result.shape == expected
+
+    @pytest.mark.parametrize("input_modifiers,regularizers,expectation", [
+        ([Jitter(), Rotate2D()], [TotalVariation2D(), Norm()], pytest.raises(ValueError)),
+        ([Jitter()], [], pytest.raises(ValueError)),
+        ([Rotate2D()], [], pytest.raises(ValueError)),
+        ([], [TotalVariation2D()], pytest.raises(ValueError)),
+        ([], [Norm()], does_not_raise()),
+        ([], [], does_not_raise()),
+    ])
+    def test__call__if_input_modifiers_or_regurarizers_are(self, input_modifiers, regularizers,
+                                                           expectation, dense_model):
+        activation_maximization = ActivationMaximization(dense_model)
+        with expectation:
+            result = activation_maximization(MockScore(),
+                                             input_modifiers=input_modifiers,
+                                             regularizers=regularizers,
+                                             steps=3)
+            assert result.shape == (1, 8)

@@ -7,8 +7,9 @@ import tensorflow.keras.backend as K
 from packaging.version import parse as version
 
 from tf_keras_vis import ModelVisualization
-from tf_keras_vis.utils import (check_steps, is_mixed_precision, listify, lower_precision_dtype)
-from tf_keras_vis.utils.input_modifiers import Jitter, Rotate
+from tf_keras_vis.utils import (check_steps, is_mixed_precision, listify,
+                                lower_precision_dtype)
+from tf_keras_vis.utils.input_modifiers import Jitter, Rotate2D
 from tf_keras_vis.utils.regularizers import Norm, TotalVariation2D
 
 if version(tf.version.VERSION) >= version("2.4.0"):
@@ -21,7 +22,7 @@ class ActivationMaximization(ModelVisualization):
             score,
             seed_input=None,
             input_range=(0, 255),
-            input_modifiers=[Jitter(jitter=8), Rotate(degree=3)],
+            input_modifiers=[Jitter(jitter=8), Rotate2D(degree=3)],
             regularizers=[TotalVariation2D(weight=1.),
                           Norm(weight=1., p=2)],
             steps=200,

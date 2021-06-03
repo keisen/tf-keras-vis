@@ -65,8 +65,8 @@ class TestSaliency():
 
     def test__call__if_model_has_only_dense_layers(self, dense_model):
         saliency = Saliency(dense_model)
-        result = saliency(MockScore(), dummy_sample((3, )), keepdims=True)
-        assert result.shape == (1, 3)
+        result = saliency(MockScore(), dummy_sample((8, )), keepdims=True)
+        assert result.shape == (1, 8)
 
     @pytest.mark.parametrize("score_class,modefier_enabled,clone_enabled,"
                              "batch_size,expectation", [
