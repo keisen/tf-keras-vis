@@ -5,7 +5,7 @@ with open("README.md", "r") as f:
 
 setup(
     name="tf-keras-vis",
-    version="0.6.2",
+    version="0.6.3",
     author="keisen",
     author_email="k.keisen@gmail.com",
     description="Neural network visualization toolkit for tf.keras",
