@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 import tensorflow as tf
+from deprecated import deprecated
 from scipy.ndimage import rotate
 
 
@@ -32,32 +33,46 @@ class Jitter(InputModifier):
 
     def __call__(self, seed_input):
         ndim = len(seed_input.shape)
+        if ndim < 3:
+            raise ValueError("The dimensions of seed_input must be 3 or more "
+                             f"(batch_size, ..., channels), but was {ndim}")
         seed_input = tf.roll(seed_input,
                              shift=tuple(np.random.randint(-self.jitter, self.jitter, ndim - 2)),
                              axis=tuple(range(ndim)[1:-1]))
         return seed_input
 
 
-class Rotate(InputModifier):
-    def __init__(self, degree=3.):
+class Rotate2D(InputModifier):
+    def __init__(self, degree=3.0):
         """Implements an input modifier that introduces random rotation.
             Rotate has been shown to produce crisper activation maximization images.
 
         # Arguments:
             degree: Integer or float. The amount of rotation to apply.
         """
-        self.rg = float(degree)
+        self.degree = float(degree)
 
     def __call__(self, seed_input):
+        ndim = len(seed_input.shape)
+        if ndim != 4:
+            raise ValueError("seed_input shape must be (batch_size, height, width, channels),"
+                             f" but was {seed_input.shape}")
         if tf.is_tensor(seed_input):
             seed_input = seed_input.numpy()
         if seed_input.dtype == np.float16:
             seed_input = seed_input.astype(np.float32)
         seed_input = rotate(seed_input,
-                            np.random.uniform(-self.rg, self.rg),
+                            np.random.uniform(-self.degree, self.degree),
                             axes=tuple(range(len(seed_input.shape))[1:-1]),
                             reshape=False,
                             mode='nearest',
                             order=1,
                             prefilter=True)
-        return tf.constant(seed_input)
+        seed_input = tf.constant(seed_input)
+        return seed_input
+
+
+@deprecated(version='0.6.2', reason="Please use Rotate2D class instead of Rotate class.")
+class Rotate(Rotate2D):
+    def __init__(self, degree=3.0):
+        super().__init__(degree=3.0)  # pragma: no cover

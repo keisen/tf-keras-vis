@@ -14,8 +14,8 @@ from tf_keras_vis.utils.scores import Score
 
 
 def mock_dense_model():
-    inputs = Input((3, ), name='input-1')
-    x = Dense(5, activation='relu', name='dense-1')(inputs)
+    inputs = Input((8, ), name='input-1')
+    x = Dense(6, activation='relu', name='dense-1')(inputs)
     x = Dense(2, activation='softmax', name='dense-2')(x)
     return Model(inputs=inputs, outputs=x)
 
