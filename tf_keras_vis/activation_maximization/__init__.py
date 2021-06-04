@@ -25,7 +25,7 @@ class ActivationMaximization(ModelVisualization):
             regularizers=[TotalVariation2D(weight=1.),
                           Norm(weight=1., p=2)],
             steps=200,
-            optimizer=None,  # When None, the default is tf.optimizers.RMSprop(1.0, 0.95)
+            optimizer=None,  # When None, the default is tf.optimizers.RMSprop(1.0, 0.999)
             normalize_gradient=None,  # Disabled option.
             gradient_modifier=None,
             callbacks=None,
@@ -180,7 +180,7 @@ class ActivationMaximization(ModelVisualization):
 
     def _get_optimizer(self, optimizer, mixed_precision_model):
         if optimizer is None:
-            optimizer = tf.optimizers.RMSprop(1.0, 0.95)
+            optimizer = tf.optimizers.RMSprop(1.0, 0.999)
         if mixed_precision_model:
             try:
                 # Wrap optimizer
