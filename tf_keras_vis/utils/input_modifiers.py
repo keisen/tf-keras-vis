@@ -59,8 +59,6 @@ class Rotate2D(InputModifier):
                              f" but was {seed_input.shape}")
         if tf.is_tensor(seed_input):
             seed_input = seed_input.numpy()
-        if seed_input.dtype == np.float16:
-            seed_input = seed_input.astype(np.float32)
         seed_input = rotate(seed_input,
                             np.random.uniform(-self.degree, self.degree),
                             axes=tuple(range(len(seed_input.shape))[1:-1]),

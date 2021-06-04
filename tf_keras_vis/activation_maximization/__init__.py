@@ -111,37 +111,42 @@ class ActivationMaximization(ModelVisualization):
                 for modifier in input_modifiers[name]:
                     seed_inputs[j] = modifier(seed_inputs[j])
 
+            # Copy seed_input values to variables
             if variables is None:
-                variables = [tf.Variable(X) for X in seed_inputs]
+                variables = [tf.Variable(X, trainable=True) for X in seed_inputs]
             else:
-                variables = [V.assign(X) for V, X in zip(variables, seed_inputs)]
+                for V, X in zip(variables, seed_inputs):
+                    V.assign(X)
 
-            # Calculate gradients
             with tf.GradientTape(watch_accessed_variables=False) as tape:
                 tape.watch(variables)
                 seed_inputs = [V.value() for V in variables]
+                # Calculate scores
                 outputs = self.model(seed_inputs, training=training)
                 outputs = listify(outputs)
                 score_values = self._calculate_scores(outputs, scores)
                 score_values = [-1.0 * score_value for score_value in score_values]
                 # Calculate regularization values
-                regularizations = [(regularizer.name, regularizer(seed_inputs))
-                                   for regularizer in regularizers]
-                overall_regularizer_value = sum([v for _, v in regularizations])
-                if overall_regularizer_value == 0:
+                if len(regularizers) == 0:
+                    regularizer_values = []
                     regularized_score_values = score_values
                 else:
+                    regularizer_values = [(regularizer.name, regularizer(seed_inputs))
+                                          for regularizer in regularizers]
+                    overall_regularizer_value = sum([v for _, v in regularizer_values])
                     regularized_score_values = [
                         score_value +
                         (tf.cast(overall_regularizer_value, score_value.dtype) if score_value.dtype
                          in [tf.float16, tf.bfloat16] else overall_regularizer_value)
                         for score_value in score_values
                     ]
+                # Scale loss
                 if mixed_precision_model:
                     regularized_score_values = [
                         optimizer.get_scaled_loss(score_value)
                         for score_value in regularized_score_values
                     ]
+            # Calculate gradients and update variables
             grads = tape.gradient(regularized_score_values,
                                   variables,
                                   unconnected_gradients=unconnected_gradients)
@@ -152,14 +157,16 @@ class ActivationMaximization(ModelVisualization):
                 grads = (gradient_modifier(g) for g in grads)
             optimizer.apply_gradients(zip(grads, variables))
 
+            # Update seed_inputs
             seed_inputs = [V.value() for V in variables]
+
             for callback in callbacks:
                 callback(i,
                          self._apply_clip(seed_inputs, input_ranges),
                          grads,
                          score_values,
                          outputs,
-                         regularizations=regularizations,
+                         regularizations=regularizer_values,
                          overall_score=regularized_score_values)
 
         for callback in callbacks:

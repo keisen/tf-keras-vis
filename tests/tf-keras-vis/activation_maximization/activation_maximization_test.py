@@ -1,3 +1,4 @@
+from tf_keras_vis.utils.scores import CategoricalScore
 import pytest
 import tensorflow as tf
 from packaging.version import parse as version
@@ -194,7 +195,7 @@ class TestActivationMaximizationWithMultipleIOModel():
 
 
 @pytest.mark.skipif(version(tf.version.VERSION) < version("2.4.0"),
-                    reason="This test is enabled when tensorflow version is 2.4.0+.")
+                    reason="This test is enabled only when tensorflow version is 2.4.0+.")
 class TestActivationMaximizationWithMixedPrecision():
     def test__call__with_single_io(self, tmpdir):
         set_global_policy('mixed_float16')
@@ -218,7 +219,7 @@ class TestActivationMaximizationWithMixedPrecision():
 
     def _test_for_single_io(self, model):
         activation_maximization = ActivationMaximization(model)
-        result = activation_maximization(MockScore(), steps=3)
+        result = activation_maximization(CategoricalScore(1), steps=3)
         assert result.shape == (1, 8, 8, 3)
 
     def test__call__with_multiple_io(self, tmpdir):
@@ -233,7 +234,7 @@ class TestActivationMaximizationWithMixedPrecision():
 
     def _test_for_multiple_io(self, model):
         activation_maximization = ActivationMaximization(model)
-        result = activation_maximization(MockScore(), steps=3)
+        result = activation_maximization([CategoricalScore(1), MockScore()], steps=3)
         assert result[0].shape == (1, 8, 8, 3)
         assert result[1].shape == (1, 10, 10, 3)
 
