@@ -125,17 +125,16 @@ class ActivationMaximization(ModelVisualization):
                 outputs = self.model(seed_inputs, training=training)
                 outputs = listify(outputs)
                 score_values = self._calculate_scores(outputs, scores)
-                score_values = [-1.0 * score_value for score_value in score_values]
                 # Calculate regularization values
                 if len(regularizers) == 0:
                     regularizer_values = []
-                    regularized_score_values = score_values
+                    regularized_score_values = [-1.0 * score_value for score_value in score_values]
                 else:
                     regularizer_values = [(regularizer.name, regularizer(seed_inputs))
                                           for regularizer in regularizers]
                     overall_regularizer_value = sum([v for _, v in regularizer_values])
                     regularized_score_values = [
-                        score_value +
+                        (-1.0 * score_value) +
                         (tf.cast(overall_regularizer_value, score_value.dtype) if score_value.dtype
                          in [tf.float16, tf.bfloat16] else overall_regularizer_value)
                         for score_value in score_values
