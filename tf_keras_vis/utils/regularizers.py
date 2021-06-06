@@ -22,7 +22,7 @@ class TotalVariation2D(Regularizer):
     def __call__(self, overall_inputs):
         tv = 0.
         for X in overall_inputs:
-            tv += tf.image.total_variation(X) / np.prod(X.shape)
+            tv += tf.image.total_variation(X) / np.prod(X.shape[1:])
         return self.weight * tv
 
 
@@ -43,7 +43,7 @@ class Norm(Regularizer):
         norm = 0.
         for X in overall_inputs:
             X = tf.reshape(X, (X.shape[0], -1))
-            norm += tf.norm(X, ord=self.p, axis=-1) / X.shape[-1]
+            norm += tf.norm(X, ord=self.p, axis=-1) / (X.shape[-1]**(1 / self.p))
         return self.weight * norm
 
 
