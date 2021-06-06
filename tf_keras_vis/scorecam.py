@@ -5,9 +5,8 @@ import tensorflow as tf
 import tensorflow.keras.backend as K
 from scipy.ndimage.interpolation import zoom
 
-from tf_keras_vis.gradcam import Gradcam
-from tf_keras_vis.utils import (get_num_of_steps_allowed, is_mixed_precision, listify, standardize,
-                                zoom_factor)
+from .gradcam import Gradcam
+from .utils import get_num_of_steps_allowed, is_mixed_precision, listify, standardize, zoom_factor
 
 
 class Scorecam(Gradcam):

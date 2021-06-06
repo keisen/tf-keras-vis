@@ -5,8 +5,8 @@ import tensorflow as tf
 import tensorflow.keras.backend as K
 from packaging.version import parse as version
 
-from tf_keras_vis import ModelVisualization
-from tf_keras_vis.utils import get_num_of_steps_allowed, is_mixed_precision, listify, standardize
+from . import ModelVisualization
+from .utils import get_num_of_steps_allowed, is_mixed_precision, listify, standardize
 
 if version(tf.version.VERSION) >= version("2.4.0"):
     from tensorflow.keras.mixed_precision import LossScaleOptimizer

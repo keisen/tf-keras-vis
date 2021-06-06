@@ -8,8 +8,8 @@ from packaging.version import parse as version
 from scipy.ndimage.interpolation import zoom
 from tensorflow.python.keras.layers.convolutional import Conv
 
-from tf_keras_vis import ModelVisualization
-from tf_keras_vis.utils import find_layer, is_mixed_precision, standardize, zoom_factor
+from . import ModelVisualization
+from .utils import find_layer, is_mixed_precision, standardize, zoom_factor
 
 if version(tf.version.VERSION) >= version("2.4.0"):
     from tensorflow.keras.mixed_precision import LossScaleOptimizer

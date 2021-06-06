@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 
 import tensorflow as tf
 
-from tf_keras_vis.utils import listify
+from .utils import listify
 
 
 class ModelVisualization(ABC):

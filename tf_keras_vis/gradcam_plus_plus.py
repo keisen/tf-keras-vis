@@ -6,8 +6,8 @@ import tensorflow.keras.backend as K
 from packaging.version import parse as version
 from scipy.ndimage.interpolation import zoom
 
-from tf_keras_vis.gradcam import Gradcam
-from tf_keras_vis.utils import is_mixed_precision, standardize, zoom_factor
+from .gradcam import Gradcam
+from .utils import is_mixed_precision, standardize, zoom_factor
 
 if version(tf.version.VERSION) >= version("2.4.0"):
     from tensorflow.keras.mixed_precision import LossScaleOptimizer

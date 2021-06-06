@@ -6,10 +6,10 @@ from tensorflow.keras import backend as K
 from tensorflow.keras.layers import Conv2D, Dense, GlobalAveragePooling2D, Input
 from tensorflow.keras.models import Model
 
-from tf_keras_vis.activation_maximization.callbacks import Callback
-from tf_keras_vis.utils.input_modifiers import InputModifier
-from tf_keras_vis.utils.regularizers import Regularizer
-from tf_keras_vis.utils.scores import Score
+from ..activation_maximization.callbacks import Callback
+from ..activation_maximization.input_modifiers import InputModifier
+from ..activation_maximization.regularizers import Regularizer
+from .scores import Score
 
 
 def mock_dense_model():

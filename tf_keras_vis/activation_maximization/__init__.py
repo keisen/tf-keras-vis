@@ -7,11 +7,10 @@ import tensorflow as tf
 import tensorflow.keras.backend as K
 from packaging.version import parse as version
 
-from tf_keras_vis import ModelVisualization
-from tf_keras_vis.utils import (get_num_of_steps_allowed, is_mixed_precision, listify,
-                                lower_precision_dtype)
-from tf_keras_vis.utils.input_modifiers import Jitter, Rotate2D
-from tf_keras_vis.utils.regularizers import Norm, TotalVariation2D
+from .. import ModelVisualization
+from ..utils import get_num_of_steps_allowed, is_mixed_precision, listify
+from .input_modifiers import Jitter, Rotate2D
+from .regularizers import Norm, TotalVariation2D
 
 if version(tf.version.VERSION) >= version("2.4.0"):
     from tensorflow.keras.mixed_precision import LossScaleOptimizer
@@ -23,20 +22,21 @@ class ActivationMaximization(ModelVisualization):
     Todo:
         * Write examples
     """
-    def __call__(self,
-                 score,
-                 seed_input=None,
-                 input_range=(0, 255),
-                 input_modifiers=[Jitter(jitter=8), Rotate2D(degree=3)],
-                 regularizers=[TotalVariation2D(weight=1.0),
-                               Norm(weight=1.0, p=2)],
-                 steps=200,
-                 optimizer=None,  # When None, the default is tf.optimizers.RMSprop(1.0, 0.999)
-                 normalize_gradient=None,  # Disabled option.
-                 gradient_modifier=None,
-                 callbacks=None,
-                 training=False,
-                 unconnected_gradients=tf.UnconnectedGradients.NONE) -> Union[np.array, list]:
+    def __call__(
+            self,
+            score,
+            seed_input=None,
+            input_range=(0, 255),
+            input_modifiers=[Jitter(jitter=8), Rotate2D(degree=3)],
+            regularizers=[TotalVariation2D(weight=1.0),
+                          Norm(weight=1.0, p=2)],
+            steps=200,
+            optimizer=None,  # When None, the default is tf.optimizers.RMSprop(1.0, 0.999)
+            normalize_gradient=None,  # Disabled option.
+            gradient_modifier=None,
+            callbacks=None,
+            training=False,
+            unconnected_gradients=tf.UnconnectedGradients.NONE) -> Union[np.array, list]:
         """Generate the model inputs that maximize the output of the given `score` functions.
 
         Args:
