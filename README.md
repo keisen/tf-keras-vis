@@ -111,8 +111,6 @@ But please note that tf-keras-vis APIs does NOT have compatibility with keras-vi
 * With InceptionV3, ActivationMaximization doesn't work well, that's, it might generate meaninglessly blur image.
 * With cascading model, Gradcam and Gradcam++ don't work well, that's, it might occur some error. So we recommend, in this case, to use FasterScoreCAM.
 * `channels-first` models and data is unsupported.
-* With a `mixed-precision` model that has a layer which are set float32 dtype exlicitly, ActivationMaximization may raise a error.
-* With a `mixed-precision` model, Regurarization values that is calculated by ActivationMaximization may be NaN.
 
 
 ## ToDo

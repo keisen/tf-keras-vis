@@ -7,8 +7,7 @@ import tensorflow.keras.backend as K
 from packaging.version import parse as version
 
 from tf_keras_vis import ModelVisualization
-from tf_keras_vis.utils import (check_steps, is_mixed_precision, listify,
-                                lower_precision_dtype)
+from tf_keras_vis.utils import (check_steps, is_mixed_precision, listify, lower_precision_dtype)
 from tf_keras_vis.utils.input_modifiers import Jitter, Rotate2D
 from tf_keras_vis.utils.regularizers import Norm, TotalVariation2D
 
@@ -26,7 +25,7 @@ class ActivationMaximization(ModelVisualization):
             regularizers=[TotalVariation2D(weight=1.),
                           Norm(weight=1., p=2)],
             steps=200,
-            optimizer=None,  # When None, the default is tf.optimizers.RMSprop(1.0, 0.95)
+            optimizer=None,  # When None, the default is tf.optimizers.RMSprop(1.0, 0.999)
             normalize_gradient=None,  # Disabled option.
             gradient_modifier=None,
             callbacks=None,
@@ -105,44 +104,60 @@ class ActivationMaximization(ModelVisualization):
         for callback in callbacks:
             callback.on_begin()
 
+        variables = None
         for i in range(check_steps(steps)):
             # Apply input modifiers
             for j, name in enumerate(self.model.input_names):
                 for modifier in input_modifiers[name]:
                     seed_inputs[j] = modifier(seed_inputs[j])
 
-            if mixed_precision_model:
-                seed_inputs = (tf.cast(X, dtype=lower_precision_dtype(self.model))
-                               for X in seed_inputs)
-            seed_inputs = [tf.Variable(X) for X in seed_inputs]
+            # Copy seed_input values to variables
+            if variables is None:
+                variables = [tf.Variable(X, trainable=True) for X in seed_inputs]
+            else:
+                for V, X in zip(variables, seed_inputs):
+                    V.assign(X)
 
-            # Calculate gradients
             with tf.GradientTape(watch_accessed_variables=False) as tape:
-                tape.watch(seed_inputs)
+                tape.watch(variables)
+                seed_inputs = [V.value() for V in variables]
+                # Calculate scores
                 outputs = self.model(seed_inputs, training=training)
                 outputs = listify(outputs)
                 score_values = self._calculate_scores(outputs, scores)
                 # Calculate regularization values
-                regularizations = [(regularizer.name, regularizer(seed_inputs))
-                                   for regularizer in regularizers]
-                regularized_score_values = [
-                    (-1. * score_value) + sum([v for _, v in regularizations])
-                    for score_value in score_values
-                ]
+                if len(regularizers) == 0:
+                    regularizer_values = []
+                    regularized_score_values = [-1.0 * score_value for score_value in score_values]
+                else:
+                    regularizer_values = [(regularizer.name, regularizer(seed_inputs))
+                                          for regularizer in regularizers]
+                    overall_regularizer_value = sum([v for _, v in regularizer_values])
+                    regularized_score_values = [
+                        (-1.0 * score_value) +
+                        (tf.cast(overall_regularizer_value, score_value.dtype) if score_value.dtype
+                         in [tf.float16, tf.bfloat16] else overall_regularizer_value)
+                        for score_value in score_values
+                    ]
+                # Scale loss
                 if mixed_precision_model:
                     regularized_score_values = [
                         optimizer.get_scaled_loss(score_value)
                         for score_value in regularized_score_values
                     ]
+            # Calculate gradients and update variables
             grads = tape.gradient(regularized_score_values,
-                                  seed_inputs,
+                                  variables,
                                   unconnected_gradients=unconnected_gradients)
             grads = listify(grads)
             if mixed_precision_model:
                 grads = optimizer.get_unscaled_gradients(grads)
             if gradient_modifier is not None:
                 grads = (gradient_modifier(g) for g in grads)
-            optimizer.apply_gradients(zip(grads, seed_inputs))
+            optimizer.apply_gradients(zip(grads, variables))
+
+            # Update seed_inputs
+            seed_inputs = [V.value() for V in variables]
 
             for callback in callbacks:
                 callback(i,
@@ -150,7 +165,7 @@ class ActivationMaximization(ModelVisualization):
                          grads,
                          score_values,
                          outputs,
-                         regularizations=regularizations,
+                         regularizations=regularizer_values,
                          overall_score=regularized_score_values)
 
         for callback in callbacks:
@@ -164,7 +179,7 @@ class ActivationMaximization(ModelVisualization):
 
     def _get_optimizer(self, optimizer, mixed_precision_model):
         if optimizer is None:
-            optimizer = tf.optimizers.RMSprop(1.0, 0.95)
+            optimizer = tf.optimizers.RMSprop(1.0, 0.999)
         if mixed_precision_model:
             try:
                 # Wrap optimizer

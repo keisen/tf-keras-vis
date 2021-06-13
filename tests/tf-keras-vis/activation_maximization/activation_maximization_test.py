@@ -1,3 +1,4 @@
+from tf_keras_vis.utils.scores import CategoricalScore
 import pytest
 import tensorflow as tf
 from packaging.version import parse as version
@@ -59,6 +60,27 @@ class TestActivationMaximization():
     def test__call__if_normalize_gradient_is_True(self, conv_model):
         activation_maximization = ActivationMaximization(conv_model)
         result = activation_maximization(MockScore(), steps=3, normalize_gradient=True)
+        assert result.shape == (1, 8, 8, 3)
+
+    @pytest.mark.parametrize("input_modifiers,regularizers,expectation", [
+        ([Jitter(), Rotate2D()], [TotalVariation2D(), Norm()], does_not_raise()),
+        ([Jitter()], [], does_not_raise()),
+        ([Rotate2D()], [], does_not_raise()),
+        ([], [TotalVariation2D()], does_not_raise()),
+        ([], [Norm()], does_not_raise()),
+        ([], [], does_not_raise()),
+        (None, [], does_not_raise()),
+        ([], None, does_not_raise()),
+        (None, None, does_not_raise()),
+    ])
+    def test__call__if_input_modifiers_or_regurarizers_are(self, input_modifiers, regularizers,
+                                                           expectation, conv_model):
+        activation_maximization = ActivationMaximization(conv_model)
+        with expectation:
+            result = activation_maximization(MockScore(),
+                                             input_modifiers=input_modifiers,
+                                             regularizers=regularizers,
+                                             steps=3)
         assert result.shape == (1, 8, 8, 3)
 
 
@@ -173,7 +195,7 @@ class TestActivationMaximizationWithMultipleIOModel():
 
 
 @pytest.mark.skipif(version(tf.version.VERSION) < version("2.4.0"),
-                    reason="This test is enabled when tensorflow version is 2.4.0+.")
+                    reason="This test is enabled only when tensorflow version is 2.4.0+.")
 class TestActivationMaximizationWithMixedPrecision():
     def test__call__with_single_io(self, tmpdir):
         set_global_policy('mixed_float16')
@@ -185,7 +207,6 @@ class TestActivationMaximizationWithMixedPrecision():
         model = load_model(path)
         self._test_for_single_io(model)
 
-    @pytest.mark.skip(reson="Because can't avoid error. It may be any bug in Tensorflow.")
     def test__call__with_float32_output_model(self, tmpdir):
         set_global_policy('mixed_float16')
         model = mock_conv_model_with_flot32_output()
@@ -198,7 +219,7 @@ class TestActivationMaximizationWithMixedPrecision():
 
     def _test_for_single_io(self, model):
         activation_maximization = ActivationMaximization(model)
-        result = activation_maximization(MockScore(), steps=3)
+        result = activation_maximization(CategoricalScore(1), steps=3)
         assert result.shape == (1, 8, 8, 3)
 
     def test__call__with_multiple_io(self, tmpdir):
@@ -213,7 +234,7 @@ class TestActivationMaximizationWithMixedPrecision():
 
     def _test_for_multiple_io(self, model):
         activation_maximization = ActivationMaximization(model)
-        result = activation_maximization(MockScore(), steps=3)
+        result = activation_maximization([CategoricalScore(1), MockScore()], steps=3)
         assert result[0].shape == (1, 8, 8, 3)
         assert result[1].shape == (1, 10, 10, 3)
 
