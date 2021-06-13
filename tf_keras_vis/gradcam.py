@@ -6,10 +6,10 @@ import tensorflow as tf
 import tensorflow.keras.backend as K
 from packaging.version import parse as version
 from scipy.ndimage.interpolation import zoom
-from tensorflow.python.keras.layers.convolutional import Conv
 
 from . import ModelVisualization
-from .utils import find_layer, is_mixed_precision, standardize, zoom_factor
+from .utils import is_mixed_precision, standardize, zoom_factor
+from .utils.model_modifiers import ExtractIntermediateLayerForGradcam as ModelModifier
 
 if version(tf.version.VERSION) >= version("2.4.0"):
     from tensorflow.keras.mixed_precision import LossScaleOptimizer
@@ -91,11 +91,9 @@ class Gradcam(ModelVisualization):
         # Preparing
         scores = self._get_scores_for_multiple_outputs(score)
         seed_inputs = self._get_seed_inputs_for_multiple_inputs(seed_input)
-        penultimate_output_tensor = self._find_penultimate_output(penultimate_layer,
-                                                                  seek_penultimate_conv_layer)
+
         # Processing gradcam
-        model = tf.keras.Model(inputs=self.model.inputs,
-                               outputs=self.model.outputs + [penultimate_output_tensor])
+        model = ModelModifier(penultimate_layer, seek_penultimate_conv_layer)(self.model)
 
         # When mixed precision enabled
         mixed_precision_model = is_mixed_precision(model)
@@ -139,28 +137,6 @@ class Gradcam(ModelVisualization):
         if len(self.model.inputs) == 1 and not isinstance(seed_input, list):
             cam = cam[0]
         return cam
-
-    def _find_penultimate_output(self, layer, seek_conv_layer):
-        _layer = layer
-        if not isinstance(_layer, tf.keras.layers.Layer):
-            if _layer is None:
-                _layer = -1
-            if isinstance(_layer, int) and _layer < len(self.model.layers):
-                _layer = self.model.layers[int(_layer)]
-            elif isinstance(_layer, str):
-                _layer = find_layer(self.model, lambda l: l.name == _layer)
-            else:
-                raise ValueError('Invalid argument. `penultimate_layer`=', layer)
-        if _layer is not None and seek_conv_layer:
-            _layer = find_layer(self.model, lambda l: isinstance(l, Conv), offset=_layer)
-        if _layer is None:
-            raise ValueError(('Unable to determine penultimate `Conv` layer. '
-                              '`penultimate_layer`='), layer)
-        output = _layer.output
-        if len(output.shape) < 3:
-            raise ValueError(("Penultimate layer's output tensor MUST have "
-                              "samples, spaces and channels dimensions. [{}]").format(output.shape))
-        return output
 
 
 from tf_keras_vis.gradcam_plus_plus import GradcamPlusPlus  # noqa: F401, E402

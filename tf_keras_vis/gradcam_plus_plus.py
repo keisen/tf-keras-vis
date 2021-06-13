@@ -6,14 +6,15 @@ import tensorflow.keras.backend as K
 from packaging.version import parse as version
 from scipy.ndimage.interpolation import zoom
 
-from .gradcam import Gradcam
+from . import ModelVisualization
 from .utils import is_mixed_precision, standardize, zoom_factor
+from .utils.model_modifiers import ExtractIntermediateLayerForGradcam as ModelModifier
 
 if version(tf.version.VERSION) >= version("2.4.0"):
     from tensorflow.keras.mixed_precision import LossScaleOptimizer
 
 
-class GradcamPlusPlus(Gradcam):
+class GradcamPlusPlus(ModelVisualization):
     """Grad-CAM++
 
         For details on GradCAM++, see the paper:
@@ -81,12 +82,10 @@ class GradcamPlusPlus(Gradcam):
         # Preparing
         scores = self._get_scores_for_multiple_outputs(score)
         seed_inputs = self._get_seed_inputs_for_multiple_inputs(seed_input)
-        penultimate_output_tensor = self._find_penultimate_output(penultimate_layer,
-                                                                  seek_penultimate_conv_layer)
 
         # Processing gradcam
-        model = tf.keras.Model(inputs=self.model.inputs,
-                               outputs=self.model.outputs + [penultimate_output_tensor])
+        model = ModelModifier(penultimate_layer, seek_penultimate_conv_layer)(self.model)
+
         # When mixed precision enabled
         mixed_precision_model = is_mixed_precision(model)
         if mixed_precision_model:

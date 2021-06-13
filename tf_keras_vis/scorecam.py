@@ -5,11 +5,12 @@ import tensorflow as tf
 import tensorflow.keras.backend as K
 from scipy.ndimage.interpolation import zoom
 
-from .gradcam import Gradcam
+from . import ModelVisualization
 from .utils import get_num_of_steps_allowed, is_mixed_precision, listify, standardize, zoom_factor
+from .utils.model_modifiers import ExtractIntermediateLayerForGradcam as ModelModifier
 
 
-class Scorecam(Gradcam):
+class Scorecam(ModelVisualization):
     """Score-CAM and Faster Score-CAM
 
         For details on Score-CAM, see the paper:
@@ -83,12 +84,11 @@ class Scorecam(Gradcam):
         # Preparing
         scores = self._get_scores_for_multiple_outputs(score)
         seed_inputs = self._get_seed_inputs_for_multiple_inputs(seed_input)
-        penultimate_output_tensor = self._find_penultimate_output(penultimate_layer,
-                                                                  seek_penultimate_conv_layer)
+
         # Processing score-cam
-        penultimate_output = tf.keras.Model(inputs=self.model.inputs,
-                                            outputs=penultimate_output_tensor)(seed_inputs,
-                                                                               training=training)
+        model = ModelModifier(penultimate_layer, seek_penultimate_conv_layer, False)(self.model)
+        penultimate_output = model(seed_inputs, training=training)
+
         if is_mixed_precision(self.model):
             penultimate_output = tf.cast(penultimate_output, self.model.variable_dtype)
 

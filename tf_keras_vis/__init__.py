@@ -18,22 +18,26 @@ class ModelVisualization(ABC):
             model (tf.keras.Model): When `model_modifier` is NOT None,
                 This model will be cloned by `tf.keras.models.clone_model` function
                 and then will be modified by `model_modifier` according to needs.
-            model_modifier (function, optional): A function that modify `model` instance.
-                For example, in ActivationMaximization usually,
-                this function is used to replace the softmax
-                function that was applied to the model outputs. Defaults to None.
+            model_modifier (Union[tf_keras_vis.utils.model_modifiers.ModelModifier,function],
+                optional): A Modifier function that modify `model` instance (i.e., return None) or
+                return modified `model` instance.
+                We recommend to apply tf_keras_vis.utils.model_modifiers.ReplaceToLinear
+                to all visualizations (except Scorecam) when the model output is softmax.
+                Defaults to None.
             clone (bool, optional): When False, the model won't be cloned.
                 Note that, although when True, the model won't be clone
                 if `model_modifier` is None. Defaults to True.
         """
         self.model = model
-        if model_modifier is not None:
+        model_modifiers = listify(model_modifier)
+        if len(model_modifiers) > 0:
             if clone:
                 self.model = tf.keras.models.clone_model(self.model)
                 self.model.set_weights(model.get_weights())
-            new_model = model_modifier(self.model)
-            if new_model is not None:
-                self.model = new_model
+            for modifier in model_modifiers:
+                new_model = modifier(self.model)
+                if new_model is not None:
+                    self.model = new_model
 
     @abstractmethod
     def __call__(self):
