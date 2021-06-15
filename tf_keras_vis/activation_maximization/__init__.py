@@ -9,7 +9,7 @@ from packaging.version import parse as version
 
 from .. import ModelVisualization
 from ..utils import get_num_of_steps_allowed, is_mixed_precision, listify
-from .input_modifiers import Jitter, Rotate2D
+from .input_modifiers import Jitter, Rotate2D, Scale
 from .regularizers import Norm, TotalVariation2D
 
 if version(tf.version.VERSION) >= version("2.4.0"):
@@ -63,24 +63,30 @@ class ActivationMaximization(ModelVisualization):
                 When `None` or a `(None, None)` tuple, an input tensor
                 (i.e., the result of this function) will be no applied any limitation.
                 Defaults to (0, 255).
-            input_modifiers
-                (function|tf_keras_vis.utils.input_modifiers.InputModifier|list|dict, optional):
-                A function, a tf_keras_vis.utils.input_modifiers.InputModifier instance,
-                a list of them or a dictionary that has a list of them on each input.
-                If the model has multiple inputs, you have to pass a dictionary of list or
-                input modifiers on each model inputs::
+            input_modifiers (Union[InputModifier,Callable,
+                list[InputModifier,Callable,list[InputModifier,Callable]],
+                Dict[str,Union[InputModifier,Callable,list[InputModifier,Callable]]]], optional):
+                A tf_keras_vis.activation_maximization.input_modifiers.InputModifier instance,
+                a function, a list of them or a list that has lists of them for each input.
+                When the model has multiple inputs, you have to pass a dictionary,
+                that contains the input layer names and lists of input modifiers,
+                or a list of lists of them for each model inputs::
 
-                input_modifiers = {
-                    "input_1st": [
-                        input_modifier_for_1st_1,
-                        input_modifier_for_1st_2,
-                    ],
-                    "input_2nd": input_modifier_for_2nd,
-                    ...
-                }
+                    input_modifiers = {
+                        'input_1': [Jitter(jitter=8), Rotate(degree=3), Scale(high=1.1)],
+                        'input_2': [Jitter(jitter=8)],
+                        ...
+                    }
+
+                Or,
+
+                    input_modifiers = [
+                        [Jitter(jitter=8), Rotate(degree=3), Scale(high=1.1)],  # For 1st input
+                        [Jitter(jitter=8)],                                     # For 2nd input
+                        ...
+                    ]
 
                 Defaults to [Jitter(jitter=8), Rotate(degree=3)].
-
             regularizers (Union[Regularizer,Callable,
                 list[Regularizer,Callable,list[Regularizer,Callable]],
                 Dict[str,Union[Regularizer,Callable,list[Regularizer,Callable]]]], optional):
@@ -305,13 +311,7 @@ class ActivationMaximization(ModelVisualization):
         return seed_inputs
 
     def _get_input_modifiers(self, input_modifier):
-        input_modifiers = self._get_dict(input_modifier, keys=self.model.input_names)
-        if len(input_modifiers) != len(self.model.inputs):
-            raise ValueError('The model has {} inputs, but you passed {} as input_modifiers. '
-                             'When the model has multiple inputs, '
-                             'you must pass a dictionary as input_modifiers.'.format(
-                                 len(self.model.inputs), input_modifier))
-        return input_modifiers
+        return self._get_callables_to_apply_to_each_input(input_modifier, "input modifiers")
 
     def _get_regularizers(self, regularizer):
         legacy_regularizers = self._get_legacy_regularizers(regularizer)
@@ -371,18 +371,6 @@ class ActivationMaximization(ModelVisualization):
         elif isinstance(_regularizer, LegacyRegularizer):
             return listify(_regularizer)
         return None
-
-    def _get_dict(self, values, keys):
-        if isinstance(values, dict):
-            _values = defaultdict(list, values)
-            for key in keys:
-                _values[key] = listify(_values[key])
-        else:
-            _values = defaultdict(list)
-            values = listify(values)
-            for k in keys:
-                _values[k] = values
-        return _values
 
     def _get_callables_to_apply_to_each_input(self, callables, object_name):
         keys = self.model.input_names
