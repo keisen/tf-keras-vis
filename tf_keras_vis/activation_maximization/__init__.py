@@ -9,6 +9,7 @@ from packaging.version import parse as version
 
 from .. import ModelVisualization
 from ..utils import get_num_of_steps_allowed, is_mixed_precision, listify
+from .callbacks import managed_callbacks
 from .input_modifiers import Jitter, Rotate2D, Scale
 from .regularizers import Norm, TotalVariation2D
 
@@ -148,6 +149,8 @@ class ActivationMaximization(ModelVisualization):
             ValueError: In case of invalid arguments for `score`, `input_range`, `input_modifiers`
                 or `regularizers`.
         """
+        arguments = self._arguments(locals())
+
         if normalize_gradient is not None:
             warnings.warn(
                 ('`normalize_gradient` option of ActivationMaximization#__call__() is disabled.,'
@@ -172,74 +175,73 @@ class ActivationMaximization(ModelVisualization):
         # regularizers
         regularizers = self._get_regularizers(regularizers)
 
-        callbacks = listify(callbacks)
-        for callback in callbacks:
-            callback.on_begin()
-
         # activation_modifiers
         activation_modifiers = self._get_activation_modifiers(activation_modifiers)
 
-        variables = None
-        for i in range(get_num_of_steps_allowed(steps)):
-            # Apply input modifiers
-            for j, name in enumerate(self.model.input_names):
-                for modifier in input_modifiers[name]:
-                    seed_inputs[j] = modifier(seed_inputs[j])
+        with managed_callbacks(**arguments) as callbacks:
+            input_values = seed_inputs
+            input_variables = [tf.Variable(X) for X in input_values]
+            for step in range(get_num_of_steps_allowed(steps)):
+                # Modify input values
+                for i, name in enumerate(self.model.input_names):
+                    for modifier in input_modifiers[name]:
+                        input_values[i] = modifier(input_values[i])
 
-            # Copy seed_input values to variables
-            if variables is None:
-                variables = [tf.Variable(X, trainable=True) for X in seed_inputs]
-            else:
-                for V, X in zip(variables, seed_inputs):
+                # Copy input values to variables
+                for V, X in zip(input_variables, input_values):
                     V.assign(X)
 
-            with tf.GradientTape(watch_accessed_variables=False) as tape:
-                tape.watch(variables)
-                seed_inputs = [V.value() for V in variables]
-                # Calculate scores
-                outputs = self.model(seed_inputs, training=training)
-                outputs = listify(outputs)
-                score_values = self._calculate_scores(outputs, scores)
-                # Calculate regularization
-                regularizer_values, regularized_score_values = \
-                    self._calculate_regularization(regularizers, input_values, score_values)
-                # Scale loss
+                with tf.GradientTape(watch_accessed_variables=False) as tape:
+                    tape.watch(input_variables)
+                    input_values = [V.value() for V in input_variables]
+                    # Calculate scores
+                    outputs = self.model(input_values, training=training)
+                    outputs = listify(outputs)
+                    score_values = self._calculate_scores(outputs, scores)
+                    # Calculate regularization
+                    regularization_values, regularized_score_values = \
+                        self._calculate_regularization(regularizers, input_values, score_values)
+                    # Scale loss
+                    if mixed_precision_model:
+                        regularized_score_values = [
+                            optimizer.get_scaled_loss(score_value)
+                            for score_value in regularized_score_values
+                        ]
+                # Calculate gradients and Update variables
+                grads = tape.gradient(regularized_score_values,
+                                      input_variables,
+                                      unconnected_gradients=unconnected_gradients)
+                grads = listify(grads)
                 if mixed_precision_model:
-                    regularized_score_values = [
-                        optimizer.get_scaled_loss(score_value)
-                        for score_value in regularized_score_values
-                    ]
-            # Calculate gradients and update variables
-            grads = tape.gradient(regularized_score_values,
-                                  variables,
-                                  unconnected_gradients=unconnected_gradients)
-            grads = listify(grads)
-            if mixed_precision_model:
-                grads = optimizer.get_unscaled_gradients(grads)
-            if gradient_modifier is not None:
-                grads = (gradient_modifier(g) for g in grads)
-            optimizer.apply_gradients(zip(grads, variables))
+                    grads = optimizer.get_unscaled_gradients(grads)
+                if gradient_modifier is not None:
+                    grads = [gradient_modifier(g) for g in grads]
+                optimizer.apply_gradients(zip(grads, input_variables))
 
-            # Update seed_inputs
-            seed_inputs = [V.value() for V in variables]
+                # Update input values
+                input_values = [V.value() for V in input_variables]
 
-            for callback in callbacks:
-                callback(i,
-                         self._clip_and_modify(seed_inputs, input_ranges, activation_modifiers),
-                         grads,
-                         score_values,
-                         outputs,
-                         regularizer_values=regularizer_values,
-                         overall_score=regularized_score_values)
+                # Calculate clipped values
+                clipped_value = self._clip_and_modify(input_values, input_ranges,
+                                                      activation_modifiers)
 
-        for callback in callbacks:
-            callback.on_end()
+                # Execute callbacks
+                for callback in callbacks:
+                    callback(step,
+                             clipped_value,
+                             grads,
+                             score_values,
+                             outputs,
+                             regularizations=regularization_values,
+                             overall_score=regularized_score_values)
 
-        clipped_value = self._clip_and_modify(seed_inputs, input_ranges, activation_modifiers)
         if len(self.model.inputs) == 1 and (seed_input is None or not isinstance(seed_input, list)):
             clipped_value = clipped_value[0]
-
         return clipped_value
+
+    def _arguments(self, variables):
+        variables = ((k, v) for k, v in variables.items() if k != 'self' and not k.startswith('_'))
+        return dict(variables)
 
     def _calculate_regularization(self, regularizers, seed_inputs, score_values):
         if isinstance(regularizers, list):

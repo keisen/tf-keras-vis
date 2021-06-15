@@ -1,16 +1,25 @@
+import warnings
 from abc import ABC
+from contextlib import contextmanager
+from inspect import signature
 
 import imageio
 import numpy as np
 import tensorflow as tf
 from PIL import Image, ImageDraw, ImageFont
 
+from ..utils import listify
+
 
 class Callback(ABC):
     """Abstract class for defining callbacks.
     """
-    def on_begin(self):
+    def on_begin(self, **kwargs) -> None:
         """Called at the begin of optimization process.
+
+        Args:
+            kwargs (dict): The parameters that is passed to
+                `tf_keras_vis.activation_maximization.ActivationMaximization#__call__()`.
         """
         pass
 
@@ -86,7 +95,7 @@ class GifGenerator2D(Callback):
         """
         self.path = path
 
-    def on_begin(self):
+    def on_begin(self, **kwargs):
         self.data = None
 
     def __call__(self, i, values, grads, score_values, outputs, regularizer_values, overall_score):
@@ -110,3 +119,27 @@ class GifGenerator2D(Callback):
             finally:
                 if writer is not None:
                     writer.close()
+
+
+@contextmanager
+def managed_callbacks(callbacks=None, **kwargs):
+    activated_callbacks = []
+    try:
+        for c in listify(callbacks):
+            if len(signature(c.on_begin).parameters) == 0:
+                warnings.warn("`Callback#on_begin()` now must accept keyword arguments.",
+                              DeprecationWarning)
+                c.on_begin()
+            else:
+                c.on_begin(**kwargs)
+            activated_callbacks.append(c)
+        yield activated_callbacks
+        for _ in range(len(activated_callbacks)):
+            activated_callbacks.pop(0).on_end()
+    finally:
+        for c in activated_callbacks:
+            try:
+                c.on_end()
+            except Exception as e:
+                tf.print("Exception args: ", e.args)
+                pass
