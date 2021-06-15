@@ -1,0 +1,35 @@
+{% set data = load_setup_py_data() %}
+
+package:
+  name: tf-keras-vis
+  version: {{ data['version'] }}
+
+source:
+  path: ../
+
+build:
+  number: 0
+  script: python setup.py install --single-version-externally-managed --record=record.txt
+
+requirements:
+  build:
+    - python >=3.6,<3.10
+    - setuptools
+    {% for package in data['install_requires'] %}
+    - {{ package.lower() }}
+    {% endfor %}
+
+  run:
+    {% for package in data['install_requires'] %}
+    - {{ package.lower() }}
+    {% endfor %}
+    - tensorflow
+
+test:
+  imports:
+    - tf_keras_vis
+
+about:
+  home: {{ data['url'] }}
+  license_file: LICENSE
+  description: {{ data['description'] }}
