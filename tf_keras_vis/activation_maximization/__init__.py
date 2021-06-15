@@ -14,6 +14,7 @@ from .regularizers import Norm, TotalVariation2D
 
 if version(tf.version.VERSION) >= version("2.4.0"):
     from tensorflow.keras.mixed_precision import LossScaleOptimizer
+from ..utils.regularizers import LegacyRegularizer
 
 
 class ActivationMaximization(ModelVisualization):
@@ -79,18 +80,30 @@ class ActivationMaximization(ModelVisualization):
                 }
 
                 Defaults to [Jitter(jitter=8), Rotate(degree=3)].
-            regularizers (function|tf_keras_vis.utils.regularizers.Regularizer|list, optional):
+
+            regularizers (Union[Regularizer,Callable,
+                list[Regularizer,Callable,list[Regularizer,Callable]],
+                Dict[str,Union[Regularizer,Callable,list[Regularizer,Callable]]]], optional):
                 A function, tf_keras_vis.utils.regularizers.Regularizer instance or a list of them.
-                If the model has multiple inputs, you can pass a list of list of regularizers
-                on each model inputs::
+                If the model has multiple inputs, you have to pass a dictionary,
+                that contains the input layer names and lists of regularizers,
+                a list of lists of regularizers on each model inputs::
 
-                regularizers = [
-                    [Norm(weight=1., p=2)],                               # For 1st input tensor
-                    [TotalVariation2D(weight=1.), Norm(weight=1., p=2)],  # For 2nd input tensor
-                    ...
-                ]
+                    regularizers = {
+                        'input_1': [TotalVariation2D(weight=1.), Norm(weight=1., p=2)],
+                        'input_2': [Norm(weight=1., p=2)],
+                        ...
+                    }
 
-                Defaults to [TotalVariation2D(weight=1.0), Norm(weight=1.0, p=2)].
+                Or,
+
+                    regularizers = [
+                        [TotalVariation2D(weight=1.), Norm(weight=1., p=2)],  # For 1st input
+                        [Norm(weight=1., p=2)],                               # For 2nt input
+                        ...
+                    ]
+
+                Defaults to [TotalVariation2D(weight=0.2), Norm(weight=0.01, p=6)].
             steps (int, optional): The number of gradient descent iterations. Defaults to 200.
             optimizer (tf.keras.optimizers.Optimizer, optional):
                 A `tf.optimizers.Optimizer` instance.
@@ -167,20 +180,9 @@ class ActivationMaximization(ModelVisualization):
                 outputs = self.model(seed_inputs, training=training)
                 outputs = listify(outputs)
                 score_values = self._calculate_scores(outputs, scores)
-                # Calculate regularization values
-                if len(regularizers) == 0:
-                    regularizer_values = []
-                    regularized_score_values = [-1.0 * score_value for score_value in score_values]
-                else:
-                    regularizer_values = [(regularizer.name, regularizer(seed_inputs))
-                                          for regularizer in regularizers]
-                    overall_regularizer_value = sum([v for _, v in regularizer_values])
-                    regularized_score_values = [
-                        (-1.0 * score_value) +
-                        (tf.cast(overall_regularizer_value, score_value.dtype) if score_value.dtype
-                         in [tf.float16, tf.bfloat16] else overall_regularizer_value)
-                        for score_value in score_values
-                    ]
+                # Calculate regularization
+                regularizer_values, regularized_score_values = \
+                    self._calculate_regularization(regularizers, input_values, score_values)
                 # Scale loss
                 if mixed_precision_model:
                     regularized_score_values = [
@@ -219,6 +221,23 @@ class ActivationMaximization(ModelVisualization):
 
         return clipped_value
 
+    def _calculate_regularization(self, regularizers, seed_inputs, score_values):
+        if isinstance(regularizers, list):
+            regularization_values = [(regularizer.name, regularizer(seed_inputs))
+                                     for regularizer in regularizers]
+        else:
+            regularization_values = ([
+                (name, regularizer(seed_inputs[i]))
+                for name, regularizer in regularizers[input_layer_name].items()
+            ] for i, input_layer_name in enumerate(self.model.input_names))
+            regularization_values = sum(regularization_values, [])
+        overall_regularization_values = sum((value for _, value in regularization_values))
+        regularized_score_values = [
+            (-1.0 * score_value) + tf.cast(overall_regularization_values, score_value.dtype)
+            for score_value in score_values
+        ]
+        return regularization_values, regularized_score_values
+
     def _get_optimizer(self, optimizer, mixed_precision_model):
         if optimizer is None:
             optimizer = tf.optimizers.RMSprop(1.0, 0.999)
@@ -243,13 +262,19 @@ class ActivationMaximization(ModelVisualization):
         for i, r in enumerate(input_ranges):
             if len(r) != 2:
                 raise ValueError(
-                    'The length of input range tuple must be 2 (Or it is just `None`, not tuple), '
-                    'but you passed {} as `input_ranges[{}]`.'.format(r, i))
+                    "The length of input range tuple must be 2 (Or it is just `None`, not tuple), "
+                    f"but you passed {r} as `input_ranges[{i}]`.")
+            a, b = r
+            if None not in r and type(a) != type(b):
+                raise TypeError(
+                    "The type of low and high values in the input range must be the same, "
+                    f"but you passed {r} are {type(a)} and {type(b)} ")
         return input_ranges
 
     def _get_seed_inputs(self, seed_inputs, input_ranges):
         # Prepare seed_inputs
-        if seed_inputs is None or len(seed_inputs) == 0:
+        seed_inputs = listify(seed_inputs)
+        if len(seed_inputs) == 0:
             # Replace None to 0.0-1.0 or any properly value
             input_ranges = ((0., 1.) if low is None and high is None else (low, high)
                             for low, high in input_ranges)
@@ -289,8 +314,63 @@ class ActivationMaximization(ModelVisualization):
         return input_modifiers
 
     def _get_regularizers(self, regularizer):
-        regularizers = listify(regularizer)
-        return regularizers
+        legacy_regularizers = self._get_legacy_regularizers(regularizer)
+        if legacy_regularizers is not None:
+            warnings.warn(
+                "`tf_keras_vis.utils.regularizers.Regularizer` is deprecated. "
+                "Use tf_keras_vis.utils.regularizers.Regularizer instead.", DeprecationWarning)
+            return legacy_regularizers
+        else:
+            regularizers = self._get_callables_to_apply_to_each_input(regularizer, "regularizers")
+            regularizers = ((input_layer_name,
+                             self._define_regularizer_names(regularizer_list, input_layer_name))
+                            for input_layer_name, regularizer_list in regularizers.items())
+            return defaultdict(dict, regularizers)
+
+    def _define_regularizer_names(self, regularizers, input_layer_name):
+        regularizers = ((f"regularizer-{i}", regularizer)
+                        for i, regularizer in enumerate(regularizers))
+        regularizers = (((regularizer.name if hasattr(regularizer, 'name') else name), regularizer)
+                        for name, regularizer in regularizers)
+        if len(self.model.input_names) > 1:
+            regularizers = ((f"{name}({input_layer_name})", regularizer)
+                            for name, regularizer in regularizers)
+        return defaultdict(list, regularizers)
+
+    def _get_legacy_regularizers(self, regularizer):
+        if isinstance(regularizer, dict):
+            _regularizer = [listify(r) for r in regularizer.values()]
+        else:
+            _regularizer = regularizer
+        if isinstance(_regularizer, (tuple, list)):
+            if any(isinstance(r, (tuple, list)) for r in _regularizer):
+                has_legacy = ((isinstance(r, LegacyRegularizer) for r in listify(_regularizers))
+                              for _regularizers in _regularizer)
+                has_legacy = (any(_legacy) for _legacy in has_legacy)
+                if any(has_legacy):
+                    raise ValueError(
+                        "Legacy Regularizer instances (that inherits "
+                        "`tf_keras_vis.utils.regularizers.Regularizer`) must be "
+                        "passed to ActivationMaximization#__call__() "
+                        "in the form of a instance or a list of instances. "
+                        "Please modify the `regularizer` argument or "
+                        "change the inheritance source to "
+                        "`tf_keras_vis.activation_maximization.regularizers.Regularizer`"
+                        f" regularizer: {regularizer}")
+            else:
+                has_legacy = [isinstance(r, LegacyRegularizer) for r in _regularizer]
+                if all(has_legacy):
+                    return _regularizer
+                if any(has_legacy):
+                    raise ValueError(
+                        "the regularizer instance (that inherits "
+                        "`tf_keras_vis.activation_maximization.regularizers.Regularizer`) "
+                        "and legacy regularizer (that inherits "
+                        "`tf_keras_vis.utils.regularizers.Regularizer` can NOT be mixed."
+                        f" regularizer: {regularizer}")
+        elif isinstance(_regularizer, LegacyRegularizer):
+            return listify(_regularizer)
+        return None
 
     def _get_dict(self, values, keys):
         if isinstance(values, dict):
@@ -303,6 +383,27 @@ class ActivationMaximization(ModelVisualization):
             for k in keys:
                 _values[k] = values
         return _values
+
+    def _get_callables_to_apply_to_each_input(self, callables, object_name):
+        keys = self.model.input_names
+        if isinstance(callables, dict):
+            non_existent_keys = set(callables.keys()) - set(keys)
+            if len(non_existent_keys) > 0:
+                raise ValueError(
+                    f"The model inputs are `{keys}`. However the {object_name} you passed have "
+                    f"non existent input name: `{non_existent_keys}`")
+            callables = ((k, listify(v)) for k, v in callables.items())
+        else:
+            callables = listify(callables)
+            if len(callables) == 0 or len(list(filter(lambda x: type(x) == list, callables))) == 0:
+                callables = [callables]
+            if len(callables) <= len(keys):
+                callables = (listify(value_each_input) for value_each_input in callables)
+                callables = zip(keys, callables)
+            else:
+                raise ValueError(f"The number of model's inputs are {len(keys)},"
+                                 f" but you define {len(callables)} {object_name}.")
+        return defaultdict(list, callables)
 
     def _apply_clip(self, seed_inputs, input_ranges):
         input_ranges = [(input_tensor.dtype.min if low is None else low,

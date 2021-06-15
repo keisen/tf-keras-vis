@@ -2,7 +2,6 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 import tensorflow as tf
-from deprecated import deprecated
 
 
 class Regularizer(ABC):
@@ -11,21 +10,23 @@ class Regularizer(ABC):
     Attributes:
         name (str): Instance name.
     """
-    def __init__(self, name):
+    def __init__(self, name) -> None:
         """Constructor.
 
         Args:
-            name (str): Instance name. This will be include a log that is printed by
-            `tf_keras_vis.activation_maximization.callbacks.PrintLogger`.
+            name (str): Instance name.
         """
         self.name = name
 
     @abstractmethod
-    def __call__(self, inputs):
+    def __call__(self, input_value) -> tf.Tensor:
         """Implement regularization.
 
         Args:
-            inputs (list): A list of tf.Tensor or tf.Variable.
+            input_value (tf.Tensor): An value to input to the model.
+
+        Returns:
+            tf.Tensor: Regularization value with respect to the input value.
 
         Raises:
             NotImplementedError: This method must be overwritten.
@@ -37,12 +38,12 @@ class TotalVariation2D(Regularizer):
     """A regularizer that introduces Total Variation.
 
     Attributes:
-        name (str): Instance name. Defaults to 'TotalVariation2D'.
         weight (float): This weight will be apply to TotalVariation values.
+        name (str): Instance name. Defaults to 'TotalVariation2D'.
     Todo:
         * Write examples
     """
-    def __init__(self, weight=10.0, name='TotalVariation2D'):
+    def __init__(self, weight=10.0, name='TotalVariation2D') -> None:
         """Constructor.
 
         Args:
@@ -53,32 +54,26 @@ class TotalVariation2D(Regularizer):
         super().__init__(name)
         self.weight = weight
 
-    def __call__(self, overall_inputs):
-        tv = 0.
-        for X in overall_inputs:
-            tv += tf.image.total_variation(X) / np.prod(X.shape[1:])
-        return self.weight * tv
-
-
-@deprecated(version='0.6.0',
-            reason="Please use TotalVariation2D class instead of this. "
-            "This class can NOT support N-dim tensor, only supports 2-dim input.")
-class TotalVariation(TotalVariation2D):
-    def __init__(self, weight=10.0):
-        super().__init__(weight=weight, name='TotalVariation')  # pragma: no cover
+    def __call__(self, input_value) -> tf.Tensor:
+        if len(input_value.shape) != 4:
+            raise ValueError('')  # TODO
+        tv = tf.image.total_variation(input_value)
+        tv /= np.prod(input_value.shape[1:])
+        tv *= self.weight
+        return tv
 
 
 class Norm(Regularizer):
     """A regularizer that introduces Norm.
 
     Attributes:
-        name (str): Instance name. Defaults to 'Norm'.
         weight (float): This weight will be apply to TotalVariation values.
         p  (int): Order of the norm.
+        name (str): Instance name. Defaults to 'Norm'.
     Todo:
         * Write examples
     """
-    def __init__(self, weight=10., p=2, name='Norm'):
+    def __init__(self, weight=10., p=2, name='Norm') -> None:
         """Constructor.
 
         Args:
@@ -91,15 +86,9 @@ class Norm(Regularizer):
         self.weight = weight
         self.p = p
 
-    def __call__(self, overall_inputs):
-        norm = 0.
-        for X in overall_inputs:
-            X = tf.reshape(X, (X.shape[0], -1))
-            norm += tf.norm(X, ord=self.p, axis=-1) / (X.shape[-1]**(1 / self.p))
-        return self.weight * norm
-
-
-@deprecated(version='0.6.0', reason="Please use Norm class instead of this.")
-class L2Norm(Norm):
-    def __init__(self, weight=10.):
-        super().__init__(weight=weight, p=2, name='L2Norm')  # pragma: no cover
+    def __call__(self, input_value) -> tf.Tensor:
+        input_value = tf.reshape(input_value, (input_value.shape[0], -1))
+        norm = tf.norm(input_value, ord=self.p, axis=1)
+        norm /= (input_value.shape[1]**(1 / self.p))
+        norm *= self.weight
+        return norm
