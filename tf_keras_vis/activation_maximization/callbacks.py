@@ -6,6 +6,7 @@ from inspect import signature
 import imageio
 import numpy as np
 import tensorflow as tf
+from deprecated import deprecated
 from PIL import Image, ImageDraw, ImageFont
 
 from ..utils import listify
@@ -23,35 +24,35 @@ class Callback(ABC):
         """
         pass
 
-    def __call__(self, i, values, grads, score_values, outputs, regularizer_values, overall_score):
-        """his function will be called within
-            `tf_keras_vis.activation_maximization.ActivationMaximization#__call__()`.
+    def __call__(self, i, values, grads, scores, model_outputs, **kwargs) -> None:
+        """This function will be called within
+            `tf_keras_vis.activation_maximization.ActivationMaximization#__call__()`
+            after gradient descent and updating input values.
 
         Args:
             i (int): The current number of optimizer iteration.
-            values (list): The current `values`.
-            grads (list): The gradient of input images with respect to `values`.
-            score_values (list): A list of score values with respect to each the model outputs.
-            outputs (list): A list of the model outputs.
-            regularizer_values (list): A list of regularizer values.
-            overall_score (list): A list of overall scores that includes
-                score values and regularizer values.
+            values (list[tf.Tensor]): The current `values` that is clopped and modified.
+            grads (list[tf.Tensor]): The gradients with respect to `values`.
+            scores (list[tf.Tensor]): Score values with respect to each the model outputs.
+            model_outputs (list[tf.Tensor]): A list of the model outputs.
+            regularizations (list[Tuple[str,tf.Tensor]], optional): A list of regularizer values.
+            overall_score (list[tf.Tensor], optional):
+                Overall scores that includes the scores and regularization values.
         """
         pass
 
-    def on_end(self):
+    def on_end(self) -> None:
         """Called at the end of optimization process.
         """
         pass
 
 
+@deprecated(version='0.7.0', reason="Use `Progress` instead.")
 class PrintLogger(Callback):
     """Callback to print values during optimization.
 
     Attributes:
         interval (int): An integer that appears the interval of printing.
-    Todo:
-        * Write examples
     """
     def __init__(self, interval=10):
         """Constructor.
@@ -62,11 +63,11 @@ class PrintLogger(Callback):
         """
         self.interval = interval
 
-    def __call__(self, i, values, grads, score_values, outputs, regularizer_values, overall_score):
+    def __call__(self, i, values, grads, scores, model_outputs, regularizations, **kwargs):
         i += 1
         if (i % self.interval == 0):
             tf.print('Steps: {:03d}\tScores: {},\tRegularization: {}'.format(
-                i, self._tolist(score_values), self._tolist(regularizer_values)))
+                i, self._tolist(scores), self._tolist(regularizations)))
 
     def _tolist(self, ary):
         if isinstance(ary, list) or isinstance(ary, (np.ndarray, np.generic)):
@@ -80,7 +81,7 @@ class PrintLogger(Callback):
 
 
 class GifGenerator2D(Callback):
-    """Callback to construct gif of optimized image.
+    """Callback to construct a gif of optimized image.
 
     Attributes:
         path (str): The file path to save gif.
@@ -98,27 +99,55 @@ class GifGenerator2D(Callback):
     def on_begin(self, **kwargs):
         self.data = None
 
-    def __call__(self, i, values, grads, score_values, outputs, regularizer_values, overall_score):
+    def __call__(self, i, values, *args, **kwargs):
         if self.data is None:
-            self.data = [[] for i in range(len(values))]
+            self.data = [[] for _ in range(len(values))]
         for n, value in enumerate(values):
-            img = Image.fromarray(value[0].astype(np.uint8))  # 1st image in a batch
-            ImageDraw.Draw(img).text((10, 10),
-                                     "Step {}".format(i + 1),
-                                     font=ImageFont.load_default())
+            img = Image.fromarray(value[0].astype(np.uint8))  # 1st image in the batch
+            ImageDraw.Draw(img).text((10, 10), f"Step {i + 1}", font=ImageFont.load_default())
             self.data[n].append(np.asarray(img))
 
     def on_end(self):
-        path = self.path if self.path.endswith('.gif') else '{}.gif'.format(self.path)
+        path = self.path if self.path.endswith(".gif") else f"{self.path}.gif"
         for i in range(len(self.data)):
-            writer = None
-            try:
-                writer = imageio.get_writer(path, mode='I', loop=0)
+            with imageio.get_writer(path, mode='I', loop=0) as writer:
                 for data in self.data[i]:
                     writer.append_data(data)
-            finally:
-                if writer is not None:
-                    writer.close()
+
+
+class Progress(Callback):
+    """Callback to print values during optimization.
+
+    Attributes:
+        mean ([bool]): When True, the average of the scores will be drawn.
+            When False, draw the scores of each samples.
+    Todo:
+        * Write examples
+    """
+    def __init__(self, mean=False) -> None:
+        """Constructor.
+
+        Args:
+            mean (bool, optional):  When True, the average of the scores will be drawn.
+            When False, draw the scores of each samples. Defaults to False.
+        """
+        self.mean = mean
+
+    def on_begin(self, steps=None, **kwargs) -> None:
+        self.progbar = tf.keras.utils.Progbar(steps)
+
+    def __call__(self, i, values, grads, scores, model_outputs, regularizations, **kwargs) -> None:
+        if len(scores) > 1:
+            scores = [(f"Score{j}", score_value) for j, score_value in enumerate(scores)]
+        else:
+            scores = [("Score", score_value) for score_value in scores]
+        scores += regularizations
+        if not self.mean:
+            scores = ((key, listify(values)) for key, values in scores)
+            scores = ([(f"{key}-{j}", value) for j, value in enumerate(values)]
+                      for key, values in scores)
+            scores = sum(scores, [])
+        self.progbar.update(i + 1, scores + regularizations)
 
 
 @contextmanager
