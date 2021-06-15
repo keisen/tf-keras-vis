@@ -37,7 +37,8 @@ class ActivationMaximization(ModelVisualization):
             gradient_modifier=None,
             callbacks=None,
             training=False,
-            unconnected_gradients=tf.UnconnectedGradients.NONE) -> Union[np.array, list]:
+            unconnected_gradients=tf.UnconnectedGradients.NONE,
+            activation_modifiers=None) -> Union[np.ndarray, list]:
         """Generate the model inputs that maximize the output of the given `score` functions.
 
         Args:
@@ -127,7 +128,17 @@ class ActivationMaximization(ModelVisualization):
             unconnected_gradients (tf.UnconnectedGradients, optional):
                 Specifies the gradient value returned when the given input tensors are unconnected.
                 Defaults to tf.UnconnectedGradients.NONE.
+            activation_modifiers (Union[Callable,Dict[Callable]], optional):
+                A function or a dictionary of them (the key is input layer name).
+                If the model has multiple inputs, you have to pass a dictionary::
 
+                    activation_modifiers = {
+                        'input_1': lambda x: ...,
+                        'input_2': lambda x: ...,
+                        ...
+                    }
+
+                This function will be executed before returning the result. Defaults to None.
         Returns:
             np.array|list: An Numpy arrays when the model has a single input and
             `seed_input` is None or has a single sample.
@@ -164,6 +175,9 @@ class ActivationMaximization(ModelVisualization):
         callbacks = listify(callbacks)
         for callback in callbacks:
             callback.on_begin()
+
+        # activation_modifiers
+        activation_modifiers = self._get_activation_modifiers(activation_modifiers)
 
         variables = None
         for i in range(get_num_of_steps_allowed(steps)):
@@ -211,7 +225,7 @@ class ActivationMaximization(ModelVisualization):
 
             for callback in callbacks:
                 callback(i,
-                         self._apply_clip(seed_inputs, input_ranges),
+                         self._clip_and_modify(seed_inputs, input_ranges, activation_modifiers),
                          grads,
                          score_values,
                          outputs,
@@ -221,7 +235,7 @@ class ActivationMaximization(ModelVisualization):
         for callback in callbacks:
             callback.on_end()
 
-        clipped_value = self._apply_clip(seed_inputs, input_ranges)
+        clipped_value = self._clip_and_modify(seed_inputs, input_ranges, activation_modifiers)
         if len(self.model.inputs) == 1 and (seed_input is None or not isinstance(seed_input, list)):
             clipped_value = clipped_value[0]
 
@@ -393,14 +407,28 @@ class ActivationMaximization(ModelVisualization):
                                  f" but you define {len(callables)} {object_name}.")
         return defaultdict(list, callables)
 
-    def _apply_clip(self, seed_inputs, input_ranges):
+    def _get_activation_modifiers(self, activation_modifiers):
+        if isinstance(activation_modifiers, dict):
+            non_existent_names = set(activation_modifiers.keys()) - set(self.model.input_names)
+            if len(non_existent_names) > 0:
+                raise ValueError(f"The model inputs are `{self.model.input_names}`. "
+                                 "However the activation modifiers you passed have "
+                                 f"non existent input names: `{non_existent_names}`")
+        else:
+            activation_modifiers = {self.model.input_names[0]: activation_modifiers}
+        return defaultdict(lambda: None, activation_modifiers)
+
+    def _clip_and_modify(self, seed_inputs, input_ranges, activation_modifiers):
         input_ranges = [(input_tensor.dtype.min if low is None else low,
                          input_tensor.dtype.max if high is None else high)
                         for (low, high), input_tensor in zip(input_ranges, self.model.inputs)]
         clipped_values = (np.array(K.clip(X, low, high))
                           for X, (low, high) in zip(seed_inputs, input_ranges))
-        clipped_values = [
-            X.astype(np.int) if isinstance(t, int) else X.astype(np.float)
-            for X, (t, _) in zip(clipped_values, input_ranges)
-        ]
-        return clipped_values
+        clipped_values = (X.astype(np.int) if isinstance(t, int) else X.astype(np.float)
+                          for X, (t, _) in zip(clipped_values, input_ranges))
+        if activation_modifiers is not None:
+            clipped_values = ((activation_modifiers[name], seed_input)
+                              for name, seed_input in zip(self.model.input_names, clipped_values))
+            clipped_values = (seed_input if modifier is None else modifier(seed_input)
+                              for modifier, seed_input in clipped_values)
+        return list(clipped_values)
