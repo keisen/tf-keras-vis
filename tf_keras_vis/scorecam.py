@@ -112,6 +112,8 @@ class Scorecam(ModelVisualization):
         # (see for details: https://github.com/tabayashi0117/Score-CAM#faster-score-cam)
         if max_N is None or max_N == -1:
             max_N = get_num_of_steps_allowed(penultimate_output.shape[-1])
+        elif max_N == 0:
+            raise ValueError("max_N can't be set 0, must be None, -1 or 1 or more.")
         else:
             max_N = get_num_of_steps_allowed(max_N)
         if max_N < penultimate_output.shape[-1]:
