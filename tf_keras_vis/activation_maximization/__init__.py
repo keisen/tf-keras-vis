@@ -43,10 +43,25 @@ class ActivationMaximization(ModelVisualization):
         """Generate the model inputs that maximize the output of the given `score` functions.
 
         Args:
-            score (tf_keras_vis.utils.scores.Score|function|list):
-                A function to specify visualizing target.
-                If the model has multiple outputs, you can use a different
-                score function on each output by passing a list of score functions.
+            score (Union[tf_keras_vis.utils.scores.Score,Callable,
+                list[tf_keras_vis.utils.scores.Score,Callable]]):
+                A Score instance or function to specify visualizing target. For example::
+
+                    scores = CategoricalScore([1, 294, 413])
+
+                This code above means the same with the one below::
+
+                    score = lambda outputs: (outputs[0][1], outputs[1][294], outputs[2][413])
+
+                When the model has multiple outputs, you have to pass a list of
+                Score instances or functions. For example::
+
+                    score = [
+                        tf_keras_vis.utils.scores.CategoricalScore([1, 23]),  # For 1st output
+                        tf_keras_vis.utils.scores.InactiveScore(),            # For 2nd output
+                        ...
+                    ]
+
             seed_input (tf.Tensor|np.array|list, optional): A tensor or a list of them.
                 When `None`, the seed_input value will be generated with randome uniform noise.
                 If the model has multiple inputs, you have to pass a list of tensor.

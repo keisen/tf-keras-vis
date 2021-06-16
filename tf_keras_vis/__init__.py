@@ -50,8 +50,6 @@ class ModelVisualization(ABC):
 
     def _get_scores_for_multiple_outputs(self, score):
         scores = listify(score)
-        if len(scores) == 1 and len(scores) < len(self.model.outputs):
-            scores = scores * len(self.model.outputs)
         for score in scores:
             if not callable(score):
                 raise ValueError('Score object must be callable! [{}]'.format(score))
