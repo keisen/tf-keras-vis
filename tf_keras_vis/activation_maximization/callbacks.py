@@ -88,7 +88,7 @@ class GifGenerator2D(Callback):
     Todo:
         * Write examples
     """
-    def __init__(self, path):
+    def __init__(self, path) -> None:
         """Constructor.
 
         Args:
@@ -96,10 +96,10 @@ class GifGenerator2D(Callback):
         """
         self.path = path
 
-    def on_begin(self, **kwargs):
+    def on_begin(self, **kwargs) -> None:
         self.data = None
 
-    def __call__(self, i, values, *args, **kwargs):
+    def __call__(self, i, values, *args, **kwargs) -> None:
         if self.data is None:
             self.data = [[] for _ in range(len(values))]
         for n, value in enumerate(values):
@@ -107,7 +107,7 @@ class GifGenerator2D(Callback):
             ImageDraw.Draw(img).text((10, 10), f"Step {i + 1}", font=ImageFont.load_default())
             self.data[n].append(np.asarray(img))
 
-    def on_end(self):
+    def on_end(self) -> None:
         path = self.path if self.path.endswith(".gif") else f"{self.path}.gif"
         for i in range(len(self.data)):
             with imageio.get_writer(path, mode='I', loop=0) as writer:
@@ -151,7 +151,7 @@ class Progress(Callback):
 
 
 @contextmanager
-def managed_callbacks(callbacks=None, **kwargs):
+def managed_callbacks(callbacks=None, **kwargs) -> list:
     activated_callbacks = []
     try:
         for c in listify(callbacks):
@@ -170,5 +170,5 @@ def managed_callbacks(callbacks=None, **kwargs):
             try:
                 c.on_end()
             except Exception as e:
-                tf.print("Exception args: ", e.args)
+                tf.print("Exception args: ", e)
                 pass

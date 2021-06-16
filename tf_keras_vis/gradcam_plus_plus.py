@@ -26,10 +26,10 @@ class GradcamPlusPlus(ModelVisualization):
                  penultimate_layer=-1,
                  seek_penultimate_conv_layer=True,
                  activation_modifier=lambda cam: K.relu(cam),
-                 expand_cam=True,
                  training=False,
+                 expand_cam=True,
                  standardize_cam=True,
-                 unconnected_gradients=tf.UnconnectedGradients.NONE) -> Union[np.array, list]:
+                 unconnected_gradients=tf.UnconnectedGradients.NONE) -> Union[np.ndarray, list]:
         """Generate gradient based class activation maps (CAM) by using positive gradient of
             penultimate_layer with respect to score.
 
@@ -53,28 +53,26 @@ class GradcamPlusPlus(ModelVisualization):
                         ...
                     ]
 
-            seed_input (tf.Tensor|np.array|list): A tensor or a list of them to input in the model.
-                If the model has multiple inputs, you have to pass a list.
-            penultimate_layer (int|str|tf.keras.layers.Layer, optional):
-                A value to represent an index or a name of tf.keras.layers.Layer instance.
-                When not None or -1, it will be the offset layer
-                when seeking the penultimate `convolutional` layter.
+            seed_input (Union[tf.Tensor,np.ndarray,list[tf.Tensor,np.ndarray]]):
+                A tensor or a list of them to input in the model.
+                When the model has multiple inputs, you have to pass a list.
+            penultimate_layer (Union[int,str,tf.keras.layers.Layer], optional):
+                An index of the layer or the name of it or the instance itself.
+                When None, it means the same with -1.
+                If the layer specified by `penultimate_layer` is not `convolutional` layer,
+                `penultimate_layer` will work as the offset to seek `convolutional` layer.
                 Defaults to None.
             seek_penultimate_conv_layer (bool, optional):
-                When True to seek the penultimate `convolutional` layter that is a subtype of
-                `keras.layers.convolutional.Conv` class.
-                When False, `penultimate_layer` (or last layer when `penultimate_layer` is None)
-                will be elected as the penultimate `convolutional` layter.
+                A bool that indicates whether seeks a penultimate layer or not
+                when the layer specified by `penultimate_layer` is not `convolutional` layer.
                 Defaults to True.
-            activation_modifier (function, optional):  A function to modify activation.
-                Defaults to lambdacam:K.relu(cam).
+            activation_modifier (Callable, optional):  A function to modify activation.
+                Defaults to `lambda cam: K.relu(cam)`.
             training (bool, optional): A bool that indicates
-                whether the model's training-mode on or off.
-                Defaults to False.
-            expand_cam (bool, optional): True to expand cam to same as input image size.
+                whether the model's training-mode on or off. Defaults to False.
+            expand_cam (bool, optional): True to resize cam to the same as input image size.
                 ![Note] When True, even if the model has multiple inputs,
-                this function return only a cam value
-                (That's, when `expand_cam` is True,
+                this function return only a cam value (That's, when `expand_cam` is True,
                 multiple cam images are generated from a model that has multiple inputs).
             standardize_cam (bool, optional): When True, cam will be standardized.
                 Defaults to True.
@@ -83,7 +81,7 @@ class GradcamPlusPlus(ModelVisualization):
                 Defaults to tf.UnconnectedGradients.NONE.
 
         Returns:
-            np.array|list: The class activation maps that indicate the `seed_input` regions
+            Union[np.ndarray,list]: The class activation maps that indicate the `seed_input` regions
                 whose change would most contribute the score value.
 
         Raises:

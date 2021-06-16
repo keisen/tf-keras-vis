@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Union
 
 import tensorflow as tf
 
@@ -8,7 +9,7 @@ from . import listify
 class Score(ABC):
     """Abstract class for defining a score function.
     """
-    def __init__(self, name=None):
+    def __init__(self, name=None) -> None:
         """Constructor.
 
         Args:
@@ -17,7 +18,7 @@ class Score(ABC):
         self.name = name
 
     @abstractmethod
-    def __call__(self, output):
+    def __call__(self, output) -> Union[tf.Tensor, list, tuple]:
         """Implement collecting scores that are used in visualization modules.
 
         Args:
@@ -25,6 +26,9 @@ class Score(ABC):
 
         Raises:
             NotImplementedError: This method must be overwritten.
+
+        Returns:
+            Union[tf.Tensor, list, tuple]: Score values or a list or tuple of them.
         """
         raise NotImplementedError()
 
@@ -43,7 +47,7 @@ class InactiveScore(Score):
         """
         super().__init__('InactiveScore')
 
-    def __call__(self, output):
+    def __call__(self, output) -> tf.Tensor:
         return output * 0.0
 
 
@@ -58,8 +62,8 @@ class BinaryScore(Score):
         """Constructor.
 
         Args:
-            target_values (list): A list of bool values.
-                When the type of target_values is not bool, they will be casted to bool.
+            target_values (bool,list[bool]): When the type of target_values is not bool,
+                they will be casted to bool.
 
         Raises:
             ValueError: When target_values is None or an empty list.
@@ -94,7 +98,7 @@ class CategoricalScore(Score):
         """Constructor.
 
         Args:
-            indices (int|list): An integer or a list of them.
+            indices (Union[int,list[int]]): An integer or a list of them.
 
         Raises:
             ValueError: When indices is None or an empty list.

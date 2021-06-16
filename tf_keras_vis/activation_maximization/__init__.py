@@ -40,6 +40,10 @@ class ActivationMaximization(ModelVisualization):
             activation_modifiers=None) -> Union[np.ndarray, list]:
         """Generate the model inputs that maximize the output of the given `score` functions.
 
+            By default, this method is tuned to visualize `tf.keras.application.VGG16` model.
+            So if you want to visualize other models,
+            you have to tune the parameters of this method.
+
         Args:
             score (Union[tf_keras_vis.utils.scores.Score,Callable,
                 list[tf_keras_vis.utils.scores.Score,Callable]]):
@@ -60,20 +64,29 @@ class ActivationMaximization(ModelVisualization):
                         ...
                     ]
 
-            seed_input (tf.Tensor|np.array|list, optional): A tensor or a list of them.
-                When `None`, the seed_input value will be generated with randome uniform noise.
-                If the model has multiple inputs, you have to pass a list of tensor.
+            seed_input (Union[tf.Tensor,np.ndarray,list[tf.Tensor,np.ndarray]], optional):
+                A tensor or a list of them. When `None`, the seed_input value will be generated
+                with randome uniform noise. When you want to visualize multiple images
+                (i.e., batch_size > 1), you have to pass seed_inputs object. For example::
+
+                    seed_input = [
+                        tf.random.uniform((samples, ..., channels), low, high),  # 1st input
+                        tf.random.uniform((samples, ..., channels), low, high),  # 2nd input
+                        ...
+                    ]
+
                 Defaults to None.
-            input_range (tuple, optional): A tuple that specifies the input range
-                as a `(min, max)` tuple or a list of the tuple. If the model has multiple inputs,
-                you can use a different input range on each input by passing as list of input
+            input_range (Union[tuple[int,int],list[tuple[int,int]]], optional):
+                A tuple that specifies the input range as a `(min, max)` tuple or
+                a list of the tuple. If the model has multiple inputs,
+                you can use a different input range for each input by passing as list of input
                 ranges. For example::
 
-                input_range = [
-                    (0, 255),     # For 1st input tensor
-                    (-1.0, 1.0),  # For 2nd input tensor
-                    ...
-                ]
+                    input_range = [
+                        (0, 255),     # The 1st input value's range
+                        (-1.0, 1.0),  # The 2nd input value's range
+                        ...
+                    ]
 
                 When `None` or a `(None, None)` tuple, an input tensor
                 (i.e., the result of this function) will be no applied any limitation.
@@ -132,9 +145,10 @@ class ActivationMaximization(ModelVisualization):
                 Defaults to None.
             normalize_gradient (bool, optional): ![Note] This option is now disabled.
                 Defaults to None.
-            gradient_modifier (function, optional): A function to modify gradients.
-                This function is executed before normalizing gradients. Defaults to None.
-            callbacks (tf_keras_vis.activation_maximization.callbacks.Callback|list, optional):
+            gradient_modifier (Callable, optional): A function to modify gradients.
+                Defaults to None.
+            callbacks (Union[tf_keras_vis.activation_maximization.callbacks.Callback,
+                list[tf_keras_vis.activation_maximization.callbacks.Callback]], optional):
                 A `tf_keras_vis.activation_maximization.callbacks.Callback` instance
                 or a list of them. Defaults to None.
             training (bool, optional): A bool that indicates
@@ -154,13 +168,12 @@ class ActivationMaximization(ModelVisualization):
 
                 This function will be executed before returning the result. Defaults to None.
         Returns:
-            np.array|list: An Numpy arrays when the model has a single input and
-            `seed_input` is None or has a single sample.
-            A list of Numpy arrays when otherwise.
+            An np.ndarray when the model has a single input and `seed_input` is None
+            or not a list of np.ndarray.
+            A list of np.ndarray when otherwise.
 
         Raises:
-            ValueError: In case of invalid arguments for `score`, `input_range`, `input_modifiers`
-                or `regularizers`.
+            ValueError: When any arguments are invalid.
         """
         arguments = self._arguments(locals())
 
