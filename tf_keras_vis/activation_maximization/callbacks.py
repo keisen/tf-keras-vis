@@ -118,35 +118,18 @@ class GifGenerator2D(Callback):
 class Progress(Callback):
     """Callback to print values during optimization.
 
-    Attributes:
-        mean ([bool]): When True, the average of the scores will be drawn.
-            When False, draw the scores of each samples.
     Todo:
         * Write examples
     """
-    def __init__(self, mean=False) -> None:
-        """Constructor.
-
-        Args:
-            mean (bool, optional):  When True, the average of the scores will be drawn.
-            When False, draw the scores of each samples. Defaults to False.
-        """
-        self.mean = mean
-
     def on_begin(self, steps=None, **kwargs) -> None:
         self.progbar = tf.keras.utils.Progbar(steps)
 
     def __call__(self, i, values, grads, scores, model_outputs, regularizations, **kwargs) -> None:
         if len(scores) > 1:
-            scores = [(f"Score{j}", score_value) for j, score_value in enumerate(scores)]
+            scores = [(f"Score[{j}]", score_value) for j, score_value in enumerate(scores)]
         else:
             scores = [("Score", score_value) for score_value in scores]
         scores += regularizations
-        if not self.mean:
-            scores = ((key, listify(values)) for key, values in scores)
-            scores = ([(f"{key}-{j}", value) for j, value in enumerate(values)]
-                      for key, values in scores)
-            scores = sum(scores, [])
         self.progbar.update(i + 1, scores + regularizations)
 
 
