@@ -164,8 +164,8 @@ class ActivationMaximization(ModelVisualization):
 
         if normalize_gradient is not None:
             warnings.warn(
-                ('`normalize_gradient` option of ActivationMaximization#__call__() is disabled.,'
-                 ' And this will be removed in future.'), DeprecationWarning)
+                "`normalize_gradient` option of ActivationMaximization#__call__() is disabled.,"
+                " And this will be removed in future.", DeprecationWarning)
 
         # Check model
         mixed_precision_model = is_mixed_precision(self.model)
@@ -280,9 +280,9 @@ class ActivationMaximization(ModelVisualization):
                 optimizer = tf.keras.mixed_precision.LossScaleOptimizer(optimizer)
             except ValueError as e:
                 raise ValueError(
-                    ("The same `optimizer` instance should be NOT used twice or more."
-                     " You can be able to avoid this error by creating new optimizer instance"
-                     " each calling __call__().")) from e
+                    "The same `optimizer` instance should be NOT used twice or more."
+                    " You can be able to avoid this error by creating new optimizer instance"
+                    " each calling __call__().") from e
         return optimizer
 
     def _get_input_ranges(self, input_range):
@@ -332,9 +332,8 @@ class ActivationMaximization(ModelVisualization):
         seed_inputs = list(seed_inputs)
         if len(seed_inputs) != len(self.model.inputs):
             raise ValueError(
-                ("The lengths of seed_inputs and model's inputs don't match."
-                 " seed_inputs: {}, model's inputs: {}").format(len(seed_inputs),
-                                                                len(self.model.inputs)))
+                "The lengths of seed_inputs and model's inputs don't match."
+                f" seed_inputs: {len(seed_inputs)}, model's inputs: {len(self.model.inputs)}")
         return seed_inputs
 
     def _get_input_modifiers(self, input_modifier):

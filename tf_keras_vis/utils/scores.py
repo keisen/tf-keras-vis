@@ -67,15 +67,14 @@ class BinaryScore(Score):
         super().__init__('BinaryScore')
         self.target_values = listify(target_values, return_empty_list_if_none=False)
         if None in self.target_values:
-            raise ValueError("Can't accept None value. [{}]".format(target_values))
+            raise ValueError(f"Can't accept None value. target_values: {target_values}")
         self.target_values = [bool(v) for v in self.target_values]
         if len(self.target_values) == 0:
-            raise ValueError('target_values is required. [{}]'.format(target_values))
+            raise ValueError(f"target_values is required. target_values: {target_values}")
 
-    def __call__(self, output):
+    def __call__(self, output) -> list:
         if output.ndim != 1 and not (output.ndim == 2 and output.shape[1] == 1):
-            raise ValueError("output shape must be (batch_size, 1), but was {}".format(
-                output.shape))
+            raise ValueError(f"`output` shape must be (batch_size, 1), but was {output.shape}")
         output = tf.reshape(output, (-1, ))
         target_values = self.target_values
         if len(target_values) == 1 and len(target_values) < output.shape[0]:
@@ -103,17 +102,17 @@ class CategoricalScore(Score):
         super().__init__('CategoricalScore')
         self.indices = listify(indices, return_empty_list_if_none=False)
         if None in self.indices:
-            raise ValueError("Can't accept None. indices: [{}]".format(indices))
+            raise ValueError(f"Can't accept None. indices: {indices}")
         if len(self.indices) == 0:
-            raise ValueError('indices is required. [{}]'.format(indices))
+            raise ValueError(f"`indices` is required. indices: {indices}")
 
     def __call__(self, output):
         if output.ndim < 2:
-            raise ValueError("output ndim must be 2 or more (batch_size, ..., channels), "
-                             "but was {}".format(output.ndim))
+            raise ValueError("`output` ndim must be 2 or more (batch_size, ..., channels), "
+                             f"but was {output.ndim}")
         if output.shape[-1] <= max(self.indices):
-            raise ValueError("Invalid index value. indices: {}, output.shape: {}".format(
-                self.indices, output.shape))
+            raise ValueError(
+                f"Invalid index value. indices: {self.indices}, output.shape: {output.shape}")
         indices = self.indices
         if len(indices) == 1 and len(indices) < output.shape[0]:
             indices = indices * output.shape[0]

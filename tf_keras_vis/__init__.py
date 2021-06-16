@@ -52,28 +52,27 @@ class ModelVisualization(ABC):
         scores = listify(score)
         for score in scores:
             if not callable(score):
-                raise ValueError('Score object must be callable! [{}]'.format(score))
+                raise ValueError(f"Score object must be callable! [{score}]")
         if len(scores) != len(self.model.outputs):
-            raise ValueError(('The model has {} outputs, '
-                              'but the number of score-functions you passed is {}.').format(
-                                  len(self.model.outputs), len(scores)))
+            raise ValueError(f"The model has {len(self.model.outputs)} outputs, "
+                             f"but the number of score-functions you passed is {len(scores)}.")
         return scores
 
     def _get_seed_inputs_for_multiple_inputs(self, seed_input):
         seed_inputs = listify(seed_input)
         if len(seed_inputs) != len(self.model.inputs):
-            raise ValueError(('The model has {} inputs, '
-                              'but the number of seed-inputs tensors you passed is {}.').format(
-                                  len(self.model.inputs), len(seed_inputs)))
+            raise ValueError(
+                f"The model has {len(self.model.inputs)} inputs, "
+                f"but the number of seed-inputs tensors you passed is {len(seed_inputs)}.")
         seed_inputs = (x if tf.is_tensor(x) else tf.constant(x) for x in seed_inputs)
         seed_inputs = (tf.expand_dims(x, axis=0) if len(x.shape) == len(tensor.shape[1:]) else x
                        for x, tensor in zip(seed_inputs, self.model.inputs))
         seed_inputs = list(seed_inputs)
         for i, (x, tensor) in enumerate(zip(seed_inputs, self.model.inputs)):
             if len(x.shape) != len(tensor.shape):
-                raise ValueError(("seed_input's shape is invalid. model-input index: {},"
-                                  " model-input shape: {},"
-                                  " seed_input shape: {}.".format(i, tensor.shape, x.shape)))
+                raise ValueError(
+                    f"seed_input's shape is invalid. model-input index: {i},"
+                    f" model-input shape: {tensor.shape}, seed_input shape: {x.shape}.")
         return seed_inputs
 
     def _calculate_scores(self, outputs, score_functions):

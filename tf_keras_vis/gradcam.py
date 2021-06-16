@@ -97,8 +97,9 @@ class Gradcam(ModelVisualization):
         """
 
         if normalize_gradient is not None:
-            warnings.warn(('`normalize_gradient` option is disabled.,'
-                           ' And this will be removed in future.'), DeprecationWarning)
+            warnings.warn(
+                '`normalize_gradient` option is disabled.,'
+                ' And this will be removed in future.', DeprecationWarning)
         # Preparing
         scores = self._get_scores_for_multiple_outputs(score)
         seed_inputs = self._get_seed_inputs_for_multiple_inputs(seed_input)
