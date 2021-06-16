@@ -8,8 +8,6 @@ from tensorflow.keras.layers import Conv2D, Dense, GlobalAveragePooling2D, Input
 from tensorflow.keras.models import Model
 
 from ..activation_maximization.callbacks import Callback
-from ..activation_maximization.input_modifiers import InputModifier
-from ..activation_maximization.regularizers import Regularizer
 
 
 def mock_dense_model():
@@ -124,9 +122,10 @@ class MockCallback(Callback):
         if self.raise_error_on_begin:
             raise ValueError('Test')
 
-    def __call__(self, *args):
+    def __call__(self, *args, **kwargs):
         self.on_call_was_called = True
         self.args = args
+        self.kwargs = kwargs
         if self.raise_error_on_call:
             raise ValueError('Test')
 
@@ -136,29 +135,15 @@ class MockCallback(Callback):
             raise ValueError('Test')
 
 
-class MockInputModifier(InputModifier):
-    def __init__(self):
-        self.seed_input = None
+class MockLegacyCallback(Callback):
+    def __init__(self, callback):
+        self.callback = callback
 
-    def __call__(self, seed_input):
-        self.seed_input = seed_input
-        return seed_input
+    def on_begin(self):
+        self.callback.on_begin()
 
+    def __call__(self, *args, **kwargs):
+        self.callback(*args, **kwargs)
 
-class MockRegularizer(Regularizer):
-    def __init__(self, name='MockRegularizer'):
-        self.name = name
-        self.inputs = None
-
-    def __call__(self, inputs):
-        self.inputs = inputs
-        return inputs
-
-
-class MockGradientModifier():
-    def __init__(self):
-        self.gradients = None
-
-    def __call__(self, gradients):
-        self.gradients = gradients
-        return gradients
+    def on_end(self):
+        self.callback.on_end()
