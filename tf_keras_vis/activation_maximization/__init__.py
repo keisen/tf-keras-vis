@@ -279,11 +279,8 @@ class ActivationMaximization(ModelVisualization):
                 for name, regularizer in regularizers[input_layer_name].items()
             ] for i, input_layer_name in enumerate(self.model.input_names))
             regularization_values = sum(regularization_values, [])
-        overall_regularization_values = sum((value for _, value in regularization_values))
-        regularized_score_values = [
-            (-1.0 * score_value) + tf.cast(overall_regularization_values, score_value.dtype)
-            for score_value in score_values
-        ]
+        regularized_score_values = [-1.0 * score_value for score_value in score_values]
+        regularized_score_values += [value for _, value in regularization_values]
         return regularization_values, regularized_score_values
 
     def _get_optimizer(self, optimizer, mixed_precision_model):
