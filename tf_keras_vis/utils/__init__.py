@@ -109,21 +109,27 @@ def zoom_factor(from_shape, to_shape):
 
 
 def is_mixed_precision(model):
+    """Check whether the model has any lower precision variable or not.
+
+    Args:
+        model (tf.keras.Model): A model instance.
+
+    Returns:
+        bool: When the model has any lower precision variable, True.
+    """
     if version(tf.version.VERSION) >= version("2.4.0"):
         for layer in model.layers:
-            if ((layer.variable_dtype != layer.compute_dtype) and
-                (layer.compute_dtype in [tf.float16, tf.bfloat16])) or \
+            if (layer.compute_dtype in [tf.float16, tf.bfloat16]) or \
                (isinstance(layer, tf.keras.Model) and is_mixed_precision(layer)):
                 return True
     return False
 
 
+@deprecated(version='0.7.0', reason="Unnecessary function.")
 def lower_precision_dtype(model):
     if version(tf.version.VERSION) >= version("2.4.0"):
-        layers = model.layers
-        layers = filter(
-            lambda l: (l.variable_dtype != l.compute_dtype) and
-            (l.compute_dtype in [tf.float16, tf.bfloat16]), layers)
-        layers = list(layers)
-        return layers[0].compute_dtype
+        for layer in model.layers:
+            if (layer.compute_dtype in [tf.float16, tf.bfloat16]) or \
+               (isinstance(layer, tf.keras.Model) and is_mixed_precision(layer)):
+                return layer.compute_dtype
     return model.dtype  # pragma: no cover
