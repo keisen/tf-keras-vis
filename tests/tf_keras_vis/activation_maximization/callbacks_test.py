@@ -1,8 +1,8 @@
 import os
 
 from tf_keras_vis.activation_maximization import ActivationMaximization
-from tf_keras_vis.activation_maximization.callbacks import GifGenerator2D, PrintLogger
-from tf_keras_vis.utils.test import MockScore
+from tf_keras_vis.activation_maximization.callbacks import GifGenerator2D, Progress, PrintLogger
+from tf_keras_vis.utils.scores import CategoricalScore
 
 
 class TestPrintLogger():
@@ -13,15 +13,30 @@ class TestPrintLogger():
 
     def test__call__(self, conv_model):
         activation_maximization = ActivationMaximization(conv_model)
-        result = activation_maximization(MockScore(), steps=1, callbacks=PrintLogger(1))
+        result = activation_maximization(CategoricalScore(1), steps=1, callbacks=PrintLogger(1))
+        assert result.shape == (1, 8, 8, 3)
+
+    def test__call__without_regularization(self, conv_model):
+        activation_maximization = ActivationMaximization(conv_model)
+        result = activation_maximization(CategoricalScore(1),
+                                         steps=1,
+                                         regularizers=None,
+                                         callbacks=PrintLogger(1))
+        assert result.shape == (1, 8, 8, 3)
+
+
+class TestProgress():
+    def test__call__(self, multiple_outputs_model):
+        activation_maximization = ActivationMaximization(multiple_outputs_model)
+        result = activation_maximization(
+            [CategoricalScore(0), CategoricalScore(0)], callbacks=Progress())
         assert result.shape == (1, 8, 8, 3)
 
     def test__call__without_regularizers(self, conv_model):
         activation_maximization = ActivationMaximization(conv_model)
-        result = activation_maximization(MockScore(),
-                                         steps=1,
+        result = activation_maximization(CategoricalScore(0),
                                          regularizers=None,
-                                         callbacks=PrintLogger(1))
+                                         callbacks=Progress())
         assert result.shape == (1, 8, 8, 3)
 
 
@@ -35,6 +50,6 @@ class TestGifGenerator2D():
         path = tmpdir.mkdir("tf-keras-vis").join("test.gif")
         activation_maximization = ActivationMaximization(conv_model)
         assert not os.path.isfile(path)
-        result = activation_maximization(MockScore(), steps=1, callbacks=GifGenerator2D(str(path)))
+        result = activation_maximization(CategoricalScore(0), callbacks=GifGenerator2D(str(path)))
         assert os.path.isfile(path)
         assert result.shape == (1, 8, 8, 3)
