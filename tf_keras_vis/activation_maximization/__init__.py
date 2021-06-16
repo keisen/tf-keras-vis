@@ -315,18 +315,15 @@ class ActivationMaximization(ModelVisualization):
                             for low, high in input_ranges)
             input_ranges = ((low, low + np.abs(low * 2.0)) if high is None else (low, high)
                             for low, high in input_ranges)
-            input_ranges = list(input_ranges)
             # Prepare input_shape
             input_shapes = (input_tensor.shape[1:] for input_tensor in self.model.inputs)
             # Generae seed-inputs
             seed_inputs = (tf.random.uniform(shape, low, high)
                            for (low, high), shape in zip(input_ranges, input_shapes))
-        else:
-            seed_inputs = listify(seed_inputs)
         # Convert numpy to tf-tensor
-        seed_inputs = (tf.constant(X, dtype=input_tensor.dtype)
+        seed_inputs = (tf.cast(tf.constant(X), dtype=input_tensor.dtype)
                        for X, input_tensor in zip(seed_inputs, self.model.inputs))
-        # Do expand_dims when tensor doesn't have the dim for samples
+        # Do expand_dims when an seed_input doesn't have the dim for samples
         seed_inputs = (tf.expand_dims(X, axis=0) if len(X.shape) < len(input_tensor.shape) else X
                        for X, input_tensor in zip(seed_inputs, self.model.inputs))
         seed_inputs = list(seed_inputs)
