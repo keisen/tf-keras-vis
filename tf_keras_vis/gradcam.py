@@ -4,15 +4,11 @@ from typing import Union
 import numpy as np
 import tensorflow as tf
 import tensorflow.keras.backend as K
-from packaging.version import parse as version
 from scipy.ndimage.interpolation import zoom
 
 from . import ModelVisualization
 from .utils import is_mixed_precision, standardize, zoom_factor
 from .utils.model_modifiers import ExtractIntermediateLayerForGradcam as ModelModifier
-
-if version(tf.version.VERSION) >= version("2.4.0"):
-    from tensorflow.keras.mixed_precision import LossScaleOptimizer
 
 
 class Gradcam(ModelVisualization):
@@ -113,7 +109,7 @@ class Gradcam(ModelVisualization):
         # When mixed precision enabled
         mixed_precision_model = is_mixed_precision(model)
         if mixed_precision_model:
-            optimizer = LossScaleOptimizer(tf.keras.optimizers.RMSprop())
+            optimizer = tf.keras.mixed_precision.LossScaleOptimizer(tf.keras.optimizers.RMSprop())
 
         with tf.GradientTape(watch_accessed_variables=False) as tape:
             tape.watch(seed_inputs)

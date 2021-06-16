@@ -5,16 +5,12 @@ from typing import Union
 import numpy as np
 import tensorflow as tf
 import tensorflow.keras.backend as K
-from packaging.version import parse as version
 
 from .. import ModelVisualization
 from ..utils import get_num_of_steps_allowed, is_mixed_precision, listify
 from .callbacks import managed_callbacks
 from .input_modifiers import Jitter, Rotate2D, Scale
 from .regularizers import Norm, TotalVariation2D
-
-if version(tf.version.VERSION) >= version("2.4.0"):
-    from tensorflow.keras.mixed_precision import LossScaleOptimizer
 from ..utils.regularizers import LegacyRegularizer
 
 
@@ -281,7 +277,7 @@ class ActivationMaximization(ModelVisualization):
         if mixed_precision_model:
             try:
                 # Wrap optimizer
-                optimizer = LossScaleOptimizer(optimizer)
+                optimizer = tf.keras.mixed_precision.LossScaleOptimizer(optimizer)
             except ValueError as e:
                 raise ValueError(
                     ("The same `optimizer` instance should be NOT used twice or more."
