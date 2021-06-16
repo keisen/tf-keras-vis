@@ -25,9 +25,11 @@ class ActivationMaximization(ModelVisualization):
             score,
             seed_input=None,
             input_range=(0, 255),
-            input_modifiers=[Jitter(jitter=8), Rotate2D(degree=3)],
-            regularizers=[TotalVariation2D(weight=1.0),
-                          Norm(weight=1.0, p=2)],
+            input_modifiers=[Jitter(jitter=4),
+                             Rotate2D(degree=3),
+                             Scale(low=0.996, high=1.01)],
+            regularizers=[TotalVariation2D(weight=0.2),
+                          Norm(weight=0.01, p=6)],
             steps=200,
             optimizer=None,  # When None, the default is tf.optimizers.RMSprop(1.0, 0.999)
             normalize_gradient=None,  # Disabled option.
@@ -99,7 +101,7 @@ class ActivationMaximization(ModelVisualization):
                         ...
                     ]
 
-                Defaults to [Jitter(jitter=8), Rotate(degree=3)].
+                Defaults to [Jitter(jitter=4), Rotate(degree=3), Scale(low=0.996, high=1.01)].
             regularizers (Union[Regularizer,Callable,
                 list[Regularizer,Callable,list[Regularizer,Callable]],
                 Dict[str,Union[Regularizer,Callable,list[Regularizer,Callable]]]], optional):
@@ -125,8 +127,8 @@ class ActivationMaximization(ModelVisualization):
                 Defaults to [TotalVariation2D(weight=0.2), Norm(weight=0.01, p=6)].
             steps (int, optional): The number of gradient descent iterations. Defaults to 200.
             optimizer (tf.keras.optimizers.Optimizer, optional):
-                A `tf.optimizers.Optimizer` instance.
-                When None, `tf.optimizers.RMSprop(1.0, 0.95)` will be automatically created.
+                A `tf.optimizers.Optimizer` instance. When None,
+                `tf.optimizers.RMSprop(learning_rate=1.0, rho=0.999)` will be automatically created.
                 Defaults to None.
             normalize_gradient (bool, optional): ![Note] This option is now disabled.
                 Defaults to None.
@@ -273,7 +275,7 @@ class ActivationMaximization(ModelVisualization):
 
     def _get_optimizer(self, optimizer, mixed_precision_model):
         if optimizer is None:
-            optimizer = tf.optimizers.RMSprop(1.0, 0.999)
+            optimizer = tf.optimizers.RMSprop(learning_rate=1.0, rho=0.999)
         if mixed_precision_model:
             try:
                 # Wrap optimizer
