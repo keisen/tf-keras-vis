@@ -74,7 +74,7 @@ class Scorecam(ModelVisualization):
             batch_size (int, optional): The number of samples per batch. Defaults to 32.
             max_N (int, optional): Setting None or under Zero is that we do NOT recommend,
                 because it takes a long time to calculate CAM.
-                When not None or over Zero of Integer, run as Faster-ScoreCAM.
+                When not None and over Zero of Integer, run as Faster-ScoreCAM.
                 Set larger number, need more time to visualize CAM
                 but to be able to get clearer attention images.
                 (see for details: https://github.com/tabayashi0117/Score-CAM#faster-score-cam)
@@ -109,12 +109,13 @@ class Scorecam(ModelVisualization):
         # For efficiently visualizing, extract maps that has a large variance.
         # This excellent idea is devised by tabayashi0117.
         # (see for details: https://github.com/tabayashi0117/Score-CAM#faster-score-cam)
-        if max_N is None or max_N == -1:
+        if max_N is None or max_N <= 0:
             max_N = get_num_of_steps_allowed(penultimate_output.shape[-1])
-        elif max_N == 0:
-            raise ValueError("max_N can't be set 0, must be None, -1 or 1 or more.")
-        else:
+        elif max_N > 0 and max_N <= penultimate_output.shape[-1]:
             max_N = get_num_of_steps_allowed(max_N)
+        else:
+            raise ValueError(f"max_N must be 1 or more and {penultimate_output.shape[-1]} or less."
+                             f" max_N: {max_N}")
         if max_N < penultimate_output.shape[-1]:
             activation_map_std = tf.math.reduce_std(penultimate_output,
                                                     axis=tuple(
