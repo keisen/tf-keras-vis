@@ -111,7 +111,7 @@ def zoom_factor(from_shape, to_shape) -> bool:
     return tuple(t / f for f, t in iter(zip(from_shape, to_shape)))
 
 
-def is_mixed_precision(model):
+def is_mixed_precision(model) -> bool:
     """Check whether the model has any lower precision variable or not.
 
     Args:
@@ -122,7 +122,7 @@ def is_mixed_precision(model):
     """
     if version(tf.version.VERSION) >= version("2.4.0"):
         for layer in model.layers:
-            if (layer.compute_dtype in [tf.float16, tf.bfloat16]) or \
+            if (layer.compute_dtype == tf.float16) or \
                (isinstance(layer, tf.keras.Model) and is_mixed_precision(layer)):
                 return True
     return False
