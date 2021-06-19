@@ -7,10 +7,10 @@ tf-keras-vis
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 
-Announcement
+News
 ---
 
-**![NOTE]** In this release, fixing some critical bugs of `ActivationMaximization` and `Regularizer`, the calculation of gradients are now more stable, and some known issues related to mixed-precision are also fixed. This is good news for users using mixed-precision mechanisms and users tuning the hyper parameters of `ActivationMaximization` for their own model from now on.
+**NOTE:** We've released `v0.7.0`! In this release, fixing some critical bugs of `ActivationMaximization` and `Regularizer`, the calculation of gradients are now more stable, and some known issues related to mixed-precision are also fixed. This is good news for users using mixed-precision mechanisms and users tuning the hyper parameters of `ActivationMaximization` for their own model from now on.
 
 However, because the calculated values of `ActivationMaximization` are now a bit different compared to the past versions, this release might badly affect users who already have the code that was adjusted to the past `ActivationMaximization`.
 
@@ -176,8 +176,7 @@ ToDo
    * Advanced score functions
    * Tuning Activation Maximization
    * Visualizing attentions for N-dim image inputs
-* ~~API documentations~~
-* Publish API documentations
-* We're going to add some methods such as below.
+*  Publish API documentations as a website
+*  We're going to add some methods such as below.
    - Deep Dream
    - Style transfer
