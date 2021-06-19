@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Callable, Union
+from typing import Union
 
 import tensorflow as tf
 from tensorflow.python.keras.layers.convolutional import Conv
@@ -29,6 +29,14 @@ class ModelModifier(ABC):
 class ReplaceToLinear(ModelModifier):
     """A model modifier that replaces the activation functions of all output layers to
         `tf.keras.activations.linear`.
+
+        Please note that this modifier must be set the end of modifiers list
+        that is passed to `ModelVisualization#__init__()`. For example::
+
+            # When visualizing `intermediate-1` layer.
+            ActivationMaximization(YOUR_MODEL,
+                                   model_modifier=[ExtractIntermediateLayer("intermediate-1"),
+                                                   ReplaceToLinear()])
 
     Attributes:
         model (tf.keras.Model): A model instance.
@@ -63,18 +71,22 @@ class ExtractIntermediateLayer(ModelModifier):
 
 
 class GuidedBackpropagation(ModelModifier):
-    """A model modifier that constructs new model instance for Guided back propagation.
+    """A model modifier that replaces the gradient calculation of activation functions to
+        Guided calculation.
 
         For details on Guided back propagation, see the papers:
+
         [String For Simplicity: The All Convolutional Net]
         (https://arxiv.org/pdf/1412.6806.pdf)
+
         [Grad-CAM: Why did you say that?
         Visual Explanations from Deep Networks via Gradient-based Localization]
         (https://arxiv.org/pdf/1610.02391v1.pdf)
 
-        ![Note]: There is a discussion that
+        ![Note]: Please note that there is a discussion that
         Guided Backpropagation is not working as model explanations,
         it may be working just as edge detections.
+
         [Sanity Checks for Saliency Maps](https://arxiv.org/pdf/1810.03292.pdf)
 
     Attributes:

@@ -72,7 +72,7 @@ def standardize(array, value_range=(1., 0.)) -> np.ndarray:
         value_range (tuple, optional): `array` will be scaled in this range. Defaults to (1., 0.).
 
     Returns:
-        np.ndarray: standardized array.
+        np.ndarray: Standardized array.
     """
     max_value = np.max(array, axis=tuple(range(array.ndim)[1:]), keepdims=True)
     min_value = np.min(array, axis=tuple(range(array.ndim)[1:]), keepdims=True)

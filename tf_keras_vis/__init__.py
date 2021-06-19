@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
+from typing import Union
 
+import numpy as np
 import tensorflow as tf
 
 from .utils import listify
@@ -11,7 +13,7 @@ class ModelVisualization(ABC):
     Attributes:
         model (tf.keras.Model): The target model instance.
     """
-    def __init__(self, model, model_modifier=None, clone=True):
+    def __init__(self, model, model_modifier=None, clone=True) -> None:
         """Create Visualization class instance that analyze the model for debugging.
 
         Args:
@@ -40,11 +42,14 @@ class ModelVisualization(ABC):
                     self.model = new_model
 
     @abstractmethod
-    def __call__(self):
+    def __call__(self) -> Union[np.ndarray, list]:
         """Analyze the model.
 
         Raises:
             NotImplementedError: The `__call__()` of subclass should be called, not this.
+
+        Returns:
+            Union[np.ndarray,list]: Visualized image(s) or something(s).
         """
         raise NotImplementedError()
 
