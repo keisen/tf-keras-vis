@@ -173,7 +173,8 @@ class ActivationMaximization(ModelVisualization):
         Raises:
             ValueError: When any arguments are invalid.
         """
-        arguments = self._arguments(locals())
+        arguments = dict(
+            (k, v) for k, v in locals().items() if k != 'self' and not k.startswith('_'))
 
         if normalize_gradient is not None:
             warnings.warn(
@@ -262,10 +263,6 @@ class ActivationMaximization(ModelVisualization):
         if len(self.model.inputs) == 1 and (seed_input is None or not isinstance(seed_input, list)):
             clipped_value = clipped_value[0]
         return clipped_value
-
-    def _arguments(self, variables):
-        variables = ((k, v) for k, v in variables.items() if k != 'self' and not k.startswith('_'))
-        return dict(variables)
 
     def _calculate_regularization(self, regularizers, seed_inputs, score_values):
         if isinstance(regularizers, list):
