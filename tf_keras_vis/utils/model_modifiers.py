@@ -57,15 +57,15 @@ class ExtractIntermediateLayer(ModelModifier):
         model (tf.keras.Model): A model instance.
     """
     def __init__(self, index_or_name) -> None:
-        if type(index_or_name) not in [str, int]:
+        if not isinstance(index_or_name, (str, int)):
             raise TypeError("The type of `index_or_name` must be a object of string or integer."
                             f"index_or_name: {index_or_name}")
         self.index_or_name = index_or_name
 
     def __call__(self, model) -> tf.keras.Model:
-        if type(self.index_or_name) == int:
+        if isinstance(self.index_or_name, int):
             target_layer = model.get_layer(index=self.index_or_name)
-        if type(self.index_or_name) == str:
+        if isinstance(self.index_or_name, str):
             target_layer = model.get_layer(name=self.index_or_name)
         return tf.keras.Model(inputs=model.inputs, outputs=target_layer.output)
 
@@ -95,7 +95,7 @@ class GuidedBackpropagation(ModelModifier):
     def __init__(self, target_activations=[tf.keras.activations.relu]) -> None:
         self.target_activations = target_activations
 
-    def get_guided_activation(self, activation) -> Callable:
+    def _get_guided_activation(self, activation):
         @tf.custom_gradient
         def guided_activation(x):
             def grad(dy):
@@ -108,7 +108,7 @@ class GuidedBackpropagation(ModelModifier):
     def __call__(self, model) -> None:
         for layer in (layer for layer in model.layers if hasattr(layer, "activation")):
             if layer.activation in self.target_activations:
-                layer.activation = self.get_guided_activation(layer.activation)
+                layer.activation = self._get_guided_activation(layer.activation)
 
 
 class ExtractIntermediateLayerForGradcam(ModelModifier):

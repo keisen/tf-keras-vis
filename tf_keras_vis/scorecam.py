@@ -3,7 +3,7 @@ from typing import Union
 import numpy as np
 import tensorflow as tf
 import tensorflow.keras.backend as K
-from scipy.ndimage.interpolation import zoom
+from scipy.ndimage import zoom
 
 from . import ModelVisualization
 from .utils import get_num_of_steps_allowed, is_mixed_precision, listify, standardize, zoom_factor
@@ -128,45 +128,41 @@ class Scorecam(ModelVisualization):
 
         # Upsampling activation-maps
         input_shapes = [seed_input.shape for seed_input in seed_inputs]
-        factors = (zoom_factor(penultimate_output.shape[:-1], input_shape[:-1])
-                   for input_shape in input_shapes)
-        upsampled_activation_maps = [zoom(penultimate_output, factor + (1, )) for factor in factors]
-        map_shapes = [activation_map.shape for activation_map in upsampled_activation_maps]
+        zoom_factors = (zoom_factor(penultimate_output.shape[1:-1], input_shape[1:-1])
+                        for input_shape in input_shapes)
+        zoom_factors = ((1, ) + factor + (1, ) for factor in zoom_factors)
+        upsampled_activation_maps = [
+            zoom(penultimate_output, factor, order=0, mode='nearest', prefilter=False)
+            for factor in zoom_factors
+        ]
+        map_shapes = [map.shape for map in upsampled_activation_maps]
 
         # Normalizing activation-maps
-        min_activation_maps = (np.min(activation_map,
-                                      axis=tuple(range(activation_map.ndim)[1:-1]),
-                                      keepdims=True)
-                               for activation_map in upsampled_activation_maps)
-        max_activation_maps = (np.max(activation_map,
-                                      axis=tuple(range(activation_map.ndim)[1:-1]),
-                                      keepdims=True)
-                               for activation_map in upsampled_activation_maps)
-        normalized_activation_maps = (
-            (activation_map - min_activation_map) /
-            (max_activation_map - min_activation_map + K.epsilon())
-            for activation_map, min_activation_map, max_activation_map in zip(
-                upsampled_activation_maps, min_activation_maps, max_activation_maps))
+        min_activation_maps = (np.min(map, axis=tuple(range(map.ndim)[1:-1]), keepdims=True)
+                               for map in upsampled_activation_maps)
+        max_activation_maps = (np.max(map, axis=tuple(range(map.ndim)[1:-1]), keepdims=True)
+                               for map in upsampled_activation_maps)
+        normalized_activation_maps = zip(upsampled_activation_maps, min_activation_maps,
+                                         max_activation_maps)
+        normalized_activation_maps = ((map - min_map) / (max_map - min_map + K.epsilon())
+                                      for map, min_map, max_map in normalized_activation_maps)
 
         # Masking inputs
-        input_tile_axes = ((map_shape[-1], ) + tuple(np.ones(len(input_shape), np.int))
-                           for input_shape, map_shape in zip(input_shapes, map_shapes))
-        mask_templates = (np.tile(seed_input, axes)
-                          for seed_input, axes in zip(seed_inputs, input_tile_axes))
-        map_transpose_axes = ((len(map_shape) - 1, ) + tuple(range(len(map_shape))[:-1])
-                              for map_shape in map_shapes)
-        masks = (np.transpose(activation_map,
-                              transpose_axis) for activation_map, transpose_axis in zip(
-                                  normalized_activation_maps, map_transpose_axes))
-        map_tile_axes = (tuple(np.ones(len(map_shape), np.int)) + (input_shape[-1], )
+        input_tile_reps = ((channels, ) + (1, ) * len(shape) for shape in input_shapes)
+        input_templates = (np.tile(seed_input, reps)
+                           for seed_input, reps in zip(seed_inputs, input_tile_reps))
+        map_transpose_axes = ((len(shape) - 1, ) + tuple(range(len(shape))[:-1])
+                              for shape in map_shapes)
+        masks = (np.transpose(map, axes)
+                 for map, axes in zip(normalized_activation_maps, map_transpose_axes))
+        masks = (np.expand_dims(mask, axis=-1) for mask in masks)
+        map_tile_reps = ((1, ) * len(map_shape) + (input_shape[-1], )
                          for input_shape, map_shape in zip(input_shapes, map_shapes))
-        masks = (np.tile(np.expand_dims(activation_map, axis=-1), tile_axis)
-                 for activation_map, tile_axis in zip(masks, map_tile_axes))
-        masked_seed_inputs = (mask_template * mask
-                              for mask_template, mask in zip(mask_templates, masks))
+        masks = (np.tile(mask, reps) for mask, reps in zip(masks, map_tile_reps))
+        masked_seed_inputs = (template * mask for template, mask in zip(input_templates, masks))
         masked_seed_inputs = [
-            np.reshape(masked_seed_input, (-1, ) + masked_seed_input.shape[2:])
-            for masked_seed_input in masked_seed_inputs
+            np.reshape(seed_input, (-1, ) + seed_input.shape[2:])
+            for seed_input in masked_seed_inputs
         ]
 
         # Predicting masked seed-inputs
@@ -192,8 +188,8 @@ class Scorecam(ModelVisualization):
                 cam = standardize(cam)
             return cam
 
-        factors = (zoom_factor(cam.shape, X.shape) for X in seed_inputs)
-        cam = [zoom(cam, factor) for factor in factors]
+        zoom_factors = (zoom_factor(cam.shape, X.shape) for X in seed_inputs)
+        cam = [zoom(cam, factor) for factor in zoom_factors]
         if standardize_cam:
             cam = [standardize(x) for x in cam]
         if len(self.model.inputs) == 1 and not isinstance(seed_input, list):
