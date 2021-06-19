@@ -56,7 +56,8 @@ class TotalVariation2D(Regularizer):
 
     def __call__(self, input_value) -> tf.Tensor:
         if len(input_value.shape) != 4:
-            raise ValueError('')  # TODO
+            raise ValueError("seed_input's shape must be (batch_size, height, width, channels), "
+                             f"but was {input_value.shape}.")
         tv = tf.image.total_variation(input_value)
         tv /= np.prod(input_value.shape[1:])
         tv *= self.weight
