@@ -54,7 +54,7 @@ class TestBinaryScore():
         score = BinaryScore(target_values)
         with assert_error(expected_error):
             score_value = score(output)
-            assert score_value == expected
+            assert tf.math.reduce_all(score_value == expected)
 
 
 class TestCategoricalScore():

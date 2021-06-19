@@ -28,7 +28,8 @@ class Score(ABC):
             NotImplementedError: This method must be overwritten.
 
         Returns:
-            Union[tf.Tensor, list, tuple]: Score values or a list or tuple of them.
+            Union[tf.Tensor, list[tf.Tensor], tuple[tf.Tensor]]:
+                Score values or a list or tuple of them.
         """
         raise NotImplementedError()
 
@@ -42,7 +43,7 @@ class InactiveScore(Score):
     Todo:
         * Write examples
     """
-    def __init__(self):
+    def __init__(self) -> None:
         """Constructor.
         """
         super().__init__('InactiveScore')
@@ -58,7 +59,7 @@ class BinaryScore(Score):
     Todo:
         * Write examples
     """
-    def __init__(self, target_values):
+    def __init__(self, target_values) -> None:
         """Constructor.
 
         Args:
@@ -76,15 +77,14 @@ class BinaryScore(Score):
         if len(self.target_values) == 0:
             raise ValueError(f"target_values is required. target_values: {target_values}")
 
-    def __call__(self, output) -> list:
-        if output.ndim != 1 and not (output.ndim == 2 and output.shape[1] == 1):
+    def __call__(self, output) -> tf.Tensor:
+        if not (output.ndim == 2 and output.shape[1] == 1):
             raise ValueError(f"`output` shape must be (batch_size, 1), but was {output.shape}")
         output = tf.reshape(output, (-1, ))
         target_values = self.target_values
         if len(target_values) == 1 and len(target_values) < output.shape[0]:
             target_values = target_values * output.shape[0]
-        score = [val if positive else 1.0 - val for val, positive in zip(output, target_values)]
-        return score
+        return tf.math.abs(output - (1.0 - tf.constant(target_values, dtype=output.dtype)))
 
 
 class CategoricalScore(Score):
@@ -94,7 +94,7 @@ class CategoricalScore(Score):
     Todo:
         * Write examples
     """
-    def __init__(self, indices):
+    def __init__(self, indices) -> None:
         """Constructor.
 
         Args:
@@ -110,7 +110,7 @@ class CategoricalScore(Score):
         if len(self.indices) == 0:
             raise ValueError(f"`indices` is required. indices: {indices}")
 
-    def __call__(self, output):
+    def __call__(self, output) -> tf.Tensor:
         if output.ndim < 2:
             raise ValueError("`output` ndim must be 2 or more (batch_size, ..., channels), "
                              f"but was {output.ndim}")

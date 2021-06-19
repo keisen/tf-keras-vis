@@ -11,7 +11,7 @@ from tf_keras_vis.activation_maximization.regularizers import Norm, TotalVariati
 from tf_keras_vis.utils.regularizers import LegacyRegularizer
 from tf_keras_vis.utils.regularizers import Norm as LegacyNorm
 from tf_keras_vis.utils.regularizers import TotalVariation2D as LegacyTotalVariation2D
-from tf_keras_vis.utils.scores import CategoricalScore
+from tf_keras_vis.utils.scores import BinaryScore, CategoricalScore
 from tf_keras_vis.utils.test import (MockLegacyCallback, NO_ERROR, MockCallback, assert_error,
                                      dummy_sample, mock_conv_model,
                                      mock_conv_model_with_float32_output, mock_multiple_io_model,
@@ -485,7 +485,7 @@ class TestActivationMaximizationWithMultipleOutputsModel():
         ([CategoricalScore(0), None], ValueError),
         ([CategoricalScore(0), score_with_tuple], NO_ERROR),
         ([CategoricalScore(0), score_with_list], NO_ERROR),
-        ([CategoricalScore(0), CategoricalScore(0)], NO_ERROR),
+        ([CategoricalScore(0), BinaryScore(False)], NO_ERROR),
     ])
     def test__call__if_score_is_(self, scores, expected_error, multiple_outputs_model):
         activation_maximization = ActivationMaximization(multiple_outputs_model)
@@ -505,7 +505,7 @@ class TestActivationMaximizationWithMultipleOutputsModel():
     def test__call__if_seed_input_is_(self, seed_input, expected, multiple_outputs_model):
         activation_maximization = ActivationMaximization(multiple_outputs_model)
         result = activation_maximization(
-            [CategoricalScore(1), CategoricalScore(0)], seed_input=seed_input)
+            [CategoricalScore(1), BinaryScore(False)], seed_input=seed_input)
         if type(expected) is list:
             assert type(result) == list
             result = result[0]
@@ -526,7 +526,7 @@ class TestActivationMaximizationWithMultipleIOModel():
         ([CategoricalScore(0), None], ValueError),
         ([CategoricalScore(0), score_with_tuple], NO_ERROR),
         ([CategoricalScore(0), score_with_list], NO_ERROR),
-        ([CategoricalScore(0), CategoricalScore(0)], NO_ERROR),
+        ([CategoricalScore(0), BinaryScore(False)], NO_ERROR),
     ])
     def test__call__if_score_is_(self, scores, expected_error, multiple_io_model):
         activation_maximization = ActivationMaximization(multiple_io_model)
@@ -551,7 +551,7 @@ class TestActivationMaximizationWithMultipleIOModel():
         activation_maximization = ActivationMaximization(multiple_io_model)
         with assert_error(expected_error):
             result = activation_maximization(
-                [CategoricalScore(1), CategoricalScore(0)], seed_input=seed_inputs)
+                [CategoricalScore(1), BinaryScore(True)], seed_input=seed_inputs)
             if seed_inputs is not None and seed_inputs[0].shape[0] == 4:
                 assert result[0].shape == (4, 8, 8, 3)
                 assert result[1].shape == (4, 10, 10, 3)
@@ -601,7 +601,7 @@ class TestActivationMaximizationWithMultipleIOModel():
         activation_maximization = ActivationMaximization(multiple_io_model)
         with assert_error(expected_error):
             result = activation_maximization(
-                [CategoricalScore(1), CategoricalScore(0)], input_modifiers=input_modifiers)
+                [CategoricalScore(1), BinaryScore(True)], input_modifiers=input_modifiers)
             assert result[0].shape == (1, 8, 8, 3)
             assert result[1].shape == (1, 10, 10, 3)
 
@@ -640,7 +640,7 @@ class TestActivationMaximizationWithMultipleIOModel():
         activation_maximization = ActivationMaximization(multiple_io_model)
         with assert_error(expected_error):
             result = activation_maximization(
-                [CategoricalScore(0), CategoricalScore(0)], regularizers=regularizers)
+                [CategoricalScore(0), BinaryScore(True)], regularizers=regularizers)
             assert result[0].shape == (1, 8, 8, 3)
             assert result[1].shape == (1, 10, 10, 3)
 
@@ -698,7 +698,7 @@ class TestActivationMaximizationWithMultipleIOModel():
         activation_maximization = ActivationMaximization(multiple_io_model)
         with assert_error(expected_error):
             result = activation_maximization(
-                [CategoricalScore(0), CategoricalScore(0)], regularizers=regularizers)
+                [CategoricalScore(0), BinaryScore(True)], regularizers=regularizers)
             assert result[0].shape == (1, 8, 8, 3)
             assert result[1].shape == (1, 10, 10, 3)
 
@@ -721,11 +721,11 @@ class TestActivationMaximizationWithMultipleIOModel():
         activation_maximization = ActivationMaximization(multiple_io_model)
         with assert_error(expected_error):
             result = activation_maximization(
-                [CategoricalScore(1), CategoricalScore(0)], seed_input=seed_inputs)
+                [CategoricalScore(1), BinaryScore(True)], seed_input=seed_inputs)
             assert not np.all(result[0] == 0.0)
             assert not np.all(result[1] == 0.0)
             result = activation_maximization(
-                [CategoricalScore(1), CategoricalScore(0)],
+                [CategoricalScore(1), BinaryScore(True)],
                 seed_input=seed_inputs,
                 activation_modifiers=activation_modifiers)
             if modified_0:
@@ -844,7 +844,7 @@ class TestMixedPrecision():
 
     def _test_for_multiple_io(self, model):
         activation_maximization = ActivationMaximization(model)
-        result = activation_maximization([CategoricalScore(1), CategoricalScore(0)])
+        result = activation_maximization([CategoricalScore(1), BinaryScore(False)])
         assert result[0].shape == (1, 8, 8, 3)
         assert result[1].shape == (1, 10, 10, 3)
 
