@@ -107,8 +107,8 @@ def find_layer(model, condition, offset=None, reverse=True) -> tf.keras.layers.L
     return None
 
 
-def zoom_factor(from_shape, to_shape) -> bool:
-    return tuple(t / f for f, t in iter(zip(from_shape, to_shape)))
+def zoom_factor(from_shape, to_shape) -> Tuple[float, float]:
+    return tuple(float(t) / float(f) for f, t in zip(from_shape, to_shape))
 
 
 def is_mixed_precision(model) -> bool:
