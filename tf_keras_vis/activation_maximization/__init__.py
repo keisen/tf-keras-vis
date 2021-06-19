@@ -9,7 +9,7 @@ import tensorflow.keras.backend as K
 from .. import ModelVisualization
 from ..utils import get_num_of_steps_allowed, is_mixed_precision, listify
 from .callbacks import managed_callbacks
-from .input_modifiers import Jitter, Rotate2D, Scale
+from .input_modifiers import Jitter, Rotate2D
 from .regularizers import Norm, TotalVariation2D
 from ..utils.regularizers import LegacyRegularizer
 
@@ -25,11 +25,9 @@ class ActivationMaximization(ModelVisualization):
             score,
             seed_input=None,
             input_range=(0, 255),
-            input_modifiers=[Jitter(jitter=4),
-                             Rotate2D(degree=3),
-                             Scale(low=0.996, high=1.01)],
-            regularizers=[TotalVariation2D(weight=0.2),
-                          Norm(weight=0.01, p=6)],
+            input_modifiers=[Jitter(jitter=16), Rotate2D(degree=1)],
+            regularizers=[TotalVariation2D(weight=1.0),
+                          Norm(weight=0.3, p=1)],
             steps=200,
             optimizer=None,  # When None, the default is tf.optimizers.RMSprop(1.0, 0.999)
             normalize_gradient=None,  # Disabled option.

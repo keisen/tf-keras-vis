@@ -92,8 +92,8 @@ class Rotate(InputModifier):
                             axes=self.axes,
                             reshape=False,
                             order=1,
-                            mode='nearest',
-                            prefilter=True)
+                            mode='reflect',
+                            prefilter=False)
         return seed_input
 
 
@@ -144,7 +144,7 @@ class Scale(InputModifier):
         _factor = factor = np.random.uniform(self.low, self.high)
         factor *= np.ones(ndim - 2)
         factor = (1, ) + tuple(factor) + (1, )
-        seed_input = zoom(seed_input, factor, order=1, mode='nearest', prefilter=True)
+        seed_input = zoom(seed_input, factor, order=1, mode='reflect', prefilter=False)
         if _factor > 1.0:
             indices = (self._central_crop_range(x, e) for x, e in zip(seed_input.shape, shape))
             indices = (slice(start, stop) for start, stop in indices)
