@@ -12,6 +12,7 @@ from tf_keras_vis.utils.test import (NO_ERROR, assert_error, dummy_sample, mock_
 
 class TestReplaceToLinear():
     @pytest.mark.parametrize("model", [mock_conv_model(), mock_multiple_outputs_model()])
+    @pytest.mark.usefixtures("mixed_precision")
     def test__call__(self, model):
         assert model.get_layer(name='dense_1').activation != tf.keras.activations.linear
         if len(model.outputs) > 1:
@@ -31,6 +32,7 @@ class TestExtractIntermediateLayer():
     @pytest.mark.parametrize("model", [mock_conv_model(), mock_multiple_outputs_model()])
     @pytest.mark.parametrize("layer,expected_error", [(None, TypeError), (1, NO_ERROR),
                                                       ('conv_1', NO_ERROR)])
+    @pytest.mark.usefixtures("mixed_precision")
     def test__call__(self, model, layer, expected_error):
         assert model.outputs[0].shape.as_list() == [None, 2]
         with assert_error(expected_error):
@@ -45,6 +47,7 @@ class TestExtractIntermediateLayerForGradcam():
 
 
 class TestExtractGuidedBackpropagation():
+    @pytest.mark.usefixtures("mixed_precision")
     def test__call__(self, conv_model):
         instance = Saliency(conv_model, model_modifier=GuidedBackpropagation())
         guided_model = instance.model

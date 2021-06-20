@@ -13,6 +13,7 @@ from tf_keras_vis.utils.test import NO_ERROR, assert_error, dummy_sample
     (3, NO_ERROR),
     (100, ValueError),
 ])
+@pytest.mark.usefixtures("mixed_precision")
 class TestScorecam():
     def test__call__if_max_N_is_(self, max_N, expected_error, conv_model):
         with assert_error(expected_error):

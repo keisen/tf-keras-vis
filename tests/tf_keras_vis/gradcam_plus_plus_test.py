@@ -8,6 +8,7 @@ from tf_keras_vis.utils.test import dummy_sample
 
 class TestGradcamPlusPlus():
     @pytest.mark.parametrize("activation_modifier", [None, (lambda cam: K.relu(cam))])
+    @pytest.mark.usefixtures("mixed_precision")
     def test__call__if_activation_modifier_is_(self, activation_modifier, conv_model):
         cam = GradcamPlusPlus(conv_model)
         result = cam(CategoricalScore(0),

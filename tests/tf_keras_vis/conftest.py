@@ -7,10 +7,10 @@ from tf_keras_vis.utils.test import (mock_conv_model, mock_conv_model_with_sigmo
                                      mock_multiple_io_model, mock_multiple_outputs_model)
 
 
-@pytest.fixture(scope='class',
+@pytest.fixture(scope='function',
                 params=["float32"]
                 if version(tf.version.VERSION) < version("2.4.0") else ["float32", "mixed_float16"])
-def mark_mixed_precision(request):
+def mixed_precision(request):
     if version(tf.version.VERSION) >= version("2.4.0"):
         tf.keras.mixed_precision.set_global_policy(request.param)
     yield
