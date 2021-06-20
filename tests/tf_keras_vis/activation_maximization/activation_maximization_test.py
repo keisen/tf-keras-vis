@@ -258,11 +258,12 @@ class TestActivationMaximization():
 
     @pytest.mark.parametrize("activation_modifiers,modified,expected_error", [
         (None, False, NO_ERROR),
-        (lambda x: x * 0.0, True, NO_ERROR),
+        (lambda x: np.ones(x.shape, np.float), True, NO_ERROR),
         (dict(input_1=None), False, NO_ERROR),
-        (dict(input_1=lambda x: x * 0.0), True, NO_ERROR),
-        (dict(input_2=lambda x: x * 0.0), False, ValueError),
-        (dict(input_1=lambda x: x * 0.0, input_2=lambda x: x * 0.0), False, ValueError),
+        (dict(input_1=lambda x: np.ones(x.shape, np.float)), True, NO_ERROR),
+        (dict(input_2=lambda x: np.ones(x.shape, np.float)), False, ValueError),
+        (dict(input_1=lambda x: np.ones(x.shape, np.float),
+              input_2=lambda x: np.ones(x.shape, np.float)), False, ValueError),
     ])
     @pytest.mark.usefixtures("mixed_precision")
     def test__call__with_activation_modifiers(self, activation_modifiers, modified, expected_error,
@@ -276,9 +277,9 @@ class TestActivationMaximization():
                                              seed_input=seed_inputs,
                                              activation_modifiers=activation_modifiers)
             if modified:
-                assert np.all(result == 0.0)
+                assert np.all(result == 1.0)
             else:
-                assert not np.all(result == 0.0)
+                assert not np.all(result == 1.0)
 
 
 class TestActivationMaximizationWithMultipleInputsModel():
@@ -469,16 +470,18 @@ class TestActivationMaximizationWithMultipleInputsModel():
 
     @pytest.mark.parametrize("activation_modifiers,modified_0,modified_1,expected_error", [
         (None, False, False, NO_ERROR),
-        (lambda x: x * 0.0, True, False, NO_ERROR),
+        (lambda x: np.ones(x.shape, np.float), True, False, NO_ERROR),
         (dict(input_1=None), False, False, NO_ERROR),
         (dict(input_2=None), False, False, NO_ERROR),
         (dict(input_1=None, input_2=None), False, False, NO_ERROR),
-        (dict(input_1=lambda x: x * 0.0), True, False, NO_ERROR),
-        (dict(input_2=lambda x: x * 0.0), False, True, NO_ERROR),
-        (dict(input_1=lambda x: x * 0.0, input_2=None), True, False, NO_ERROR),
-        (dict(input_1=None, input_2=lambda x: x * 0.0), False, True, NO_ERROR),
-        (dict(input_1=lambda x: x * 0.0, input_2=lambda x: x * 0.0), True, True, NO_ERROR),
-        (dict(input_1=None, input_2=None, input_3=lambda x: x * 0.0), False, False, ValueError),
+        (dict(input_1=lambda x: np.ones(x.shape, np.float)), True, False, NO_ERROR),
+        (dict(input_2=lambda x: np.ones(x.shape, np.float)), False, True, NO_ERROR),
+        (dict(input_1=lambda x: np.ones(x.shape, np.float), input_2=None), True, False, NO_ERROR),
+        (dict(input_1=None, input_2=lambda x: np.ones(x.shape, np.float)), False, True, NO_ERROR),
+        (dict(input_1=lambda x: np.ones(x.shape, np.float),
+              input_2=lambda x: np.ones(x.shape, np.float)), True, True, NO_ERROR),
+        (dict(input_1=None, input_2=None,
+              input_3=lambda x: np.ones(x.shape, np.float)), False, False, ValueError),
     ])
     @pytest.mark.usefixtures("mixed_precision")
     def test__call__with_activation_modifiers(self, activation_modifiers, modified_0, modified_1,
@@ -487,19 +490,19 @@ class TestActivationMaximizationWithMultipleInputsModel():
         activation_maximization = ActivationMaximization(multiple_inputs_model)
         with assert_error(expected_error):
             result = activation_maximization(CategoricalScore(0), seed_input=seed_inputs)
-            assert not np.all(result[0] == 0.0)
-            assert not np.all(result[1] == 0.0)
+            assert not np.all(result[0] == 1.0)
+            assert not np.all(result[1] == 1.0)
             result = activation_maximization(CategoricalScore(0),
                                              seed_input=seed_inputs,
                                              activation_modifiers=activation_modifiers)
             if modified_0:
-                assert np.all(result[0] == 0.0)
+                assert np.all(result[0] == 1.0)
             else:
-                assert not np.all(result[0] == 0.0)
+                assert not np.all(result[0] == 1.0)
             if modified_1:
-                assert np.all(result[1] == 0.0)
+                assert np.all(result[1] == 1.0)
             else:
-                assert not np.all(result[1] == 0.0)
+                assert not np.all(result[1] == 1.0)
 
 
 class TestActivationMaximizationWithMultipleOutputsModel():
@@ -741,16 +744,18 @@ class TestActivationMaximizationWithMultipleIOModel():
 
     @pytest.mark.parametrize("activation_modifiers,modified_0,modified_1,expected_error", [
         (None, False, False, NO_ERROR),
-        (lambda x: x * 0.0, True, False, NO_ERROR),
+        (lambda x: np.ones(x.shape, np.float), True, False, NO_ERROR),
         (dict(input_1=None), False, False, NO_ERROR),
         (dict(input_2=None), False, False, NO_ERROR),
         (dict(input_1=None, input_2=None), False, False, NO_ERROR),
-        (dict(input_1=lambda x: x * 0.0), True, False, NO_ERROR),
-        (dict(input_2=lambda x: x * 0.0), False, True, NO_ERROR),
-        (dict(input_1=lambda x: x * 0.0, input_2=None), True, False, NO_ERROR),
-        (dict(input_1=None, input_2=lambda x: x * 0.0), False, True, NO_ERROR),
-        (dict(input_1=lambda x: x * 0.0, input_2=lambda x: x * 0.0), True, True, NO_ERROR),
-        (dict(input_1=None, input_2=None, input_3=lambda x: x * 0.0), False, False, ValueError),
+        (dict(input_1=lambda x: np.ones(x.shape, np.float)), True, False, NO_ERROR),
+        (dict(input_2=lambda x: np.ones(x.shape, np.float)), False, True, NO_ERROR),
+        (dict(input_1=lambda x: np.ones(x.shape, np.float), input_2=None), True, False, NO_ERROR),
+        (dict(input_1=None, input_2=lambda x: np.ones(x.shape, np.float)), False, True, NO_ERROR),
+        (dict(input_1=lambda x: np.ones(x.shape, np.float),
+              input_2=lambda x: np.ones(x.shape, np.float)), True, True, NO_ERROR),
+        (dict(input_1=None, input_2=None,
+              input_3=lambda x: np.ones(x.shape, np.float)), False, False, ValueError),
     ])
     @pytest.mark.usefixtures("mixed_precision")
     def test__call__with_activation_modifiers(self, activation_modifiers, modified_0, modified_1,
@@ -760,20 +765,20 @@ class TestActivationMaximizationWithMultipleIOModel():
         with assert_error(expected_error):
             result = activation_maximization(
                 [CategoricalScore(1), BinaryScore(True)], seed_input=seed_inputs)
-            assert not np.all(result[0] == 0.0)
-            assert not np.all(result[1] == 0.0)
+            assert not np.all(result[0] == 1.0)
+            assert not np.all(result[1] == 1.0)
             result = activation_maximization(
                 [CategoricalScore(1), BinaryScore(True)],
                 seed_input=seed_inputs,
                 activation_modifiers=activation_modifiers)
             if modified_0:
-                assert np.all(result[0] == 0.0)
+                assert np.all(result[0] == 1.0)
             else:
-                assert not np.all(result[0] == 0.0)
+                assert not np.all(result[0] == 1.0)
             if modified_1:
-                assert np.all(result[1] == 0.0)
+                assert np.all(result[1] == 1.0)
             else:
-                assert not np.all(result[1] == 0.0)
+                assert not np.all(result[1] == 1.0)
 
 
 @pytest.mark.skipif(version(tf.version.VERSION) < version("2.4.0"),
@@ -931,11 +936,12 @@ class TestActivationMaximizationWithDenseModel():
 
     @pytest.mark.parametrize("activation_modifiers,modified,expected_error", [
         (None, False, NO_ERROR),
-        (lambda x: x * 0.0, True, NO_ERROR),
+        (lambda x: np.ones(x.shape, np.float), True, NO_ERROR),
         (dict(input_1=None), False, NO_ERROR),
-        (dict(input_1=lambda x: x * 0.0), True, NO_ERROR),
-        (dict(input_2=lambda x: x * 0.0), False, ValueError),
-        (dict(input_1=lambda x: x * 0.0, input_2=lambda x: x * 0.0), False, ValueError),
+        (dict(input_1=lambda x: np.ones(x.shape, np.float)), True, NO_ERROR),
+        (dict(input_2=lambda x: np.ones(x.shape, np.float)), False, ValueError),
+        (dict(input_1=lambda x: np.ones(x.shape, np.float),
+              input_2=lambda x: np.ones(x.shape, np.float)), False, ValueError),
     ])
     @pytest.mark.usefixtures("mixed_precision")
     def test__call__with_activation_modifiers(self, activation_modifiers, modified, expected_error,
@@ -947,13 +953,13 @@ class TestActivationMaximizationWithDenseModel():
                                              seed_input=seed_inputs,
                                              input_modifiers=None,
                                              regularizers=None)
-            assert not np.all(result == 0.0)
+            assert not np.all(result == 1.0)
             result = activation_maximization(CategoricalScore(0),
                                              seed_input=seed_inputs,
                                              input_modifiers=None,
                                              regularizers=None,
                                              activation_modifiers=activation_modifiers)
             if modified:
-                assert np.all(result == 0.0)
+                assert np.all(result == 1.0)
             else:
-                assert not np.all(result == 0.0)
+                assert not np.all(result == 1.0)
