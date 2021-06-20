@@ -1,9 +1,9 @@
 import warnings
 from abc import ABC, abstractmethod
 
-from deprecated import deprecated
 import numpy as np
 import tensorflow as tf
+from deprecated import deprecated
 
 warnings.warn(('`tf_keras_vis.utils.regularizers` module is deprecated. '
                'Please use `tf_keras_vis.activation_maximization.regularizers` instead.'),

@@ -8,10 +8,10 @@ import tensorflow.keras.backend as K
 
 from .. import ModelVisualization
 from ..utils import get_num_of_steps_allowed, is_mixed_precision, listify
+from ..utils.regularizers import LegacyRegularizer
 from .callbacks import managed_callbacks
 from .input_modifiers import Jitter, Rotate2D
 from .regularizers import Norm, TotalVariation2D
-from ..utils.regularizers import LegacyRegularizer
 
 
 class ActivationMaximization(ModelVisualization):
