@@ -26,7 +26,9 @@ Regularizer = LegacyRegularizer
 
 
 @deprecated(version='0.7.0',
-            reason="Please use `tf_keras_vis.activation_maximization.regularizers.TotalVariation2D`"
+            reason="The class has a bug that the calculated value is incorrect (too small) "
+            "when the `batch_size` is greater than one. So please use "
+            "`tf_keras_vis.activation_maximization.regularizers.TotalVariation2D`"
             " class instead of this.")
 class TotalVariation2D(LegacyRegularizer):
     def __init__(self, weight=10., name='TotalVariation2D'):
@@ -36,7 +38,7 @@ class TotalVariation2D(LegacyRegularizer):
     def __call__(self, overall_inputs):
         tv = 0.
         for X in overall_inputs:
-            tv += tf.image.total_variation(X) / np.prod(X.shape[1:])
+            tv += tf.image.total_variation(X) / np.prod(X.shape)
         return self.weight * tv
 
 
@@ -49,7 +51,8 @@ class TotalVariation(TotalVariation2D):
 
 
 @deprecated(version='0.7.0',
-            reason="Please use `tf_keras_vis.activation_maximization.regularizers.Norm`"
+            reason="The class has a bug that the calculated value is incorrect (too small). "
+            "So please use `tf_keras_vis.activation_maximization.regularizers.Norm`"
             " class instead of this.")
 class Norm(LegacyRegularizer):
     def __init__(self, weight=10., p=2, name='Norm'):
@@ -61,7 +64,7 @@ class Norm(LegacyRegularizer):
         norm = 0.
         for X in overall_inputs:
             X = tf.reshape(X, (X.shape[0], -1))
-            norm += tf.norm(X, ord=self.p, axis=-1) / (X.shape[1]**(1 / self.p))
+            norm += tf.norm(X, ord=self.p, axis=-1) / X.shape[1]
         return self.weight * norm
 
 

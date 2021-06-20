@@ -1,8 +1,8 @@
 import tensorflow as tf
 
 from . import ActivationMaximization as ActivationMaximizationBase
-from .input_modifiers import Jitter, Rotate2D
-from .regularizers import Norm, TotalVariation2D
+from ..utils.input_modifiers import Jitter, Rotate2D
+from ..utils.regularizers import Norm, TotalVariation2D
 
 
 class ActivationMaximization(ActivationMaximizationBase):
