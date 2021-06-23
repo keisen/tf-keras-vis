@@ -52,14 +52,14 @@ class TotalVariation2D(Regularizer):
             name (str, optional): Instance name.. Defaults to 'TotalVariation2D'.
         """
         super().__init__(name)
-        self.weight = weight
+        self.weight = float(weight)
 
     def __call__(self, input_value) -> tf.Tensor:
         if len(input_value.shape) != 4:
             raise ValueError("seed_input's shape must be (batch_size, height, width, channels), "
                              f"but was {input_value.shape}.")
         tv = tf.image.total_variation(input_value)
-        tv /= np.prod(input_value.shape[1:])
+        tv /= np.prod(input_value.shape[1:], dtype=np.float)
         tv *= self.weight
         return tv
 
@@ -84,12 +84,12 @@ class Norm(Regularizer):
             name (str, optional): Instance name. Defaults to 'Norm'. Defaults to 'Norm'.
         """
         super().__init__(name)
-        self.weight = weight
-        self.p = p
+        self.weight = float(weight)
+        self.p = int(p)
 
     def __call__(self, input_value) -> tf.Tensor:
         input_value = tf.reshape(input_value, (input_value.shape[0], -1))
         norm = tf.norm(input_value, ord=self.p, axis=1)
-        norm /= (input_value.shape[1]**(1 / self.p))
+        norm /= (float(input_value.shape[1])**(1.0 / float(self.p)))
         norm *= self.weight
         return norm
