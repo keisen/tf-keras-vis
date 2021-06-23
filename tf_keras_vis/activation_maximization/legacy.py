@@ -6,6 +6,10 @@ from ..utils.regularizers import Norm, TotalVariation2D
 
 
 class ActivationMaximization(ActivationMaximizationBase):
+    """ActivationMaximization of legacy version.
+
+        This class was introduced in v0.7.0 to keep compatibility with the past versions.
+    """
     def __call__(self,
                  score,
                  seed_input=None,

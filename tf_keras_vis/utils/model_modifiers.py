@@ -84,10 +84,11 @@ class GuidedBackpropagation(ModelModifier):
         (https://arxiv.org/pdf/1610.02391v1.pdf)
 
         ![Note]: Please note that there is a discussion that
-        Guided Backpropagation is not working as model explanations,
-        it may be working just as edge detections.
+        Guided Backpropagation is not working well as model explanations.
 
         [Sanity Checks for Saliency Maps](https://arxiv.org/pdf/1810.03292.pdf)
+        [Guided Grad-CAM is Broken! Sanity Checks for Saliency Maps]
+        (https://glassboxmedicine.com/2019/10/12/guided-grad-cam-is-broken-sanity-checks-for-saliency-maps/)
 
     Attributes:
         model (tf.keras.Model): A model instance.
