@@ -41,7 +41,7 @@ jobs:
     - name: Test with pytest
       run: |
         pytest
-      timeout-minutes: 15
+      timeout-minutes: 30
     - name: Test attentions.ipynb
       run: |
         jupyter-nbconvert --ExecutePreprocessor.timeout=600 --to notebook --execute examples/attentions.ipynb
