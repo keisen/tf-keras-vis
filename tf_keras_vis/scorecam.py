@@ -124,42 +124,44 @@ class Scorecam(ModelVisualization):
             _, top_k_indices = tf.math.top_k(activation_map_std, max_N)
             top_k_indices, _ = tf.unique(tf.reshape(top_k_indices, (-1, )))
             penultimate_output = tf.gather(penultimate_output, top_k_indices, axis=-1)
+        nsamples = penultimate_output.shape[0]
         channels = penultimate_output.shape[-1]
 
-        # Upsampling activation-maps
+        # Upsampling activations
         input_shapes = [seed_input.shape for seed_input in seed_inputs]
         zoom_factors = (zoom_factor(penultimate_output.shape[1:-1], input_shape[1:-1])
                         for input_shape in input_shapes)
         zoom_factors = ((1, ) + factor + (1, ) for factor in zoom_factors)
-        upsampled_activation_maps = [
-            zoom(penultimate_output, factor, order=0, mode='nearest', prefilter=False)
-            for factor in zoom_factors
+        upsampled_activations = [
+            zoom(penultimate_output, factor, order=1, mode='nearest') for factor in zoom_factors
         ]
-        map_shapes = [map.shape for map in upsampled_activation_maps]
+        activation_shapes = [activation.shape for activation in upsampled_activations]
 
-        # Normalizing activation-maps
-        min_activation_maps = (np.min(map, axis=tuple(range(map.ndim)[1:-1]), keepdims=True)
-                               for map in upsampled_activation_maps)
-        max_activation_maps = (np.max(map, axis=tuple(range(map.ndim)[1:-1]), keepdims=True)
-                               for map in upsampled_activation_maps)
-        normalized_activation_maps = zip(upsampled_activation_maps, min_activation_maps,
-                                         max_activation_maps)
-        normalized_activation_maps = ((map - min_map) / (max_map - min_map + K.epsilon())
-                                      for map, min_map, max_map in normalized_activation_maps)
+        # Normalizing activations
+        min_activations = (np.min(activation,
+                                  axis=tuple(range(activation.ndim)[1:-1]),
+                                  keepdims=True) for activation in upsampled_activations)
+        max_activations = (np.max(activation,
+                                  axis=tuple(range(activation.ndim)[1:-1]),
+                                  keepdims=True) for activation in upsampled_activations)
+        normalized_activations = zip(upsampled_activations, min_activations, max_activations)
+        normalized_activations = ((activation - _min) / (_max - _min + K.epsilon())
+                                  for activation, _min, _max in normalized_activations)
 
-        # Masking inputs
-        input_tile_reps = ((channels, ) + (1, ) * len(shape) for shape in input_shapes)
-        input_templates = (np.tile(seed_input, reps)
-                           for seed_input, reps in zip(seed_inputs, input_tile_reps))
-        map_transpose_axes = ((len(shape) - 1, ) + tuple(range(len(shape))[:-1])
-                              for shape in map_shapes)
-        masks = (np.transpose(map, axes)
-                 for map, axes in zip(normalized_activation_maps, map_transpose_axes))
-        masks = (np.expand_dims(mask, axis=-1) for mask in masks)
-        map_tile_reps = ((1, ) * len(map_shape) + (input_shape[-1], )
-                         for input_shape, map_shape in zip(input_shapes, map_shapes))
-        masks = (np.tile(mask, reps) for mask, reps in zip(masks, map_tile_reps))
-        masked_seed_inputs = (template * mask for template, mask in zip(input_templates, masks))
+        # (samples, h, w, c) -> (channels, samples, h, w, c)
+        input_templates = (np.tile(seed_input, (channels, ) + (1, ) * len(seed_input.shape))
+                           for seed_input in seed_inputs)
+        # (samples, h, w, channels) -> (c, samples, h, w, channels)
+        masks = (np.tile(mask, (input_shape[-1], ) + (1, ) * len(map_shape)) for mask, input_shape,
+                 map_shape in zip(normalized_activations, input_shapes, activation_shapes))
+        # (c, samples, h, w, channels) -> (channels, samples, h, w, c)
+        masks = (np.transpose(mask,
+                              (len(mask.shape) - 1, ) + tuple(range(len(mask.shape)))[1:-1] + (0, ))
+                 for mask in masks)
+        # Create masked inputs
+        masked_seed_inputs = (np.multiply(input_template, mask)
+                              for input_template, mask in zip(input_templates, masks))
+        # (channels, samples, h, w, c) -> (channels * samples, h, w, c)
         masked_seed_inputs = [
             np.reshape(seed_input, (-1, ) + seed_input.shape[2:])
             for seed_input in masked_seed_inputs
@@ -167,14 +169,18 @@ class Scorecam(ModelVisualization):
 
         # Predicting masked seed-inputs
         preds = self.model.predict(masked_seed_inputs, batch_size=batch_size)
-        preds = (np.reshape(prediction, (channels, -1, prediction.shape[-1]))
+        # (channels * samples, logits) -> (channels, samples, logits)
+        preds = (np.reshape(prediction, (channels, nsamples, prediction.shape[-1]))
                  for prediction in listify(preds))
 
         # Calculating weights
-        weights = ([score(p) for p in prediction] for score, prediction in zip(scores, preds))
+        weights = ([score(K.softmax(p)) for p in prediction]
+                   for score, prediction in zip(scores, preds))
+        weights = ([self._validate_weight(s, nsamples) for s in w] for w in weights)
         weights = (np.array(w, dtype=np.float32) for w in weights)
-        weights = (np.reshape(w, (penultimate_output.shape[0], -1, channels)) for w in weights)
-        weights = (np.mean(w, axis=1) for w in weights)
+        weights = (np.reshape(w, (channels, nsamples, -1)) for w in weights)
+        weights = (np.mean(w, axis=2) for w in weights)
+        weights = (np.transpose(w, (1, 0)) for w in weights)
         weights = np.array(list(weights), dtype=np.float32)
         weights = np.sum(weights, axis=0)
 
@@ -188,6 +194,7 @@ class Scorecam(ModelVisualization):
                 cam = standardize(cam)
             return cam
 
+        # Visualizing
         zoom_factors = (zoom_factor(cam.shape, X.shape) for X in seed_inputs)
         cam = [zoom(cam, factor) for factor in zoom_factors]
         if standardize_cam:
@@ -195,6 +202,22 @@ class Scorecam(ModelVisualization):
         if len(self.model.inputs) == 1 and not isinstance(seed_input, list):
             cam = cam[0]
         return cam
+
+    def _validate_weight(self, score, nsamples):
+        invalid = False
+        if tf.is_tensor(score) or isinstance(score, np.ndarray):
+            invalid = (score.shape[0] != nsamples)
+        elif isinstance(score, (list, tuple)):
+            invalid = (len(score) != nsamples)
+        else:
+            invalid = (nsamples != 1)
+        if invalid:
+            raise ValueError(
+                "Score function must return a Tensor, whose the first dimension is "
+                "the same as the first dimension of seed_input or "
+                ", a list or tuple, whose length is the first dimension of seed_input.")
+        else:
+            return score
 
 
 ScoreCAM = Scorecam
