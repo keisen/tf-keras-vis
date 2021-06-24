@@ -5,7 +5,7 @@ import tensorflow as tf
 import tensorflow.keras.backend as K
 
 from . import ModelVisualization
-from .utils import get_num_of_steps_allowed, is_mixed_precision, listify, standardize
+from .utils import get_num_of_steps_allowed, listify, standardize
 
 
 class Saliency(ModelVisualization):
@@ -119,25 +119,14 @@ class Saliency(ModelVisualization):
 
     def _get_gradients(self, seed_inputs, scores, gradient_modifier, training,
                        unconnected_gradients):
-        # When mixed precision enabled
-        mixed_precision_model = is_mixed_precision(self.model)
-        if mixed_precision_model:
-            optimizer = tf.keras.mixed_precision.LossScaleOptimizer(tf.keras.optimizers.RMSprop())
-
         with tf.GradientTape(watch_accessed_variables=False, persistent=True) as tape:
             tape.watch(seed_inputs)
             outputs = self.model(seed_inputs, training=training)
             outputs = listify(outputs)
             score_values = self._calculate_scores(outputs, scores)
-            if mixed_precision_model:
-                score_values = [
-                    optimizer.get_scaled_loss(score_value) for score_value in score_values
-                ]
         grads = tape.gradient(score_values,
                               seed_inputs,
                               unconnected_gradients=unconnected_gradients)
-        if mixed_precision_model:
-            grads = optimizer.get_unscaled_gradients(grads)
         if gradient_modifier is not None:
             grads = [gradient_modifier(g) for g in grads]
         return grads
