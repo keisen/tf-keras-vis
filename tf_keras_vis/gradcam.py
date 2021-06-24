@@ -4,7 +4,7 @@ from typing import Union
 import numpy as np
 import tensorflow as tf
 import tensorflow.keras.backend as K
-from scipy.ndimage.interpolation import zoom
+from scipy.ndimage import zoom
 
 from . import ModelVisualization
 from .utils import is_mixed_precision, standardize, zoom_factor
@@ -141,7 +141,7 @@ class Gradcam(ModelVisualization):
 
         # Visualizing
         factors = (zoom_factor(cam.shape, X.shape) for X in seed_inputs)
-        cam = [zoom(cam, factor) for factor in factors]
+        cam = [zoom(cam, factor, order=1) for factor in factors]
         if standardize_cam:
             cam = [standardize(x) for x in cam]
         if len(self.model.inputs) == 1 and not isinstance(seed_input, list):

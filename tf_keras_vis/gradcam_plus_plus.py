@@ -163,7 +163,7 @@ class GradcamPlusPlus(ModelVisualization):
 
         # Visualizing
         factors = (zoom_factor(cam.shape, X.shape) for X in seed_inputs)
-        cam = [zoom(cam, factor) for factor in factors]
+        cam = [zoom(cam, factor, order=1) for factor in factors]
         if standardize_cam:
             cam = [standardize(x) for x in cam]
         if len(self.model.inputs) == 1 and not isinstance(seed_input, list):
