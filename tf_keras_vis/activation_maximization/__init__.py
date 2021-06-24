@@ -25,7 +25,7 @@ class ActivationMaximization(ModelVisualization):
             score,
             seed_input=None,
             input_range=(0, 255),
-            input_modifiers=[Jitter(jitter=16), Rotate2D(degree=1)],
+            input_modifiers=[Jitter(jitter=4), Rotate2D(degree=1)],
             regularizers=[TotalVariation2D(weight=1.0),
                           Norm(weight=0.3, p=1)],
             steps=200,
