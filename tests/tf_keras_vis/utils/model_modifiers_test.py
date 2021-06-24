@@ -14,15 +14,15 @@ class TestReplaceToLinear():
     @pytest.mark.parametrize("model", [mock_conv_model(), mock_multiple_outputs_model()])
     @pytest.mark.usefixtures("mixed_precision")
     def test__call__(self, model):
-        assert model.get_layer(name='dense_1').activation != tf.keras.activations.linear
+        assert model.get_layer(name='output_1').activation != tf.keras.activations.linear
         if len(model.outputs) > 1:
-            assert model.get_layer(name='dense_2').activation != tf.keras.activations.linear
+            assert model.get_layer(name='output_2').activation != tf.keras.activations.linear
         instance = ActivationMaximization(model, model_modifier=ReplaceToLinear())
         assert instance.model != model
-        assert instance.model.get_layer(name='dense_1').activation == tf.keras.activations.linear
+        assert instance.model.get_layer(name='output_1').activation == tf.keras.activations.linear
         if len(model.outputs) > 1:
             assert instance.model.get_layer(
-                name='dense_2').activation == tf.keras.activations.linear
+                name='output_2').activation == tf.keras.activations.linear
             instance([CategoricalScore(0), CategoricalScore(0)])
         else:
             instance([CategoricalScore(0)])

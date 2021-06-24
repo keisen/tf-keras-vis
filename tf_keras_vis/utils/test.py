@@ -6,6 +6,7 @@ import tensorflow as tf
 from tensorflow.keras import backend as K
 from tensorflow.keras.layers import Conv2D, Dense, GlobalAveragePooling2D, Input
 from tensorflow.keras.models import Model
+from tensorflow.python.keras.layers.core import Activation
 
 from ..activation_maximization.callbacks import Callback
 
@@ -13,7 +14,8 @@ from ..activation_maximization.callbacks import Callback
 def mock_dense_model():
     inputs = Input((8, ), name='input_1')
     x = Dense(6, activation='relu', name='dense_1')(inputs)
-    x = Dense(2, activation='softmax', name='dense_2')(x)
+    x = Dense(2, name='dense_2')(x)
+    x = Activation('softmax', dtype=tf.float32, name='output_1')(x)
     return Model(inputs=inputs, outputs=x)
 
 
@@ -21,7 +23,8 @@ def mock_conv_model_with_sigmoid_output():
     inputs = Input((8, 8, 3), name='input_1')
     x = Conv2D(6, 3, activation='relu', name='conv_1')(inputs)
     x = GlobalAveragePooling2D()(x)
-    x = Dense(1, activation='sigmoid', name='dense_1')(x)
+    x = Dense(1, name='dense_1')(x)
+    x = Activation('sigmoid', dtype=tf.float32, name='output_1')(x)
     return Model(inputs=inputs, outputs=x)
 
 
@@ -29,7 +32,8 @@ def mock_conv_model():
     inputs = Input((8, 8, 3), name='input_1')
     x = Conv2D(6, 3, activation='relu', name='conv_1')(inputs)
     x = GlobalAveragePooling2D()(x)
-    x = Dense(2, activation='softmax', name='dense_1')(x)
+    x = Dense(2, name='dense_1')(x)
+    x = Activation('softmax', dtype=tf.float32, name='output_1')(x)
     return Model(inputs=inputs, outputs=x)
 
 
@@ -40,7 +44,8 @@ def mock_multiple_inputs_model():
     x2 = Conv2D(6, 3, activation='relu', name='conv_2')(input_2)
     x = K.concatenate([x1, x2], axis=-1)
     x = GlobalAveragePooling2D()(x)
-    x = Dense(2, activation='softmax', name='dense_1')(x)
+    x = Dense(2, name='dense_1')(x)
+    x = Activation('softmax', dtype=tf.float32, name='output_1')(x)
     return Model(inputs=[input_1, input_2], outputs=x)
 
 
@@ -48,8 +53,10 @@ def mock_multiple_outputs_model():
     inputs = Input((8, 8, 3), name='input_1')
     x = Conv2D(6, 3, activation='relu', name='conv_1')(inputs)
     x = GlobalAveragePooling2D()(x)
-    x1 = Dense(2, activation='softmax', name='dense_1')(x)
-    x2 = Dense(1, activation='sigmoid', name='dense_2')(x)
+    x1 = Dense(2, name='dense_1')(x)
+    x2 = Dense(1, name='dense_2')(x)
+    x1 = Activation('softmax', dtype=tf.float32, name='output_1')(x1)
+    x2 = Activation('sigmoid', dtype=tf.float32, name='output_2')(x2)
     return Model(inputs=inputs, outputs=[x1, x2])
 
 
@@ -60,8 +67,10 @@ def mock_multiple_io_model():
     x2 = Conv2D(6, 3, activation='relu', name='conv_2')(input_2)
     x = K.concatenate([x1, x2], axis=-1)
     x = GlobalAveragePooling2D()(x)
-    x1 = Dense(2, activation='softmax', name='dense_1')(x)
-    x2 = Dense(1, activation='sigmoid', name='dense_2')(x)
+    x1 = Dense(2, name='dense_1')(x)
+    x2 = Dense(1, name='dense_2')(x)
+    x1 = Activation('softmax', dtype=tf.float32, name='output_1')(x1)
+    x2 = Activation('sigmoid', dtype=tf.float32, name='output_2')(x2)
     return Model(inputs=[input_1, input_2], outputs=[x1, x2])
 
 
@@ -79,6 +88,10 @@ def dummy_sample(shape, dtype=np.float32):
     values = np.reshape(values, shape)
     values = values.astype(dtype)
     return values
+
+
+def score_with_tensor(output):
+    return output[:, 0]
 
 
 def score_with_tuple(output):
