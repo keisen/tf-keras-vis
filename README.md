@@ -10,7 +10,7 @@ tf-keras-vis
 News
 ---
 
-**NOTE:** We've released `v0.7.0`! In this release, fixing a critical problem of ActivationMaximization, the gradients calculation is now more stable. And, as a result, some known issues related to mixed-precision are also fixed. However, because the results of the gradients calculation are now different compared to the past versions, you might have to re-tune your code. If you want to avoid adjusting them to new ActivationMaximization for now, you can do so by modifying the your code as follows:
+**NOTE:** We've released `v0.7.0`! In this release, fixing a critical problem of ActivationMaximization, the gradients calculation is now more stable. And some known issues related to mixed-precision are also fixed. However, because the results of the gradients calculation are now different compared to the past versions, you might have to re-tune your code. If you want to avoid adjusting them to new ActivationMaximization for now, you can do so by modifying the your code as follows:
 
 ```python
 # from tf_keras_vis.activation_maximization import ActivationMaximization
