@@ -10,18 +10,14 @@ tf-keras-vis
 News
 ---
 
-**NOTE:** We've released `v0.7.0`! In this release, fixing a critical bug of ActivationMaximization, the gradients calculation is now more stable. As a result, some known issues related to mixed-precision are also fixed. These are good news for users using mixed-precision mechanisms and users tuning the hyper parameters of ActivationMaximization for their own model from now on.
-
-However, because the results of the gradients calculation are now different compared to the past versions, you might have to tune your code again. For now, if you want to avoid adjusting them to new ActivationMaximization, you can do so by modifying the your code as follows:
+**NOTE:** We've released `v0.7.0`! In this release, fixing a critical problem of ActivationMaximization, the gradients calculation is now more stable. And, as a result, some known issues related to mixed-precision are also fixed. However, because the results of the gradients calculation are now different compared to the past versions, you might have to re-tune your code. If you want to avoid adjusting them to new ActivationMaximization for now, you can do so by modifying the your code as follows:
 
 ```python
 # from tf_keras_vis.activation_maximization import ActivationMaximization
 from tf_keras_vis.activation_maximization.legacy import ActivationMaximization
 ```
 
-In addition to above, we've also found some bugs of Regularizers. To keep compatibility with the past versions, we've NOT updated `tf_keras_vis.utils.regularizers` module. Instead, we've added `tf_keras_vis.activation_maximization.regularizers` module that includes the regularizers fixed the bugs. 
-
-So like ActivationMaximization, for now, if you want to avoid adjusting them, you can continuously use `tf_keras_vis.utils.regularizers` module that still has the problems as follows:
+In addition to above, we've also found some bugs of Regularizers. To keep compatibility with the past versions, we've NOT updated `tf_keras_vis.utils.regularizers` module. Instead, we've added `tf_keras_vis.activation_maximization.regularizers` module that includes the regularizers whose the bugs fixed. So like ActivationMaximization, if you want to avoid adjusting them for now, you can continuously use `tf_keras_vis.utils.regularizers` module that still has the problems as follows:
 
 ```python
 # from tf_keras_vis.activation_maximization.regularizers import Norm, TotalVariation2D 
@@ -94,7 +90,7 @@ Usage
 from matplotlib import pyplot as plt
 from tf_keras_vis.activation_maximization import ActivationMaximization
 from tf_keras_vis.activation_maximization.callbacks import Progress
-from tf_keras_vis.activation_maximization.input_modifiers import Jitter, Rotate
+from tf_keras_vis.activation_maximization.input_modifiers import Jitter, Rotate2D
 from tf_keras_vis.activation_maximization.regularizers import TotalVariation2D, Norm
 from tf_keras_vis.utils.model_modifiers import ExtractIntermediateLayer, ReplaceToLinear
 from tf_keras_vis.utils.scores import CategoricalScore
@@ -130,6 +126,7 @@ plt.imshow(activations[0])
 
 ```python
 from matplotlib import pyplot as plt
+from matplotlib import cm
 from tf_keras_vis.gradcam_plus_plus import GradcamPlusPlus
 from tf_keras_vis.utils.model_modifiers import ReplaceToLinear
 from tf_keras_vis.utils.scores import CategoricalScore
@@ -147,7 +144,9 @@ cam = gradcam(CategoricalScore(CATEGORICAL_INDEX),
 ## Since v0.6.0, calling `normalize()` is NOT necessary.
 # cam = normalize(cam)
 
-plt.imshow(cam[0])
+plt.imshow(SEED_INPUT_IMAGE)
+heatmap = np.uint8(cm.jet(cam[0])[..., :3] * 255)
+plt.imshow(heatmap, cmap='jet', alpha=0.5) # overlay
 ```
 
 Please see the guides below for more details:
