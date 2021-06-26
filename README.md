@@ -10,7 +10,7 @@ tf-keras-vis
 Notes
 ---
 
-We've released `v0.7.0`! In this release, the gradient calculation of ActivationMaximization is changed for the sake of fixing a critical problem. Although the calculation result are now a bit different compared to the past versions, you could also use legacy implementation as follows:
+We've released `v0.7.0`! In this release, the gradient calculation of ActivationMaximization is changed for the sake of fixing a critical problem. Although the calculation result are now a bit different compared to the past versions, you could avoid it by using legacy implementation as follows:
 
 ```python
 # from tf_keras_vis.activation_maximization import ActivationMaximization
