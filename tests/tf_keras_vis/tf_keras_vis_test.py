@@ -3,6 +3,7 @@ import pytest
 import tensorflow as tf
 
 from tf_keras_vis import ModelVisualization
+from tf_keras_vis.utils.model_modifiers import ReplaceToLinear
 from tf_keras_vis.utils.test import dummy_sample
 
 
@@ -12,14 +13,6 @@ class MockVisualizer(ModelVisualization):
 
 
 class TestModelVisualization():
-    def _replace_activation(self, returns=False):
-        def func(model):
-            model.layers[-1].activation = tf.keras.activations.linear
-            if returns:
-                return model
-
-        return func
-
     @pytest.mark.parametrize("modifier,clone,expected_same,expected_activation", [
         (None, False, True, tf.keras.activations.softmax),
         (None, True, True, tf.keras.activations.softmax),
@@ -28,15 +21,12 @@ class TestModelVisualization():
         ('return', False, True, tf.keras.activations.linear),
         ('return', True, False, tf.keras.activations.linear),
     ])
+    @pytest.mark.usefixtures("mixed_precision")
     def test__init__(self, modifier, clone, expected_same, expected_activation, conv_model):
         if modifier == 'return':
-            mock = MockVisualizer(conv_model,
-                                  model_modifier=self._replace_activation(returns=True),
-                                  clone=clone)
+            mock = MockVisualizer(conv_model, model_modifier=ReplaceToLinear(), clone=clone)
         elif modifier == 'not-return':
-            mock = MockVisualizer(conv_model,
-                                  model_modifier=self._replace_activation(returns=False),
-                                  clone=clone)
+            mock = MockVisualizer(conv_model, model_modifier=ReplaceToLinear(), clone=clone)
         else:
             mock = MockVisualizer(conv_model, clone=clone)
         assert (mock.model is conv_model) == expected_same
@@ -52,6 +42,7 @@ class TestModelVisualization():
         ([tf.constant(dummy_sample((32, 32, 3))),
           tf.constant(dummy_sample((32, 32, 3)))], (2, )),
     ])
+    @pytest.mark.usefixtures("mixed_precision")
     def test_mean_score_value(self, score, expected_shape, conv_model):
         actual = MockVisualizer(conv_model)._mean_score_value(score)
         assert actual.shape == expected_shape

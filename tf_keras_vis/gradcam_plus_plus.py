@@ -1,39 +1,35 @@
-import warnings
 from typing import Union
 
 import numpy as np
 import tensorflow as tf
 import tensorflow.keras.backend as K
-from scipy.ndimage import zoom
+from scipy.ndimage.interpolation import zoom
 
 from . import ModelVisualization
 from .utils import is_mixed_precision, standardize, zoom_factor
 from .utils.model_modifiers import ExtractIntermediateLayerForGradcam as ModelModifier
 
 
-class Gradcam(ModelVisualization):
-    """Grad-CAM
+class GradcamPlusPlus(ModelVisualization):
+    """Grad-CAM++
 
-        For details on Grad-CAM, see the paper:
-        [Grad-CAM: Why did you say that?
-        Visual Explanations from Deep Networks via Gradient-based Localization]
-        (https://arxiv.org/pdf/1610.02391v1.pdf).
+        For details on GradCAM++, see the paper:
+        [GradCAM++: Improved Visual Explanations for Deep Convolutional Networks]
+        (https://arxiv.org/pdf/1710.11063.pdf).
 
     Todo:
         * Write examples
     """
-    def __call__(
-            self,
-            score,
-            seed_input,
-            penultimate_layer=None,
-            seek_penultimate_conv_layer=True,
-            activation_modifier=lambda cam: K.relu(cam),
-            training=False,
-            normalize_gradient=None,  # Disabled option.
-            expand_cam=True,
-            standardize_cam=True,
-            unconnected_gradients=tf.UnconnectedGradients.NONE) -> Union[np.ndarray, list]:
+    def __call__(self,
+                 score,
+                 seed_input,
+                 penultimate_layer=-1,
+                 seek_penultimate_conv_layer=True,
+                 activation_modifier=lambda cam: K.relu(cam),
+                 training=False,
+                 expand_cam=True,
+                 standardize_cam=True,
+                 unconnected_gradients=tf.UnconnectedGradients.NONE) -> Union[np.ndarray, list]:
         """Generate gradient based class activation maps (CAM) by using positive gradient of
             penultimate_layer with respect to score.
 
@@ -74,8 +70,6 @@ class Gradcam(ModelVisualization):
                 Defaults to `lambda cam: K.relu(cam)`.
             training (bool, optional): A bool that indicates
                 whether the model's training-mode on or off. Defaults to False.
-            normalize_gradient (bool, optional): ![Note] This option is now disabled.
-                Defaults to None.
             expand_cam (bool, optional): True to resize cam to the same as input image size.
                 ![Note] When True, even if the model has multiple inputs,
                 this function return only a cam value (That's, when `expand_cam` is True,
@@ -94,10 +88,6 @@ class Gradcam(ModelVisualization):
             ValueError: In case of invalid arguments for `score`, or `penultimate_layer`.
         """
 
-        if normalize_gradient is not None:
-            warnings.warn(
-                '`normalize_gradient` option is disabled.,'
-                ' And this will be removed in future.', DeprecationWarning)
         # Preparing
         scores = self._get_scores_for_multiple_outputs(score)
         seed_inputs = self._get_seed_inputs_for_multiple_inputs(seed_input)
@@ -118,9 +108,41 @@ class Gradcam(ModelVisualization):
         if is_mixed_precision(model):
             grads = tf.cast(grads, dtype=model.variable_dtype)
             penultimate_output = tf.cast(penultimate_output, dtype=model.variable_dtype)
+            score_values = [tf.cast(v, dtype=model.variable_dtype) for v in score_values]
 
-        weights = K.mean(grads, axis=tuple(range(grads.ndim)[1:-1]), keepdims=True)
-        cam = np.sum(np.multiply(penultimate_output, weights), axis=-1)
+        score_values = sum(tf.math.exp(o) for o in score_values)
+        score_values = tf.reshape(score_values, score_values.shape + (1, ) * (grads.ndim - 1))
+
+        first_derivative = score_values * grads
+        second_derivative = first_derivative * grads
+        third_derivative = second_derivative * grads
+
+        global_sum = K.sum(penultimate_output,
+                           axis=tuple(np.arange(len(penultimate_output.shape))[1:-1]),
+                           keepdims=True)
+
+        alpha_denom = second_derivative * 2.0 + third_derivative * global_sum
+        alpha_denom = alpha_denom + tf.cast((second_derivative == 0.0), second_derivative.dtype)
+        alphas = second_derivative / alpha_denom
+
+        alpha_normalization_constant = K.sum(alphas,
+                                             axis=tuple(np.arange(len(alphas.shape))[1:-1]),
+                                             keepdims=True)
+        alpha_normalization_constant = alpha_normalization_constant + tf.cast(
+            (alpha_normalization_constant == 0.0), alpha_normalization_constant.dtype)
+        alphas = alphas / alpha_normalization_constant
+
+        if activation_modifier is None:
+            weights = first_derivative
+        else:
+            weights = activation_modifier(first_derivative)
+        deep_linearization_weights = weights * alphas
+        deep_linearization_weights = K.sum(
+            deep_linearization_weights,
+            axis=tuple(np.arange(len(deep_linearization_weights.shape))[1:-1]),
+            keepdims=True)
+
+        cam = K.sum(deep_linearization_weights * penultimate_output, axis=-1)
         if activation_modifier is not None:
             cam = activation_modifier(cam)
 
@@ -137,6 +159,3 @@ class Gradcam(ModelVisualization):
         if len(self.model.inputs) == 1 and not isinstance(seed_input, list):
             cam = cam[0]
         return cam
-
-
-from tf_keras_vis.gradcam_plus_plus import GradcamPlusPlus  # noqa: F401, E402

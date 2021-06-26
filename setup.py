@@ -5,7 +5,7 @@ with open("README.md", "r") as f:
 
 setup(
     name="tf-keras-vis",
-    version="0.6.2",
+    version="0.7.0",
     author="keisen",
     author_email="k.keisen@gmail.com",
     description="Neural network visualization toolkit for tf.keras",
@@ -14,7 +14,6 @@ setup(
     url="https://github.com/keisen/tf-keras-vis",
     packages=find_packages(),
     classifiers=[
-        "Environment :: GPU :: NVIDIA CUDA",
         "Intended Audience :: Developers",
         "Intended Audience :: Education",
         "Intended Audience :: Science/Research",
@@ -36,10 +35,28 @@ setup(
         "Topic :: Software Development :: Libraries :: Python Modules",
     ],
     python_requires='>=3.6, <3.10',
-    install_requires=['scipy', 'pillow', 'deprecated', 'imageio', 'packaging'],
+    install_requires=[
+        'scipy',
+        'pillow',
+        'deprecated',
+        'imageio',
+        'packaging',
+    ],
     extras_require={
-        'develop': ['flake8', 'isort', 'yapf', 'pytest', 'pytest-pycodestyle', 'pytest-cov'],
-        'examples': ['jupyterlab==2.*', 'jedi==0.17.*', 'matplotlib'],
+        'develop': [
+            'flake8',
+            'isort',
+            'yapf',
+            'pytest',
+            'pytest-pycodestyle',
+            'pytest-cov',
+            'pytest-env',
+        ],
+        'examples': [
+            'jupyterlab~=2.0',
+            'jedi~=0.17.0',
+            'matplotlib',
+        ],
     },
     include_package_data=True,
 )

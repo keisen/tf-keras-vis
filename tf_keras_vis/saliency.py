@@ -1,16 +1,26 @@
+from typing import Union
+
 import numpy as np
 import tensorflow as tf
 import tensorflow.keras.backend as K
-from packaging.version import parse as version
 
-from tf_keras_vis import ModelVisualization
-from tf_keras_vis.utils import (check_steps, is_mixed_precision, listify, standardize)
-
-if version(tf.version.VERSION) >= version("2.4.0"):
-    from tensorflow.keras.mixed_precision import LossScaleOptimizer
+from . import ModelVisualization
+from .utils import get_num_of_steps_allowed, listify, standardize
 
 
 class Saliency(ModelVisualization):
+    """Vanilla Saliency and Smooth-Grad
+
+        For details on Vanilla Saliency, see the paper:
+        [Deep Inside Convolutional Networks: Visualising Image Classification Models
+        and Saliency Maps](https://arxiv.org/pdf/1312.6034)
+
+        For details on Smooth-Grad, see the paper:
+        [SmoothGrad: removing noise by adding noise](https://arxiv.org/pdf/1706.03825)
+
+    Todo:
+        * Write examples
+    """
     def __call__(self,
                  score,
                  seed_input,
@@ -20,40 +30,65 @@ class Saliency(ModelVisualization):
                  gradient_modifier=lambda grads: K.abs(grads),
                  training=False,
                  standardize_saliency=True,
-                 unconnected_gradients=tf.UnconnectedGradients.NONE):
+                 unconnected_gradients=tf.UnconnectedGradients.NONE) -> Union[np.ndarray, list]:
         """Generate an attention map that appears how output value changes with respect to a small
             change in input image pixels.
-            See details: https://arxiv.org/pdf/1706.03825.pdf
 
-        # Arguments
-            score: A score function. If the model has multiple outputs, you can use a different
-                score function on each output by passing a list of score functions.
-            seed_input: An N-dim Numpy array. If the model has multiple inputs,
-                you have to pass a list of N-dim Numpy arrays.
-            smooth_samples: The number of calculating gradients iterations. If set to zero,
-                the noise for smoothing won't be generated.
-            smooth_noise: Noise level that is recommended no tweaking when there is no reason.
-            keepdims: A boolean that whether to keep the channels-dim or not.
-            gradient_modifier: A function to modify gradients. By default, the function modify
-                gradients to `absolute` values.
-            training: A bool whether the model's trainig-mode turn on or off.
-            standardize_saliency: A bool. If True(default), saliency map will be standardized.
-            unconnected_gradients: Specifies the gradient value returned when the given input
-                tensors are unconnected. Accepted values are constants defined in the class
-                `tf.UnconnectedGradients` and the default value is NONE.
-        # Returns
-            The heatmap image indicating the `seed_input` regions whose change would most contribute
-            towards maximizing the score value, Or a list of their images.
-            A list of Numpy arrays that the model inputs that maximize the out of `score`.
-        # Raises
+        Args:
+            score (Union[tf_keras_vis.utils.scores.Score,Callable,
+                list[tf_keras_vis.utils.scores.Score,Callable]]):
+                A Score instance or function to specify visualizing target. For example::
+
+                    scores = CategoricalScore([1, 294, 413])
+
+                This code above means the same with the one below::
+
+                    score = lambda outputs: (outputs[0][1], outputs[1][294], outputs[2][413])
+
+                When the model has multiple outputs, you have to pass a list of
+                Score instances or functions. For example::
+
+                    score = [
+                        tf_keras_vis.utils.scores.CategoricalScore([1, 23]),  # For 1st output
+                        tf_keras_vis.utils.scores.InactiveScore(),            # For 2nd output
+                        ...
+                    ]
+
+            seed_input (Union[tf.Tensor,np.ndarray,list[tf.Tensor,np.ndarray]]):
+                A tensor or a list of them to input in the model.
+                When the model has multiple inputs, you have to pass a list.
+            smooth_samples (int, optional): The number of calculating gradients iterations.
+                When over zero, this method will work as SmoothGrad.
+                When zero, it will work as Vanilla Saliency.
+                Defaults to 0.
+            smooth_noise (float, optional): Noise level. Defaults to 0.20.
+            keepdims (bool, optional): A boolean that whether to keep the channels-dim or not.
+                Defaults to False.
+            gradient_modifier (Callable, optional): A function to modify gradients.
+                Defaults to None.
+            training (bool, optional): A bool that indicates
+                whether the model's training-mode on or off. Defaults to False.
+            standardize_saliency (bool, optional): When True, saliency map will be standardized.
+                Defaults to True.
+            unconnected_gradients (tf.UnconnectedGradients, optional):
+                Specifies the gradient value returned when the given input tensors are unconnected.
+                Defaults to tf.UnconnectedGradients.NONE.
+
+        Returns:
+            Union[np.ndarray,list]: The heatmap image indicating the `seed_input` regions
+                whose change would most contribute towards maximizing the score value,
+                Or a list of their images.
+
+        Raises:
             ValueError: In case of invalid arguments for `score`, or `seed_input`.
         """
+
         # Preparing
         scores = self._get_scores_for_multiple_outputs(score)
         seed_inputs = self._get_seed_inputs_for_multiple_inputs(seed_input)
         # Processing saliency
         if smooth_samples > 0:
-            smooth_samples = check_steps(smooth_samples)
+            smooth_samples = get_num_of_steps_allowed(smooth_samples)
             seed_inputs = (tf.tile(X, (smooth_samples, ) + tuple(np.ones(X.ndim - 1, np.int)))
                            for X in seed_inputs)
             seed_inputs = (tf.reshape(X, (smooth_samples, -1) + tuple(X.shape[1:]))
@@ -84,25 +119,14 @@ class Saliency(ModelVisualization):
 
     def _get_gradients(self, seed_inputs, scores, gradient_modifier, training,
                        unconnected_gradients):
-        # When mixed precision enabled
-        mixed_precision_model = is_mixed_precision(self.model)
-        if mixed_precision_model:
-            optimizer = LossScaleOptimizer(tf.keras.optimizers.RMSprop())
-
         with tf.GradientTape(watch_accessed_variables=False, persistent=True) as tape:
             tape.watch(seed_inputs)
             outputs = self.model(seed_inputs, training=training)
             outputs = listify(outputs)
             score_values = self._calculate_scores(outputs, scores)
-            if mixed_precision_model:
-                score_values = [
-                    optimizer.get_scaled_loss(score_value) for score_value in score_values
-                ]
         grads = tape.gradient(score_values,
                               seed_inputs,
                               unconnected_gradients=unconnected_gradients)
-        if mixed_precision_model:
-            grads = optimizer.get_unscaled_gradients(grads)
         if gradient_modifier is not None:
             grads = [gradient_modifier(g) for g in grads]
         return grads

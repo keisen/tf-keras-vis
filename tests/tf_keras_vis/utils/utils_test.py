@@ -1,11 +1,43 @@
+import os
+
 import pytest
 import tensorflow as tf
 from packaging.version import parse as version
 
-from tf_keras_vis.utils import num_of_gpus, find_layer
+from tf_keras_vis.utils import MAX_STEPS, find_layer, get_num_of_steps_allowed, num_of_gpus
 
 
 class TestUtils():
+    @pytest.mark.parametrize("env,steps,expected", [
+        (None, -1, -1),
+        (None, 0, 0),
+        (None, 1, 1),
+        (None, 2, 2),
+        (None, 100, 100),
+        (1, -1, -1),
+        (1, 0, 0),
+        (1, 1, 1),
+        (1, 2, 1),
+        (1, 100, 1),
+        (2, -1, -1),
+        (2, 0, 0),
+        (2, 1, 1),
+        (2, 2, 2),
+        (2, 100, 2),
+    ])
+    def test_get_num_of_steps_allowed(self, env, steps, expected):
+        _env = os.environ.get(MAX_STEPS)
+        try:
+            if env is None:
+                os.environ.pop(MAX_STEPS, None)
+            else:
+                os.environ[MAX_STEPS] = str(env)
+            actual = get_num_of_steps_allowed(steps)
+            assert actual == expected
+        finally:
+            if _env is not None:
+                os.environ[MAX_STEPS] = _env
+
     def test_num_of_gpus_if_no_gpus(self, monkeypatch):
         def list_physical_devices(name):
             return None
@@ -57,5 +89,5 @@ class TestUtils():
             tf.keras.layers.Dense(1),
         ])
         offset = conv_model.layers[-1] if offset_of_child_layer else None
-        actual = find_layer(model, lambda l: l.name == 'conv-1', offset=offset)
-        assert conv_model.get_layer(name='conv-1') == actual
+        actual = find_layer(model, lambda l: l.name == 'conv_1', offset=offset)
+        assert conv_model.get_layer(name='conv_1') == actual
