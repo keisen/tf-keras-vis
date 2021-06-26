@@ -7,17 +7,17 @@ tf-keras-vis
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 
-News
+Notes
 ---
 
-**NOTE:** We've released `v0.7.0`! In this release, fixing a critical problem of ActivationMaximization, the gradients calculation is now more stable. And some known issues related to mixed-precision are also fixed. However, because the results of the gradients calculation are now different compared to the past versions, you might have to re-tune your code. If you want to avoid adjusting them to new ActivationMaximization for now, you can do so by modifying the your code as follows:
+We've released `v0.7.0`! In this release, the gradient calculation of ActivationMaximization is changed for the sake of fixing a critical problem. Although the calculation result are now a bit different compared to the past versions, you could also use legacy implementation as follows:
 
 ```python
 # from tf_keras_vis.activation_maximization import ActivationMaximization
 from tf_keras_vis.activation_maximization.legacy import ActivationMaximization
 ```
 
-In addition to above, we've also found some bugs of Regularizers. To keep compatibility with the past versions, we've NOT updated `tf_keras_vis.utils.regularizers` module. Instead, we've added `tf_keras_vis.activation_maximization.regularizers` module that includes the regularizers whose the bugs fixed. So like ActivationMaximization, if you want to avoid adjusting them for now, you can continuously use `tf_keras_vis.utils.regularizers` module that still has the problems as follows:
+In addition to above, we've also fixed some problems related Regularizers. Although we newly provide `tf_keras_vis.activation_maximization.regularizers` module that includes the regularizers whose bugs are fixed, like ActivationMaximization, you could also use legacy implementation as follows:
 
 ```python
 # from tf_keras_vis.activation_maximization.regularizers import Norm, TotalVariation2D 
