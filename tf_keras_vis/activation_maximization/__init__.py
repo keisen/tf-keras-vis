@@ -361,7 +361,8 @@ class ActivationMaximization(ModelVisualization):
         if legacy_regularizers is not None:
             warnings.warn(
                 "`tf_keras_vis.utils.regularizers.Regularizer` is deprecated. "
-                "Use tf_keras_vis.utils.regularizers.Regularizer instead.", DeprecationWarning)
+                "Use tf_keras_vis.activation_maximization.regularizers.Regularizer instead.",
+                DeprecationWarning)
             return legacy_regularizers
         else:
             regularizers = self._get_callables_to_apply_to_each_input(regularizer, "regularizers")
@@ -393,7 +394,7 @@ class ActivationMaximization(ModelVisualization):
                 if any(has_legacy):
                     raise ValueError(
                         "Legacy Regularizer instances (that inherits "
-                        "`tf_keras_vis.utils.regularizers.Regularizer`) must be "
+                        "`tf_keras_vis.utils.regularizers.LegacyRegularizer`) must be "
                         "passed to ActivationMaximization#__call__() "
                         "in the form of a instance or a list of instances. "
                         "Please modify the `regularizer` argument or "
@@ -409,7 +410,7 @@ class ActivationMaximization(ModelVisualization):
                         "the regularizer instance (that inherits "
                         "`tf_keras_vis.activation_maximization.regularizers.Regularizer`) "
                         "and legacy regularizer (that inherits "
-                        "`tf_keras_vis.utils.regularizers.Regularizer` can NOT be mixed."
+                        "`tf_keras_vis.utils.regularizers.LegacyRegularizer` can NOT be mixed."
                         f" regularizer: {regularizer}")
         elif isinstance(_regularizer, LegacyRegularizer):
             return listify(_regularizer)
