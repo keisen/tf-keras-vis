@@ -87,6 +87,8 @@ Usage
 * ActivationMaximization (Visualizing Convolutional Filter)
 
 ```python
+import tensorflow as tf
+from tensorflow.keras.applications import VGG16
 from matplotlib import pyplot as plt
 from tf_keras_vis.activation_maximization import ActivationMaximization
 from tf_keras_vis.activation_maximization.callbacks import Progress
@@ -99,8 +101,8 @@ from tf_keras_vis.utils.scores import CategoricalScore
 # All visualization classes accept a model and model-modifier, which, for example,
 #     replaces the activation of last layer to linear function so on, in constructor.
 activation_maximization = \
-   ActivationMaximization(YOUR_MODEL_INSTANCE,
-                          model_modifier=[ExtractIntermediateLayer('layer_name'),
+   ActivationMaximization(VGG16(),
+                          model_modifier=[ExtractIntermediateLayer('block5_conv3'),
                                           ReplaceToLinear()],
                           clone=False)
 
@@ -125,6 +127,7 @@ plt.imshow(activations[0])
 * Gradcam++
 
 ```python
+import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib import cm
 from tf_keras_vis.gradcam_plus_plus import GradcamPlusPlus
@@ -138,8 +141,7 @@ gradcam = GradcamPlusPlus(YOUR_MODEL_INSTANCE,
 
 # Generate cam with GradCAM++
 cam = gradcam(CategoricalScore(CATEGORICAL_INDEX),
-              SEED_INPUT,
-              penultimate_layer=-1)
+              SEED_INPUT)
 
 ## Since v0.6.0, calling `normalize()` is NOT necessary.
 # cam = normalize(cam)
