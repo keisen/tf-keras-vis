@@ -1,4 +1,4 @@
-[tf-keras-vis](https://keisen.github.io/tf-keras-vis/)
+[tf-keras-vis](https://keisen.github.io/tf-keras-vis-docs/)
 ===
 
 [![Downloads](https://pepy.tech/badge/tf-keras-vis)](https://pepy.tech/project/tf-keras-vis)
@@ -30,7 +30,7 @@ Please see [the release note](https://github.com/keisen/tf-keras-vis/releases/ta
 Web documents
 -------------
 
-https://keisen.github.io/tf-keras-vis/
+https://keisen.github.io/tf-keras-vis-docs/
 
 
 Overview
