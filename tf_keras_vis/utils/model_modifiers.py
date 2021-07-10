@@ -2,7 +2,12 @@ from abc import ABC, abstractmethod
 from typing import Union
 
 import tensorflow as tf
-from tensorflow.python.keras.layers.convolutional import Conv
+from packaging.version import parse as version
+
+if version(tf.version.VERSION) < version("2.6.0rc0"):
+    from tensorflow.python.keras.layers.convolutional import Conv
+else:
+    from keras.layers.convolutional import Conv
 
 from . import find_layer
 
