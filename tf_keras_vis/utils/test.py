@@ -4,9 +4,8 @@ import numpy as np
 import pytest
 import tensorflow as tf
 from tensorflow.keras import backend as K
-from tensorflow.keras.layers import Conv2D, Dense, GlobalAveragePooling2D, Input
+from tensorflow.keras.layers import Activation, Conv2D, Dense, GlobalAveragePooling2D, Input
 from tensorflow.keras.models import Model
-from tensorflow.python.keras.layers.core import Activation
 
 from ..activation_maximization.callbacks import Callback
 
