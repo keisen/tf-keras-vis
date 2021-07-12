@@ -9,9 +9,9 @@ from tf_keras_vis.gradcam_plus_plus import GradcamPlusPlus
 from tf_keras_vis.saliency import Saliency
 from tf_keras_vis.scorecam import Scorecam
 from tf_keras_vis.utils.scores import BinaryScore, CategoricalScore
-from tf_keras_vis.utils.test import (NO_ERROR, assert_error, dummy_sample, mock_conv_model,
+from tf_keras_vis.utils.test import (NO_ERROR, assert_raises, dummy_sample, mock_conv_model,
                                      mock_conv_model_with_float32_output, mock_multiple_io_model,
-                                     score_with_tensor, score_with_list, score_with_tuple)
+                                     score_with_list, score_with_tensor, score_with_tuple)
 
 if version(tf.version.VERSION) >= version("2.4.0"):
     from tensorflow.keras.mixed_precision import set_global_policy
@@ -49,7 +49,7 @@ class TestXcam():
     @pytest.mark.usefixtures("xcam", "saliency", "mixed_precision")
     def test__call__if_score_is_(self, scores, expected_error, conv_model):
         cam = Xcam(conv_model)
-        with assert_error(expected_error):
+        with assert_raises(expected_error):
             result = cam(scores, dummy_sample((1, 8, 8, 3)))
             assert result.shape == (1, 8, 8)
 
@@ -64,7 +64,7 @@ class TestXcam():
     @pytest.mark.usefixtures("xcam", "saliency", "mixed_precision")
     def test__call__if_seed_input_is_(self, seed_input, expected, expected_error, conv_model):
         cam = Xcam(conv_model)
-        with assert_error(expected_error):
+        with assert_raises(expected_error):
             result = cam(CategoricalScore(0), seed_input)
             if type(expected) is list:
                 assert type(result) is list
@@ -90,7 +90,7 @@ class TestXcam():
     def test__call__if_penultimate_layer_is(self, penultimate_layer, seek_penultimate_conv_layer,
                                             expected_error, conv_model):
         cam = Xcam(conv_model)
-        with assert_error(expected_error):
+        with assert_raises(expected_error):
             result = cam(CategoricalScore(0),
                          dummy_sample((1, 8, 8, 3)),
                          penultimate_layer=penultimate_layer,
@@ -163,7 +163,7 @@ class TestXcamWithMultipleInputsModel():
     @pytest.mark.usefixtures("xcam", "saliency", "mixed_precision")
     def test__call__if_score_is_(self, scores, expected_error, multiple_inputs_model):
         cam = Xcam(multiple_inputs_model)
-        with assert_error(expected_error):
+        with assert_raises(expected_error):
             result = cam(scores, [dummy_sample((1, 8, 8, 3)), dummy_sample((1, 10, 10, 3))])
             assert len(result) == 2
             assert result[0].shape == (1, 8, 8)
@@ -178,7 +178,7 @@ class TestXcamWithMultipleInputsModel():
     @pytest.mark.usefixtures("xcam", "saliency", "mixed_precision")
     def test__call__if_seed_input_is_(self, seed_input, expected_error, multiple_inputs_model):
         cam = Xcam(multiple_inputs_model)
-        with assert_error(expected_error):
+        with assert_raises(expected_error):
             result = cam(CategoricalScore(0), seed_input)
             assert result[0].shape == (1, 8, 8)
             assert result[1].shape == (1, 10, 10)
@@ -214,7 +214,7 @@ class TestXcamWithMultipleOutputsModel():
     @pytest.mark.usefixtures("xcam", "saliency", "mixed_precision")
     def test__call__if_score_is_(self, scores, expected_error, multiple_outputs_model):
         cam = Xcam(multiple_outputs_model)
-        with assert_error(expected_error):
+        with assert_raises(expected_error):
             result = cam(scores, dummy_sample((1, 8, 8, 3)))
             assert result.shape == (1, 8, 8)
 
@@ -230,7 +230,7 @@ class TestXcamWithMultipleOutputsModel():
     def test__call__if_seed_input_is_(self, seed_input, expected, expected_error,
                                       multiple_outputs_model):
         cam = Xcam(multiple_outputs_model)
-        with assert_error(expected_error):
+        with assert_raises(expected_error):
             result = cam([CategoricalScore(0), BinaryScore(0)], seed_input)
             if type(expected) is list:
                 assert type(result) is list
@@ -266,7 +266,7 @@ class TestXcamWithMultipleIOModel():
     @pytest.mark.usefixtures("xcam", "saliency", "mixed_precision")
     def test__call__if_score_is_(self, scores, expected_error, multiple_io_model):
         cam = Xcam(multiple_io_model)
-        with assert_error(expected_error):
+        with assert_raises(expected_error):
             result = cam(scores, [dummy_sample((1, 8, 8, 3)), dummy_sample((1, 10, 10, 3))])
             assert result[0].shape == (1, 8, 8)
             assert result[1].shape == (1, 10, 10)
@@ -280,7 +280,7 @@ class TestXcamWithMultipleIOModel():
     @pytest.mark.usefixtures("xcam", "saliency", "mixed_precision")
     def test__call__if_seed_input_is_(self, seed_input, expected_error, multiple_io_model):
         cam = Xcam(multiple_io_model)
-        with assert_error(expected_error):
+        with assert_raises(expected_error):
             result = cam([CategoricalScore(0), BinaryScore(0)], seed_input)
             assert result[0].shape == (1, 8, 8)
             assert result[1].shape == (1, 10, 10)
@@ -304,7 +304,7 @@ class TestXcamWithDenseModel():
     @pytest.mark.usefixtures("xcam", "saliency", "mixed_precision")
     def test__call__(self, dense_model):
         cam = Xcam(dense_model)
-        with assert_error(ValueError):
+        with assert_raises(ValueError):
             result = cam(CategoricalScore(0), dummy_sample((1, 8, 8, 3)))
             assert result.shape == (1, 8, 8)
 

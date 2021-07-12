@@ -15,7 +15,7 @@ from tf_keras_vis.utils.regularizers import LegacyRegularizer
 from tf_keras_vis.utils.regularizers import Norm as LegacyNorm
 from tf_keras_vis.utils.regularizers import TotalVariation2D as LegacyTotalVariation2D
 from tf_keras_vis.utils.scores import BinaryScore, CategoricalScore
-from tf_keras_vis.utils.test import (NO_ERROR, MockCallback, MockLegacyCallback, assert_error,
+from tf_keras_vis.utils.test import (NO_ERROR, MockCallback, MockLegacyCallback, assert_raises,
                                      dummy_sample, mock_conv_model,
                                      mock_conv_model_with_float32_output, mock_multiple_io_model,
                                      score_with_list, score_with_tuple)
@@ -46,7 +46,7 @@ class TestActivationMaximization():
     @pytest.mark.usefixtures("mixed_precision", "legacy")
     def test__call__if_score_is_(self, scores, expected_error, conv_model):
         activation_maximization = ActivationMaximization(conv_model)
-        with assert_error(expected_error):
+        with assert_raises(expected_error):
             result = activation_maximization(scores)
             assert result.shape == (1, 8, 8, 3)
 
@@ -82,7 +82,7 @@ class TestActivationMaximization():
     @pytest.mark.usefixtures("mixed_precision", "legacy")
     def test_call__if_input_range_is_(self, input_range, expected_error, conv_model):
         activation_maximization = ActivationMaximization(conv_model)
-        with assert_error(expected_error):
+        with assert_raises(expected_error):
             result = activation_maximization(CategoricalScore(0), input_range=input_range)
             assert result.shape == (1, 8, 8, 3)
 
@@ -117,7 +117,7 @@ class TestActivationMaximization():
     @pytest.mark.usefixtures("mixed_precision", "legacy")
     def test__call__if_input_modifiers_are_(self, input_modifiers, expected_error, conv_model):
         activation_maximization = ActivationMaximization(conv_model)
-        with assert_error(expected_error):
+        with assert_raises(expected_error):
             result = activation_maximization(CategoricalScore(0), input_modifiers=input_modifiers)
             assert result.shape == (1, 8, 8, 3)
 
@@ -148,7 +148,7 @@ class TestActivationMaximization():
     @pytest.mark.usefixtures("mixed_precision", "legacy")
     def test__call__if_regularizer_is_(self, regularizers, expected_error, conv_model):
         activation_maximization = ActivationMaximization(conv_model)
-        with assert_error(expected_error):
+        with assert_raises(expected_error):
             result = activation_maximization(CategoricalScore(0), regularizers=regularizers)
             assert result.shape == (1, 8, 8, 3)
 
@@ -195,7 +195,7 @@ class TestActivationMaximization():
             if any((any(f) for f in has_legacy)):
                 expected_error = ValueError
         activation_maximization = ActivationMaximization(conv_model)
-        with assert_error(expected_error):
+        with assert_raises(expected_error):
             result = activation_maximization(CategoricalScore(0), regularizers=regularizers)
             assert result.shape == (1, 8, 8, 3)
 
@@ -270,7 +270,7 @@ class TestActivationMaximization():
                                               conv_model):
         seed_inputs = dummy_sample((1, 8, 8, 3))
         activation_maximization = ActivationMaximization(conv_model)
-        with assert_error(expected_error):
+        with assert_raises(expected_error):
             result = activation_maximization(CategoricalScore(0), seed_input=seed_inputs)
             assert not np.all(result == 0.0)
             result = activation_maximization(CategoricalScore(0),
@@ -296,7 +296,7 @@ class TestActivationMaximizationWithMultipleInputsModel():
     @pytest.mark.usefixtures("mixed_precision", "legacy")
     def test__call__if_score_is_(self, scores, expected_error, multiple_inputs_model):
         activation_maximization = ActivationMaximization(multiple_inputs_model)
-        with assert_error(expected_error):
+        with assert_raises(expected_error):
             result = activation_maximization(scores)
             assert result[0].shape == (1, 8, 8, 3)
             assert result[1].shape == (1, 10, 10, 3)
@@ -316,7 +316,7 @@ class TestActivationMaximizationWithMultipleInputsModel():
     @pytest.mark.usefixtures("mixed_precision", "legacy")
     def test__call__if_seed_input_is_(self, seed_inputs, expected_error, multiple_inputs_model):
         activation_maximization = ActivationMaximization(multiple_inputs_model)
-        with assert_error(expected_error):
+        with assert_raises(expected_error):
             result = activation_maximization(CategoricalScore(0), seed_input=seed_inputs)
             if seed_inputs is not None and seed_inputs[0].shape[0] == 4:
                 assert result[0].shape == (4, 8, 8, 3)
@@ -366,7 +366,7 @@ class TestActivationMaximizationWithMultipleInputsModel():
     def test__call__if_input_modifiers_are_(self, input_modifiers, expected_error,
                                             multiple_inputs_model):
         activation_maximization = ActivationMaximization(multiple_inputs_model)
-        with assert_error(expected_error):
+        with assert_raises(expected_error):
             result = activation_maximization(CategoricalScore(0), input_modifiers=input_modifiers)
             assert result[0].shape == (1, 8, 8, 3)
             assert result[1].shape == (1, 10, 10, 3)
@@ -405,7 +405,7 @@ class TestActivationMaximizationWithMultipleInputsModel():
     @pytest.mark.usefixtures("mixed_precision", "legacy")
     def test__call__if_regularizer_is_(self, regularizers, expected_error, multiple_inputs_model):
         activation_maximization = ActivationMaximization(multiple_inputs_model)
-        with assert_error(expected_error):
+        with assert_raises(expected_error):
             result = activation_maximization(CategoricalScore(0), regularizers=regularizers)
             assert result[0].shape == (1, 8, 8, 3)
             assert result[1].shape == (1, 10, 10, 3)
@@ -463,7 +463,7 @@ class TestActivationMaximizationWithMultipleInputsModel():
             if any((any(f) for f in has_legacy)):
                 expected_error = ValueError
         activation_maximization = ActivationMaximization(multiple_inputs_model)
-        with assert_error(expected_error):
+        with assert_raises(expected_error):
             result = activation_maximization(CategoricalScore(0), regularizers=regularizers)
             assert result[0].shape == (1, 8, 8, 3)
             assert result[1].shape == (1, 10, 10, 3)
@@ -488,7 +488,7 @@ class TestActivationMaximizationWithMultipleInputsModel():
                                               expected_error, multiple_inputs_model):
         seed_inputs = [dummy_sample((1, 8, 8, 3)), dummy_sample((1, 10, 10, 3))]
         activation_maximization = ActivationMaximization(multiple_inputs_model)
-        with assert_error(expected_error):
+        with assert_raises(expected_error):
             result = activation_maximization(CategoricalScore(0), seed_input=seed_inputs)
             assert not np.all(result[0] == 1.0)
             assert not np.all(result[1] == 1.0)
@@ -523,7 +523,7 @@ class TestActivationMaximizationWithMultipleOutputsModel():
     @pytest.mark.usefixtures("mixed_precision", "legacy")
     def test__call__if_score_is_(self, scores, expected_error, multiple_outputs_model):
         activation_maximization = ActivationMaximization(multiple_outputs_model)
-        with assert_error(expected_error):
+        with assert_raises(expected_error):
             result = activation_maximization(scores)
             assert result.shape == (1, 8, 8, 3)
 
@@ -566,7 +566,7 @@ class TestActivationMaximizationWithMultipleIOModel():
     @pytest.mark.usefixtures("mixed_precision", "legacy")
     def test__call__if_score_is_(self, scores, expected_error, multiple_io_model):
         activation_maximization = ActivationMaximization(multiple_io_model)
-        with assert_error(expected_error):
+        with assert_raises(expected_error):
             result = activation_maximization(scores)
             assert result[0].shape == (1, 8, 8, 3)
             assert result[1].shape == (1, 10, 10, 3)
@@ -586,7 +586,7 @@ class TestActivationMaximizationWithMultipleIOModel():
     @pytest.mark.usefixtures("mixed_precision", "legacy")
     def test__call__if_seed_input_is_(self, seed_inputs, expected_error, multiple_io_model):
         activation_maximization = ActivationMaximization(multiple_io_model)
-        with assert_error(expected_error):
+        with assert_raises(expected_error):
             result = activation_maximization(
                 [CategoricalScore(1), BinaryScore(True)], seed_input=seed_inputs)
             if seed_inputs is not None and seed_inputs[0].shape[0] == 4:
@@ -637,7 +637,7 @@ class TestActivationMaximizationWithMultipleIOModel():
     def test__call__if_input_modifiers_are_(self, input_modifiers, expected_error,
                                             multiple_io_model):
         activation_maximization = ActivationMaximization(multiple_io_model)
-        with assert_error(expected_error):
+        with assert_raises(expected_error):
             result = activation_maximization(
                 [CategoricalScore(1), BinaryScore(True)], input_modifiers=input_modifiers)
             assert result[0].shape == (1, 8, 8, 3)
@@ -677,7 +677,7 @@ class TestActivationMaximizationWithMultipleIOModel():
     @pytest.mark.usefixtures("mixed_precision", "legacy")
     def test__call__if_regularizer_is_(self, regularizers, expected_error, multiple_io_model):
         activation_maximization = ActivationMaximization(multiple_io_model)
-        with assert_error(expected_error):
+        with assert_raises(expected_error):
             result = activation_maximization(
                 [CategoricalScore(0), BinaryScore(True)], regularizers=regularizers)
             assert result[0].shape == (1, 8, 8, 3)
@@ -736,7 +736,7 @@ class TestActivationMaximizationWithMultipleIOModel():
             if any((any(f) for f in has_legacy)):
                 expected_error = ValueError
         activation_maximization = ActivationMaximization(multiple_io_model)
-        with assert_error(expected_error):
+        with assert_raises(expected_error):
             result = activation_maximization(
                 [CategoricalScore(0), BinaryScore(True)], regularizers=regularizers)
             assert result[0].shape == (1, 8, 8, 3)
@@ -762,7 +762,7 @@ class TestActivationMaximizationWithMultipleIOModel():
                                               expected_error, multiple_io_model):
         seed_inputs = [dummy_sample((1, 8, 8, 3)), dummy_sample((1, 10, 10, 3))]
         activation_maximization = ActivationMaximization(multiple_io_model)
-        with assert_error(expected_error):
+        with assert_raises(expected_error):
             result = activation_maximization(
                 [CategoricalScore(1), BinaryScore(True)], seed_input=seed_inputs)
             assert not np.all(result[0] == 1.0)
@@ -849,10 +849,10 @@ class TestMixedPrecision():
         optimizer = tf.keras.optimizers.RMSprop()
         model = mock_conv_model()
         activation_maximization = ActivationMaximization(model)
-        with assert_error(NO_ERROR):
+        with assert_raises(NO_ERROR):
             result = activation_maximization(CategoricalScore(0), optimizer=optimizer)
             assert result.shape == (1, 8, 8, 3)
-        with assert_error(ValueError):
+        with assert_raises(ValueError):
             result = activation_maximization(CategoricalScore(0), optimizer=optimizer)
             assert result.shape == (1, 8, 8, 3)
 
@@ -871,7 +871,7 @@ class TestActivationMaximizationWithDenseModel():
     @pytest.mark.usefixtures("mixed_precision", "legacy")
     def test__call__if_score_is_(self, scores, expected_error, dense_model):
         activation_maximization = ActivationMaximization(dense_model)
-        with assert_error(expected_error):
+        with assert_raises(expected_error):
             result = activation_maximization(scores, input_modifiers=None, regularizers=None)
             assert result.shape == (1, 8)
 
@@ -910,7 +910,7 @@ class TestActivationMaximizationWithDenseModel():
     @pytest.mark.usefixtures("mixed_precision", "legacy")
     def test__call__if_input_modifiers_are_(self, input_modifiers, expected_error, dense_model):
         activation_maximization = ActivationMaximization(dense_model)
-        with assert_error(expected_error):
+        with assert_raises(expected_error):
             result = activation_maximization(CategoricalScore(0),
                                              input_modifiers=input_modifiers,
                                              regularizers=None)
@@ -928,7 +928,7 @@ class TestActivationMaximizationWithDenseModel():
     @pytest.mark.usefixtures("mixed_precision", "legacy")
     def test__call__if_regularizers_are(self, regularizers, expected_error, dense_model):
         activation_maximization = ActivationMaximization(dense_model)
-        with assert_error(expected_error):
+        with assert_raises(expected_error):
             result = activation_maximization(CategoricalScore(0),
                                              input_modifiers=None,
                                              regularizers=regularizers)
@@ -948,7 +948,7 @@ class TestActivationMaximizationWithDenseModel():
                                               dense_model):
         seed_inputs = dummy_sample((1, 8))
         activation_maximization = ActivationMaximization(dense_model)
-        with assert_error(expected_error):
+        with assert_raises(expected_error):
             result = activation_maximization(CategoricalScore(0),
                                              seed_input=seed_inputs,
                                              input_modifiers=None,

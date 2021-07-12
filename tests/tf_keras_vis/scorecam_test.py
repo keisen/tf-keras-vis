@@ -4,8 +4,8 @@ import tensorflow as tf
 
 from tf_keras_vis.scorecam import Scorecam
 from tf_keras_vis.utils.scores import CategoricalScore
-from tf_keras_vis.utils.test import (NO_ERROR, assert_error, dummy_sample, score_with_tensor,
-                                     score_with_list, score_with_tuple)
+from tf_keras_vis.utils.test import (NO_ERROR, assert_raises, dummy_sample, score_with_list,
+                                     score_with_tensor, score_with_tuple)
 
 
 class TestScorecam():
@@ -19,7 +19,7 @@ class TestScorecam():
     ])
     @pytest.mark.usefixtures("mixed_precision")
     def test__call__if_max_N_is_(self, max_N, expected_error, conv_model):
-        with assert_error(expected_error):
+        with assert_raises(expected_error):
             cam = Scorecam(conv_model)
             result = cam(CategoricalScore(0), dummy_sample((2, 8, 8, 3)), max_N=max_N)
             assert result.shape == (2, 8, 8)
@@ -43,6 +43,6 @@ class TestScorecam():
     @pytest.mark.usefixtures("mixed_precision")
     def test__call__if_score_is_(self, scores, expected_error, conv_model):
         cam = Scorecam(conv_model)
-        with assert_error(expected_error):
+        with assert_raises(expected_error):
             result = cam(scores, dummy_sample((2, 8, 8, 3)))
             assert result.shape == (2, 8, 8)

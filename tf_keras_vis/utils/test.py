@@ -101,7 +101,7 @@ def score_with_list(output):
     return list(o[0] for o in output)
 
 
-NO_ERROR = 'NO_ERROR'
+NO_ERROR = None
 
 
 @contextmanager
@@ -109,7 +109,7 @@ def _does_not_raise():
     yield
 
 
-def assert_error(e):
+def assert_raises(e):
     if e is NO_ERROR:
         return _does_not_raise()
     else:

@@ -2,7 +2,7 @@ import pytest
 import tensorflow as tf
 
 from tf_keras_vis.activation_maximization.input_modifiers import Rotate, Rotate2D, Scale
-from tf_keras_vis.utils.test import NO_ERROR, assert_error, dummy_sample
+from tf_keras_vis.utils.test import NO_ERROR, assert_raises, dummy_sample
 
 
 class TestRotate():
@@ -17,7 +17,7 @@ class TestRotate():
         ((0, 1, 2), ValueError),
     ])
     def test__init__(self, degree, axes, expected_error):
-        with assert_error(expected_error):
+        with assert_raises(expected_error):
             if axes is None:
                 instance = Rotate(degree=degree)
             else:

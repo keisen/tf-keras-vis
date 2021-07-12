@@ -6,7 +6,7 @@ from tf_keras_vis.saliency import Saliency
 from tf_keras_vis.utils.model_modifiers import (ExtractIntermediateLayer, GuidedBackpropagation,
                                                 ReplaceToLinear)
 from tf_keras_vis.utils.scores import CategoricalScore
-from tf_keras_vis.utils.test import (NO_ERROR, assert_error, dummy_sample, mock_conv_model,
+from tf_keras_vis.utils.test import (NO_ERROR, assert_raises, dummy_sample, mock_conv_model,
                                      mock_multiple_outputs_model)
 
 

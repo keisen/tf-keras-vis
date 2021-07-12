@@ -3,7 +3,7 @@ import pytest
 import tensorflow as tf
 
 from tf_keras_vis.utils.scores import BinaryScore, CategoricalScore, InactiveScore
-from tf_keras_vis.utils.test import NO_ERROR, assert_error, dummy_sample
+from tf_keras_vis.utils.test import NO_ERROR, assert_raises, dummy_sample
 
 
 class TestInactiveScore():
@@ -13,7 +13,7 @@ class TestInactiveScore():
         (dummy_sample((1, 224, 224, 3)), (1, 224, 224, 3), NO_ERROR),
     ])
     def test__call__(self, output, expected_shape, expected_error):
-        with assert_error(expected_error):
+        with assert_raises(expected_error):
             actual = InactiveScore()(output)
             assert np.all(actual == 0.0)
             assert actual.shape == expected_shape
@@ -34,7 +34,7 @@ class TestBinaryScore():
         ([-1, 0], [True, False], NO_ERROR),
     ])
     def test__init__(self, target_values, expected, expected_error):
-        with assert_error(expected_error):
+        with assert_raises(expected_error):
             score = BinaryScore(target_values)
             assert score.target_values == expected
 
@@ -70,7 +70,7 @@ class TestCategoricalScore():
         ([0, 8, 3], [0, 8, 3], NO_ERROR),
     ])
     def test__init__(self, indices, expected, expected_error):
-        with assert_error(expected_error):
+        with assert_raises(expected_error):
             score = CategoricalScore(indices)
             assert score.indices == expected
 
@@ -85,6 +85,6 @@ class TestCategoricalScore():
     def test__call__(self, indices, output_shape, expected_error):
         output = tf.constant(dummy_sample(output_shape), tf.float32)
         score = CategoricalScore(indices)
-        with assert_error(expected_error):
+        with assert_raises(expected_error):
             score_value = score(output)
             assert score_value.shape == output_shape[0:1]
