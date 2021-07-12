@@ -67,6 +67,7 @@ class Rotate(InputModifier):
             raise TypeError(f"`axes` must be consist of ints, but it was {axes}.")
         self.axes = axes
         self.degree = float(degree)
+        self.random_generator = np.random.default_rng()
 
     def __call__(self, seed_input) -> np.ndarray:
         ndim = len(seed_input.shape)
@@ -76,7 +77,7 @@ class Rotate(InputModifier):
         if tf.is_tensor(seed_input):
             seed_input = seed_input.numpy()
         seed_input = rotate(seed_input,
-                            np.random.uniform(-self.degree, self.degree),
+                            self.random_generator.uniform(-self.degree, self.degree),
                             axes=self.axes,
                             reshape=False,
                             order=1,
@@ -107,6 +108,7 @@ class Scale(InputModifier):
         """
         self.low = low
         self.high = high
+        self.random_generator = np.random.default_rng()
 
     def __call__(self, seed_input) -> np.ndarray:
         ndim = len(seed_input.shape)
@@ -116,7 +118,7 @@ class Scale(InputModifier):
         if tf.is_tensor(seed_input):
             seed_input = seed_input.numpy()
         shape = seed_input.shape
-        _factor = factor = np.random.uniform(self.low, self.high)
+        _factor = factor = self.random_generator.uniform(self.low, self.high)
         factor *= np.ones(ndim - 2)
         factor = (1, ) + tuple(factor) + (1, )
         seed_input = zoom(seed_input, factor, order=1, mode='reflect', prefilter=False)
