@@ -19,16 +19,18 @@ class Gradcam(ModelVisualization):
           Visual Explanations from Deep Networks via Gradient-based Localization
           (https://arxiv.org/pdf/1610.02391v1.pdf)
     """
-    def __call__(self,
-                 score,
-                 seed_input,
-                 penultimate_layer=None,
-                 seek_penultimate_conv_layer=True,
-                 activation_modifier=lambda cam: K.relu(cam),
-                 training=False,
-                 expand_cam=True,
-                 standardize_cam=True,
-                 unconnected_gradients=tf.UnconnectedGradients.NONE) -> Union[np.ndarray, list]:
+    def __call__(
+            self,
+            score,
+            seed_input,
+            penultimate_layer=None,
+            seek_penultimate_conv_layer=True,
+            activation_modifier=lambda cam: K.relu(cam),
+            training=False,
+            normalize_gradient=None,  # Disabled option.
+            expand_cam=True,
+            standardize_cam=True,
+            unconnected_gradients=tf.UnconnectedGradients.NONE) -> Union[np.ndarray, list]:
         """Generate gradient based class activation maps (CAM) by using positive gradient of
         penultimate_layer with respect to score.
 
@@ -65,6 +67,8 @@ class Gradcam(ModelVisualization):
                 `lambda cam: K.relu(cam)`.
             training: A bool that indicates whether the model's training-mode on or off. Defaults
                 to False.
+            normalize_gradient (bool, optional): ![Note] This option is now disabled.
+                Defaults to None.
             expand_cam: True to resize CAM to the same as input image size. **Notes!** When False,
                 even if the model has multiple inputs, return only a CAM. Defaults to True.
             standardize_cam: When True, CAM will be standardized. Defaults to True.
