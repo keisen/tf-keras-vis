@@ -6,7 +6,7 @@ with open("README.md", "r") as f:
 setup(
     name="tf-keras-vis",
     version="0.7.1",
-    author="keisen",
+    author="keisen (Yasuhiro Kubota)",
     author_email="k.keisen@gmail.com",
     description="Neural network visualization toolkit for tf.keras",
     long_description=long_description,
@@ -45,12 +45,21 @@ setup(
     extras_require={
         'develop': [
             'flake8',
+            'flake8-docstrings',
             'isort',
             'yapf',
             'pytest',
             'pytest-pycodestyle',
             'pytest-cov',
             'pytest-env',
+        ],
+        'docs': [
+            'sphinx',
+            'sphinx-autobuild',
+            'sphinx-rtd-theme',
+            'myst-parser',
+            'nbsphinx',
+            'pandoc',
         ],
         'examples': [
             'jupyterlab~=2.0',

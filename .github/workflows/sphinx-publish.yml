@@ -1,0 +1,55 @@
+# This workflow will install Python dependencies, run tests and lint with a variety of Python versions
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+
+name: Sphinx publish
+
+on:
+  push:
+    branches: [ master ]
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  ACCESS_KEY: ${{ secrets.DOCUMENT_PUBLISHING }}
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+    - name: Install pandoc
+      run: |
+        sudo apt update
+        sudo apt install -y pandoc
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install --upgrade -e .[docs]
+    - name: Clone the documentation project
+      run: |
+        git clone -n https://${GITHUB_ACTOR}:${GITHUB_TOKEN}@github.com/keisen/tf-keras-vis-docs.git docs/_build
+    - name: Build
+      run: |
+        cd docs
+        make html
+    - name: Configuration
+      run: |
+        cd docs/_build
+        echo "$ACCESS_KEY" > ~/access_key.pem
+        chmod 600 ~/access_key.pem
+        git config --local user.email k.keisen@gmail.com
+        git config --local user.name keisen
+        git config remote.origin.url "git@github.com:keisen/tf-keras-vis-docs.git"
+    - name: Publish files
+      env:
+        GIT_SSH_COMMAND: ssh -i ~/access_key.pem -o StrictHostKeyChecking=no -F /dev/null
+      run: |
+        cd docs/_build
+        git add .
+        if ! git diff --cached --quiet; then
+          git commit -m "Auto commit"
+          git push -f origin master
+        fi

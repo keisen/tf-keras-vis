@@ -64,7 +64,8 @@ instance/
 .scrapy
 
 # Sphinx documentation
-docs/_build/
+# docs/_build/
+/docs/build
 
 # PyBuilder
 target/
@@ -98,21 +99,19 @@ venv.bak/
 .ropeproject
 
 # mkdocs documentation
-/site
+# /site
 
 # mypy
 .mypy_cache/
 
 # Add by keisen
-*.swp
-/examples/core*
-/examples/sandbox.ipynb
-/examples/workspace.ipynb
-/*.ipynb
-.node-version
-*.nbconvert.ipynb
-Untitled.ipynb
-/temp/
 .DS_Store
+*.swp
+*.Identifier
+core*
+/docs/_build/
+/docs/examples/sandbox.ipynb
+/docs/examples/workspace.ipynb
+/docs/examples/Untitled.ipynb
 /dockerfiles/docker-compose.yml
 DraftReleaseNote.md
