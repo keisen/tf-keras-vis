@@ -8,27 +8,22 @@ from .utils import listify
 
 
 class ModelVisualization(ABC):
-    """Visualization class for Keras models.
-
-    Attributes:
-        model (tf.keras.Model): The target model instance.
+    """Visualization class that analyze the model for debugging.
     """
     def __init__(self, model, model_modifier=None, clone=True) -> None:
-        """Create Visualization class instance that analyze the model for debugging.
-
+        """
         Args:
-            model (tf.keras.Model): When `model_modifier` is NOT None,
-                This model will be cloned by `tf.keras.models.clone_model` function
-                and then will be modified by `model_modifier` according to needs.
-            model_modifier (Union[tf_keras_vis.utils.model_modifiers.ModelModifier,function],
-                optional): A Modifier function that modify `model` instance (i.e., return None) or
-                return modified `model` instance.
-                We recommend to apply tf_keras_vis.utils.model_modifiers.ReplaceToLinear
-                to all visualizations (except Scorecam) when the model output is softmax.
-                Defaults to None.
-            clone (bool, optional): When False, the model won't be cloned.
-                Note that, although when True, the model won't be clone
-                if `model_modifier` is None. Defaults to True.
+            model: A  `tf.keras.Model` instance. When `model_modifier` is NOT None, this model will
+                be cloned with `tf.keras.models.clone_model` function and then will be modified by
+                `model_modifier` according to needs.
+            model_modifier: A :obj:`tf_keras_vis.utils.model_modifiers.ModelModifier` instance,
+                a function or a list of them. We recommend to apply
+                `tf_keras_vis.utils.model_modifiers.ReplaceToLinear` to all visualizations (except
+                :obj:`tf_keras_vis.scorecam.Scorecam`) when the model output is softmax. Defaults
+                to None.
+            clone: A bool that indicates whether or not it clones the `model`. When False, the
+                model won't be cloned. Note that, although when True, the model won't be clone if
+                `model_modifier` is None. Defaults to True.
         """
         self.model = model
         model_modifiers = listify(model_modifier)
@@ -46,10 +41,10 @@ class ModelVisualization(ABC):
         """Analyze the model.
 
         Raises:
-            NotImplementedError: The `__call__()` of subclass should be called, not this.
+            NotImplementedError: This method must be overwritten.
 
         Returns:
-            Union[np.ndarray,list]: Visualized image(s) or something(s).
+            Visualized image(s) or something(s).
         """
         raise NotImplementedError()
 

@@ -19,25 +19,26 @@ class Callback(ABC):
         """Called at the begin of optimization process.
 
         Args:
-            kwargs (dict): The parameters that is passed to
-                `tf_keras_vis.activation_maximization.ActivationMaximization#__call__()`.
+            kwargs: The parameters that was passed to
+                :obj:`tf_keras_vis.activation_maximization.ActivationMaximization.__call__()`.
         """
         pass
 
     def __call__(self, i, values, grads, scores, model_outputs, **kwargs) -> None:
-        """This function will be called within
-            `tf_keras_vis.activation_maximization.ActivationMaximization#__call__()`
-            after gradient descent and updating input values.
+        """This function will be called after updating input values by gradient descent in
+        :obj:`tf_keras_vis.activation_maximization.ActivationMaximization.__call__()`.
 
         Args:
-            i (int): The current number of optimizer iteration.
-            values (list[tf.Tensor]): The current `values` that is clopped and modified.
-            grads (list[tf.Tensor]): The gradients with respect to `values`.
-            scores (list[tf.Tensor]): Score values with respect to each the model outputs.
-            model_outputs (list[tf.Tensor]): A list of the model outputs.
-            regularizations (list[Tuple[str,tf.Tensor]], optional): A list of regularizer values.
-            overall_score (list[tf.Tensor], optional):
-                Overall scores that includes the scores and regularization values.
+            i: The current number of optimizer iteration.
+            values: A list of tf.Tensor that indicates current `values`.
+            grads: A list of tf.Tensor that indicates the gradients with respect to model input.
+            scores: A list of tf.Tensor that indicates score values with respect to each the model
+                outputs.
+            model_outputs: A list of tf.Tensor that indicates the model outputs.
+            regularizations:  A list of tuples of (str, tf.Tensor) that indicates the regularizer
+                values.
+            overall_score: A list of tf.Tensor that indicates the overall scores that includes the
+                scores and regularization values.
         """
         pass
 
@@ -51,14 +52,14 @@ class Callback(ABC):
 class PrintLogger(Callback):
     """Callback to print values during optimization.
 
-    Attributes:
-        interval (int): An integer that appears the interval of printing.
+    Warnings:
+        This class is now **deprecated**!
+        Please use :obj:`tf_keras_vis.activation_maximization.callbacks.Progress` instead.
     """
     def __init__(self, interval=10):
-        """Constructor.
-
+        """
         Args:
-            interval (int, optional): An integer that appears the interval of printing.
+            interval: An integer that indicates the interval of printing.
                 Defaults to 10.
         """
         self.interval = interval
@@ -82,17 +83,11 @@ class PrintLogger(Callback):
 
 class GifGenerator2D(Callback):
     """Callback to construct a gif of optimized image.
-
-    Attributes:
-        path (str): The file path to save gif.
-    Todo:
-        * Write examples
     """
     def __init__(self, path) -> None:
-        """Constructor.
-
+        """
         Args:
-            path (str): The file path to save gif.
+            path: The file path to save gif.
         """
         self.path = path
 
@@ -117,9 +112,6 @@ class GifGenerator2D(Callback):
 
 class Progress(Callback):
     """Callback to print values during optimization.
-
-    Todo:
-        * Write examples
     """
     def on_begin(self, steps=None, **kwargs) -> None:
         self.progbar = tf.keras.utils.Progbar(steps)
@@ -134,7 +126,7 @@ class Progress(Callback):
 
 
 @contextmanager
-def managed_callbacks(callbacks=None, **kwargs) -> list:
+def managed_callbacks(callbacks=None, **kwargs):
     activated_callbacks = []
     try:
         for c in listify(callbacks):

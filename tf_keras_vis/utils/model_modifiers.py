@@ -20,31 +20,27 @@ class ModelModifier(ABC):
         """Implement modification to the model before processing gradient descent.
 
         Args:
-            model (tf.keras.Model): A model instance.
+            model: A model instance.
 
         Raises:
             NotImplementedError: This method must be overwritten.
 
-        Returns:
-            Union[None, tf.keras.Model]: Modified model or None.
+        Returns: Modified model or None.
         """
         raise NotImplementedError()
 
 
 class ReplaceToLinear(ModelModifier):
     """A model modifier that replaces the activation functions of all output layers to
-        `tf.keras.activations.linear`.
+    `tf.keras.activations.linear`.
 
-        Please note that this modifier must be set the end of modifiers list
-        that is passed to `ModelVisualization#__init__()`. For example::
+    Please note that this modifier must be set the end of modifiers list
+    that is passed to `ModelVisualization#__init__()`. For example::
 
-            # When visualizing `intermediate-1` layer.
-            ActivationMaximization(YOUR_MODEL,
-                                   model_modifier=[ExtractIntermediateLayer("intermediate-1"),
-                                                   ReplaceToLinear()])
-
-    Attributes:
-        model (tf.keras.Model): A model instance.
+        # When visualizing `intermediate-1` layer.
+        ActivationMaximization(YOUR_MODEL,
+                                model_modifier=[ExtractIntermediateLayer("intermediate-1"),
+                                                ReplaceToLinear()])
     """
     def __call__(self, model) -> None:
         layers = (model.get_layer(name=name) for name in model.output_names)
@@ -54,12 +50,9 @@ class ReplaceToLinear(ModelModifier):
 
 class ExtractIntermediateLayer(ModelModifier):
     """A model modifier that constructs new model instance
-        whose output layer is an intermediate layer of `model`.
+    whose output layer is an intermediate layer of `model`.
 
-        This modifier will be used to visualize the features of the model layer.
-
-    Attributes:
-        model (tf.keras.Model): A model instance.
+    This modifier will be used to visualize the features of the model layer.
     """
     def __init__(self, index_or_name) -> None:
         if not isinstance(index_or_name, (str, int)):
@@ -77,26 +70,22 @@ class ExtractIntermediateLayer(ModelModifier):
 
 class GuidedBackpropagation(ModelModifier):
     """A model modifier that replaces the gradient calculation of activation functions to
-        Guided calculation.
+    Guided calculation.
 
-        For details on Guided back propagation, see the papers:
+    For details on Guided back propagation, see the papers:
 
-        [String For Simplicity: The All Convolutional Net]
-        (https://arxiv.org/pdf/1412.6806.pdf)
+    References:
+        * String For Simplicity: The All Convolutional Net (https://arxiv.org/pdf/1412.6806.pdf)
+        * Grad-CAM: Why did you say that? Visual Explanations from Deep Networks via
+          Gradient-based Localization (https://arxiv.org/pdf/1610.02391v1.pdf)
 
-        [Grad-CAM: Why did you say that?
-        Visual Explanations from Deep Networks via Gradient-based Localization]
-        (https://arxiv.org/pdf/1610.02391v1.pdf)
+    Warnings:
+        Please note that there is a discussion that Guided Backpropagation is not working well as
+        model explanations.
 
-        ![Note]: Please note that there is a discussion that
-        Guided Backpropagation is not working well as model explanations.
-
-        [Sanity Checks for Saliency Maps](https://arxiv.org/pdf/1810.03292.pdf)
-        [Guided Grad-CAM is Broken! Sanity Checks for Saliency Maps]
-        (https://glassboxmedicine.com/2019/10/12/guided-grad-cam-is-broken-sanity-checks-for-saliency-maps/)
-
-    Attributes:
-        model (tf.keras.Model): A model instance.
+        * Sanity Checks for Saliency Maps (https://arxiv.org/pdf/1810.03292.pdf)
+        * Guided Grad-CAM is Broken! Sanity Checks for Saliency Maps
+          (https://glassboxmedicine.com/2019/10/12/guided-grad-cam-is-broken-sanity-checks-for-saliency-maps/)
     """
     def __init__(self, target_activations=[tf.keras.activations.relu]) -> None:
         self.target_activations = target_activations

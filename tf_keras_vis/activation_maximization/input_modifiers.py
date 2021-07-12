@@ -14,10 +14,11 @@ class InputModifier(ABC):
         """Implement modification to the input before processing gradient descent.
 
         Args:
-            seed_input (Union[np.ndarray,tf.Tensor]): A value to input to model.
+            seed_input: An :obj:`numpy.ndarray` or a tf.Tensor that indicates a value to input to
+                model.
 
         Returns:
-            Union[np.ndarray,tf.Tensor]: Modified values.
+            An :obj:`numpy.ndarray` or a tf.Tensor.
 
         Raises:
             NotImplementedError: This method must be overwritten.
@@ -28,17 +29,11 @@ class InputModifier(ABC):
 class Jitter(InputModifier):
     """An input modifier that introduces random jitter.
         Jitter has been shown to produce crisper activation maximization images.
-
-    Attributes:
-        jitter (int): The amount of jitter to apply.
-    Todo:
-        * Write examples
     """
     def __init__(self, jitter=8) -> None:
-        """Constructor.
-
+        """
         Args:
-            jitter (int, optional): The amount of jitter to apply. Defaults to 8.
+            jitter: The amount of jitter to apply. Defaults to 8.
         """
         self.jitter = int(jitter)
 
@@ -55,20 +50,13 @@ class Jitter(InputModifier):
 
 class Rotate(InputModifier):
     """An input modifier that introduces random rotation.
-
-    Attributes:
-        axes (Tuple[int,int]): The two axes that define the plane of rotation.
-        degree (float): The amount of rotation to apply.
-    Todo:
-        * Write examples
     """
     def __init__(self, axes=(1, 2), degree=3.0) -> None:
-        """Constructor.
-
+        """
         Args:
-            axes (Tuple[int,int], optional): The two axes that define the plane of rotation.
+            axes: The two axes that define the plane of rotation.
                 Defaults to (1, 2).
-            degree (Union[int,float], optional): The amount of rotation to apply. Defaults to 3.0.
+            degree: The amount of rotation to apply. Defaults to 3.0.
 
         Raises:
             ValueError: When axes is not a tuple of two ints.
@@ -99,36 +87,23 @@ class Rotate(InputModifier):
 
 class Rotate2D(Rotate):
     """An input modifier for 2D that introduces random rotation.
-
-    Attributes:
-        degree (Union[int,float]): The amount of rotation to apply.
-    Todo:
-        * Write examples
     """
     def __init__(self, degree=3.0) -> None:
-        """Constructor.
-
+        """
         Args:
-            degree (int|float, optional): The amount of rotation to apply. Defaults to 3.0.
+            degree: The amount of rotation to apply. Defaults to 3.0.
         """
         super().__init__((1, 2), degree)
 
 
 class Scale(InputModifier):
     """An input modifier that introduces randam scaling.
-
-    Attributes:
-        low (float): Lower boundary of the zoom factor.
-        high (float): Higher boundary of the zoom factor.
     """
     def __init__(self, low=0.9, high=1.1) -> None:
-        """Constructor.
-
+        """
         Args:
             low (float, optional): Lower boundary of the zoom factor. Defaults to 0.9.
             high (float, optional): Higher boundary of the zoom factor. Defaults to 1.1.
-        Raises:
-            ValueError: When high is less 1.
         """
         self.low = low
         self.high = high

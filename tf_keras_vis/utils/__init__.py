@@ -41,7 +41,8 @@ def num_of_gpus() -> Tuple[int, int]:
 
 def listify(value, return_empty_list_if_none=True, convert_tuple_to_list=True) -> list:
     """Ensures that the value is a list.
-        If it is not a list, it creates a new list with `value` as an item.
+
+    If it is not a list, it creates a new list with `value` as an item.
 
     Args:
         value (object): A list or something else.

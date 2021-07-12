@@ -14,84 +14,70 @@ from .utils.model_modifiers import ExtractIntermediateLayerForGradcam as ModelMo
 class Gradcam(ModelVisualization):
     """Grad-CAM
 
-        For details on Grad-CAM, see the paper:
-        [Grad-CAM: Why did you say that?
-        Visual Explanations from Deep Networks via Gradient-based Localization]
-        (https://arxiv.org/pdf/1610.02391v1.pdf).
-
-    Todo:
-        * Write examples
+    References:
+        * Grad-CAM: Why did you say that?
+          Visual Explanations from Deep Networks via Gradient-based Localization
+          (https://arxiv.org/pdf/1610.02391v1.pdf)
     """
-    def __call__(
-            self,
-            score,
-            seed_input,
-            penultimate_layer=None,
-            seek_penultimate_conv_layer=True,
-            activation_modifier=lambda cam: K.relu(cam),
-            training=False,
-            normalize_gradient=None,  # Disabled option.
-            expand_cam=True,
-            standardize_cam=True,
-            unconnected_gradients=tf.UnconnectedGradients.NONE) -> Union[np.ndarray, list]:
+    def __call__(self,
+                 score,
+                 seed_input,
+                 penultimate_layer=None,
+                 seek_penultimate_conv_layer=True,
+                 activation_modifier=lambda cam: K.relu(cam),
+                 training=False,
+                 expand_cam=True,
+                 standardize_cam=True,
+                 unconnected_gradients=tf.UnconnectedGradients.NONE) -> Union[np.ndarray, list]:
         """Generate gradient based class activation maps (CAM) by using positive gradient of
-            penultimate_layer with respect to score.
+        penultimate_layer with respect to score.
 
         Args:
-            score (Union[tf_keras_vis.utils.scores.Score,Callable,
-                list[tf_keras_vis.utils.scores.Score,Callable]]):
-                A Score instance or function to specify visualizing target. For example::
+            score: A :obj:`tf_keras_vis.utils.scores.Score` instance, function or a list of them.
+                For example of the Score instance to specify visualizing target::
 
                     scores = CategoricalScore([1, 294, 413])
 
-                This code above means the same with the one below::
+                The code above means the same with the one below::
 
                     score = lambda outputs: (outputs[0][1], outputs[1][294], outputs[2][413])
 
-                When the model has multiple outputs, you have to pass a list of
+                When the model has multiple outputs, you MUST pass a list of
                 Score instances or functions. For example::
 
+                    from tf_keras_vis.utils.scores import CategoricalScore, InactiveScore
                     score = [
-                        tf_keras_vis.utils.scores.CategoricalScore([1, 23]),  # For 1st output
-                        tf_keras_vis.utils.scores.InactiveScore(),            # For 2nd output
+                        CategoricalScore([1, 23]),  # For 1st model output
+                        InactiveScore(),            # For 2nd model output
                         ...
                     ]
 
-            seed_input (Union[tf.Tensor,np.ndarray,list[tf.Tensor,np.ndarray]]):
-                A tensor or a list of them to input in the model.
-                When the model has multiple inputs, you have to pass a list.
-            penultimate_layer (Union[int,str,tf.keras.layers.Layer], optional):
-                An index of the layer or the name of it or the instance itself.
-                When None, it means the same with -1.
-                If the layer specified by `penultimate_layer` is not `convolutional` layer,
-                `penultimate_layer` will work as the offset to seek `convolutional` layer.
-                Defaults to None.
-            seek_penultimate_conv_layer (bool, optional):
-                A bool that indicates whether seeks a penultimate layer or not
-                when the layer specified by `penultimate_layer` is not `convolutional` layer.
+            seed_input: A tf.Tensor, :obj:`numpy.ndarray` or a list of them to input in the model.
+                That's when the model has multiple inputs, you MUST pass a list of tensors.
+            penultimate_layer: An index or name of the layer, or the tf.keras.layers.Layer
+                instance itself. When None, it means the same with `-1`. If the layer specified by
+                this option is not `convolutional` layer, `penultimate_layer` will work as the
+                offset to seek `convolutional` layer. Defaults to None.
+            seek_penultimate_conv_layer: A bool that indicates whether or not seeks a penultimate
+                layer when the layer specified by `penultimate_layer` is not `convolutional` layer.
                 Defaults to True.
-            activation_modifier (Callable, optional):  A function to modify activation.
-                Defaults to `lambda cam: K.relu(cam)`.
-            training (bool, optional): A bool that indicates
-                whether the model's training-mode on or off. Defaults to False.
-            normalize_gradient (bool, optional): ![Note] This option is now disabled.
-                Defaults to None.
-            expand_cam (bool, optional): True to resize cam to the same as input image size.
-                ![Note] When True, even if the model has multiple inputs,
-                this function return only a cam value (That's, when `expand_cam` is True,
-                multiple cam images are generated from a model that has multiple inputs).
-            standardize_cam (bool, optional): When True, cam will be standardized.
-                Defaults to True.
-            unconnected_gradients (tf.UnconnectedGradients, optional):
-                Specifies the gradient value returned when the given input tensors are unconnected.
-                Defaults to tf.UnconnectedGradients.NONE.
+            activation_modifier: A function to modify the Class Activation Map (CAM). Defaults to
+                `lambda cam: K.relu(cam)`.
+            training: A bool that indicates whether the model's training-mode on or off. Defaults
+                to False.
+            expand_cam: True to resize CAM to the same as input image size. **Notes!** When False,
+                even if the model has multiple inputs, return only a CAM. Defaults to True.
+            standardize_cam: When True, CAM will be standardized. Defaults to True.
+            unconnected_gradients: Specifies the gradient value returned when the given input
+                tensors are unconnected. Defaults to tf.UnconnectedGradients.NONE.
 
         Returns:
-            Union[np.ndarray,list]: The class activation maps that indicate the `seed_input` regions
-                whose change would most contribute the score value.
+            An :obj:`numpy.ndarray` or a list of them. They are the Class Activation Maps (CAMs)
+            that indicate the `seed_input` regions whose change would most contribute the score
+            value.
 
         Raises:
-            ValueError: In case of invalid arguments for `score`, or `penultimate_layer`.
+            :obj:`ValueError`: When there is any invalid arguments.
         """
 
         if normalize_gradient is not None:

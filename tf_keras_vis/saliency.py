@@ -11,15 +11,10 @@ from .utils import get_num_of_steps_allowed, listify, standardize
 class Saliency(ModelVisualization):
     """Vanilla Saliency and Smooth-Grad
 
-        For details on Vanilla Saliency, see the paper:
-        [Deep Inside Convolutional Networks: Visualising Image Classification Models
-        and Saliency Maps](https://arxiv.org/pdf/1312.6034)
-
-        For details on Smooth-Grad, see the paper:
-        [SmoothGrad: removing noise by adding noise](https://arxiv.org/pdf/1706.03825)
-
-    Todo:
-        * Write examples
+    References:
+        * Vanilla Saliency: Deep Inside Convolutional Networks: Visualising Image Classification
+          Models and Saliency Maps (https://arxiv.org/pdf/1312.6034)
+        * SmoothGrad: removing noise by adding noise (https://arxiv.org/pdf/1706.03825)
     """
     def __call__(self,
                  score,
@@ -32,55 +27,51 @@ class Saliency(ModelVisualization):
                  standardize_saliency=True,
                  unconnected_gradients=tf.UnconnectedGradients.NONE) -> Union[np.ndarray, list]:
         """Generate an attention map that appears how output value changes with respect to a small
-            change in input image pixels.
+        change in input image pixels.
 
         Args:
-            score (Union[tf_keras_vis.utils.scores.Score,Callable,
-                list[tf_keras_vis.utils.scores.Score,Callable]]):
-                A Score instance or function to specify visualizing target. For example::
+            score: A :obj:`tf_keras_vis.utils.scores.Score` instance, function or a list of them.
+                For example of the Score instance to specify visualizing target::
 
                     scores = CategoricalScore([1, 294, 413])
 
-                This code above means the same with the one below::
+                The code above means the same with the one below::
 
                     score = lambda outputs: (outputs[0][1], outputs[1][294], outputs[2][413])
 
-                When the model has multiple outputs, you have to pass a list of
+                When the model has multiple outputs, you MUST pass a list of
                 Score instances or functions. For example::
 
+                    from tf_keras_vis.utils.scores import CategoricalScore, InactiveScore
                     score = [
-                        tf_keras_vis.utils.scores.CategoricalScore([1, 23]),  # For 1st output
-                        tf_keras_vis.utils.scores.InactiveScore(),            # For 2nd output
+                        CategoricalScore([1, 23]),  # For 1st model output
+                        InactiveScore(),            # For 2nd model output
                         ...
                     ]
 
-            seed_input (Union[tf.Tensor,np.ndarray,list[tf.Tensor,np.ndarray]]):
-                A tensor or a list of them to input in the model.
-                When the model has multiple inputs, you have to pass a list.
-            smooth_samples (int, optional): The number of calculating gradients iterations.
-                When over zero, this method will work as SmoothGrad.
-                When zero, it will work as Vanilla Saliency.
-                Defaults to 0.
-            smooth_noise (float, optional): Noise level. Defaults to 0.20.
-            keepdims (bool, optional): A boolean that whether to keep the channels-dim or not.
+            seed_input: A tf.Tensor, :obj:`numpy.ndarray` or a list of them to input in the model.
+                That's when the model has multiple inputs, you MUST pass a list of tensors.
+            smooth_samples (int, optional): The number of calculating gradients iterations. When
+                over zero, this method will work as SmoothGrad. When zero, it will work as Vanilla
+                Saliency. Defaults to 0.
+            smooth_noise: Noise level. Defaults to 0.20.
+            keepdims: A bool that indicates whether or not to keep the channels-dimension.
                 Defaults to False.
-            gradient_modifier (Callable, optional): A function to modify gradients.
-                Defaults to None.
-            training (bool, optional): A bool that indicates
-                whether the model's training-mode on or off. Defaults to False.
+            gradient_modifier: A function to modify gradients. Defaults to None.
+            training: A bool that indicates whether the model's training-mode on or off. Defaults
+                to False.
             standardize_saliency (bool, optional): When True, saliency map will be standardized.
                 Defaults to True.
-            unconnected_gradients (tf.UnconnectedGradients, optional):
-                Specifies the gradient value returned when the given input tensors are unconnected.
-                Defaults to tf.UnconnectedGradients.NONE.
+            unconnected_gradients: Specifies the gradient value returned when the given input
+                tensors are unconnected. Defaults to tf.UnconnectedGradients.NONE.
 
         Returns:
-            Union[np.ndarray,list]: The heatmap image indicating the `seed_input` regions
-                whose change would most contribute towards maximizing the score value,
-                Or a list of their images.
+            An :obj:`numpy.ndarray` or a list of them.
+            They are the saliency maps that indicate the `seed_input` regions
+            whose change would most contribute the score value.
 
         Raises:
-            ValueError: In case of invalid arguments for `score`, or `seed_input`.
+            :obj:`ValueError`: When there is any invalid arguments.
         """
 
         # Preparing

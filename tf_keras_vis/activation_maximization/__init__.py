@@ -15,10 +15,7 @@ from .regularizers import Norm, TotalVariation2D
 
 
 class ActivationMaximization(ModelVisualization):
-    """ActivationMaximization
-
-    Todo:
-        * Write examples
+    """ActivationMaximization.
     """
     def __call__(
             self,
@@ -40,34 +37,38 @@ class ActivationMaximization(ModelVisualization):
     ) -> Union[np.ndarray, list]:
         """Generate the model inputs that maximize the output of the given `score` functions.
 
-            By default, this method is tuned to visualize `tf.keras.application.VGG16` model.
-            So if you want to visualize other models,
-            you have to tune the parameters of this method.
+        By default, this method is optimized to visualize `tf.keras.application.VGG16` model.
+        So if you want to visualize other models, you have to tune the parameters of this method.
 
         Args:
-            score (Union[tf_keras_vis.utils.scores.Score,Callable,
-                list[tf_keras_vis.utils.scores.Score,Callable]]):
-                A Score instance or function to specify visualizing target. For example::
+            score: A :obj:`tf_keras_vis.utils.scores.Score` instance, function or a list of them.
+                For example of the Score instance to specify visualizing target::
 
                     scores = CategoricalScore([1, 294, 413])
 
-                This code above means the same with the one below::
+                The code above means the same with the one below::
 
                     score = lambda outputs: (outputs[0][1], outputs[1][294], outputs[2][413])
 
-                When the model has multiple outputs, you have to pass a list of
+                When the model has multiple outputs, you MUST pass a list of
                 Score instances or functions. For example::
 
+                    from tf_keras_vis.utils.scores import CategoricalScore, InactiveScore
                     score = [
-                        tf_keras_vis.utils.scores.CategoricalScore([1, 23]),  # For 1st output
-                        tf_keras_vis.utils.scores.InactiveScore(),            # For 2nd output
+                        CategoricalScore([1, 23]),  # For 1st model output
+                        InactiveScore(),            # For 2nd model output
                         ...
                     ]
 
-            seed_input (Union[tf.Tensor,np.ndarray,list[tf.Tensor,np.ndarray]], optional):
-                A tensor or a list of them. When `None`, the seed_input value will be generated
-                with randome uniform noise. When you want to visualize multiple images
-                (i.e., batch_size > 1), you have to pass seed_inputs object. For example::
+            seed_input: A tf.Tensor, :obj:`numpy.ndarray` or a list of them to input in the model.
+                When `None`, the seed_input value will be automatically generated from a uniform
+                distribution. If you want to visualize multiple images (i.e., batch_size > 1),
+                you have to pass a seed_input object. For example::
+
+                    seed_input = tf.random.uniform((samples, ..., channels), low, high)
+
+                Farthermore, if the model has multiple inputs and you want multiple images,
+                you have to do as follows::
 
                     seed_input = [
                         tf.random.uniform((samples, ..., channels), low, high),  # 1st input
@@ -76,29 +77,28 @@ class ActivationMaximization(ModelVisualization):
                     ]
 
                 Defaults to None.
-            input_range (Union[tuple[int,int],list[tuple[int,int]]], optional):
-                A tuple that specifies the input range as a `(min, max)` tuple or
-                a list of the tuple. If the model has multiple inputs,
-                you can use a different input range for each input by passing as list of input
-                ranges. For example::
+            input_range: A tuple of two int values or a list of them. The tuple indicates
+                `(min, max)` values that is range of the result of this method. If the model has
+                multiple inputs, you can use different input ranges for each model input by
+                passing list of tuples. For example::
 
                     input_range = [
-                        (0, 255),     # The 1st input value's range
-                        (-1.0, 1.0),  # The 2nd input value's range
+                        (0, 255),     # The 1st model input's range
+                        (-1.0, 1.0),  # The 2nd model input's range
                         ...
                     ]
 
-                When `None` or a `(None, None)` tuple, an input tensor
-                (i.e., the result of this function) will be no applied any limitation.
+                When `None` or `(None, None)` tuple, the input tensor
+                (i.e., the result of this method) will be not applied any limitation.
                 Defaults to (0, 255).
-            input_modifiers (Union[InputModifier,Callable,
-                list[InputModifier,Callable,list[InputModifier,Callable]],
-                Dict[str,Union[InputModifier,Callable,list[InputModifier,Callable]]]], optional):
-                A tf_keras_vis.activation_maximization.input_modifiers.InputModifier instance,
-                a function, a list of them or a list that has lists of them for each input.
-                When the model has multiple inputs, you have to pass a dictionary,
-                that contains the input layer names and lists of input modifiers,
-                or a list of lists of them for each model inputs::
+            input_modifiers: A :obj:`tf_keras_vis.activation_maximization.input_modifiers.
+                InputModifier` instance, a function, a list of them when the model has a single
+                input. For example::
+
+                    input_modifiers = [Jitter(jitter=8), Rotate(degree=3), Scale(high=1.1)]
+
+                When the model has multiple inputs, you have to pass a dictionary
+                that contains the lists of input modifiers for each model inputs::
 
                     input_modifiers = {
                         'input_1': [Jitter(jitter=8), Rotate(degree=3), Scale(high=1.1)],
@@ -106,7 +106,8 @@ class ActivationMaximization(ModelVisualization):
                         ...
                     }
 
-                Or,
+                Or you could also pass a list of lists of input modifiers for each model inputs as
+                follows::
 
                     input_modifiers = [
                         [Jitter(jitter=8), Rotate(degree=3), Scale(high=1.1)],  # For 1st input
@@ -114,51 +115,50 @@ class ActivationMaximization(ModelVisualization):
                         ...
                     ]
 
-                Defaults to [Jitter(jitter=4), Rotate(degree=3), Scale(low=0.996, high=1.01)].
-            regularizers (Union[Regularizer,Callable,
-                list[Regularizer,Callable,list[Regularizer,Callable]],
-                Dict[str,Union[Regularizer,Callable,list[Regularizer,Callable]]]], optional):
-                A function, tf_keras_vis.utils.regularizers.Regularizer instance or a list of them.
-                If the model has multiple inputs, you have to pass a dictionary,
-                that contains the input layer names and lists of regularizers,
-                a list of lists of regularizers on each model inputs::
+                Defaults to [Jitter(jitter=4), Rotate(degree=1)].
+            regularizers: A :obj:`tf_keras_vis.utils.regularizers.Regularizer` instance,
+                a list of regularizers or a list that has lists of regularizers for each input.
+                For example::
+
+                    regularizers = [TotalVariation2D(weight=1.0), Norm(weight=0.3, p=1)]
+
+                > Please notice that `regularizes` does NOT accept function object like
+                `input_modifiers`.
+
+                When the model has multiple inputs, you have to pass a dictionary
+                that contains the lists of regularizers for each model inputs::
 
                     regularizers = {
-                        'input_1': [TotalVariation2D(weight=1.), Norm(weight=1., p=2)],
-                        'input_2': [Norm(weight=1., p=2)],
+                        'input_1': [TotalVariation2D(weight=1.0), Norm(weight=0.3, p=1)],
+                        'input_2': [Norm(weight=1.0, p=2)],
                         ...
                     }
 
-                Or,
+                Or you could also pass a list of lists of regularizers for each model inputs as
+                follows::
 
                     regularizers = [
-                        [TotalVariation2D(weight=1.), Norm(weight=1., p=2)],  # For 1st input
-                        [Norm(weight=1., p=2)],                               # For 2nt input
+                        [TotalVariation2D(weight=1.0), Norm(weight=0.3, p=1)],  # For 1st input
+                        [Norm(weight=1.0, p=2)],                               # For 2nt input
                         ...
                     ]
 
-                Defaults to [TotalVariation2D(weight=0.2), Norm(weight=0.01, p=6)].
-            steps (int, optional): The number of gradient descent iterations. Defaults to 200.
-            optimizer (tf.keras.optimizers.Optimizer, optional):
-                A `tf.optimizers.Optimizer` instance. When None,
-                `tf.optimizers.RMSprop(learning_rate=1.0, rho=0.999)` will be automatically created.
+                Defaults to [TotalVariation2D(weight=1.0), Norm(weight=0.3, p=1)].
+            steps: The number of gradient descent iterations. Defaults to 200.
+            optimizer: A `tf.optimizers.Optimizer` instance. When None, it will be automatically
+                created. Defaults to `tf.optimizers.RMSprop(learning_rate=1.0, rho=0.999)`.
+            gradient_modifier: A function to modify gradients.
                 Defaults to None.
-            normalize_gradient (bool, optional): ![Note] This option is now disabled.
+            callbacks: A :obj:`tf_keras_vis.activation_maximization.callbacks.Callback` instance
+                or a list of them.
                 Defaults to None.
-            gradient_modifier (Callable, optional): A function to modify gradients.
-                Defaults to None.
-            callbacks (Union[tf_keras_vis.activation_maximization.callbacks.Callback,
-                list[tf_keras_vis.activation_maximization.callbacks.Callback]], optional):
-                A `tf_keras_vis.activation_maximization.callbacks.Callback` instance
-                or a list of them. Defaults to None.
-            training (bool, optional): A bool that indicates
-                whether the model's training-mode on or off. Defaults to False.
-            unconnected_gradients (tf.UnconnectedGradients, optional):
-                Specifies the gradient value returned when the given input tensors are unconnected.
+            training: A bool that indicates whether the model's training-mode on or off.
+                Defaults to False.
+            unconnected_gradients: Specifies the gradient value returned when the given input
+                tensors are unconnected.
                 Defaults to tf.UnconnectedGradients.NONE.
-            activation_modifiers (Union[Callable,Dict[Callable]], optional):
-                A function or a dictionary of them (the key is input layer name).
-                If the model has multiple inputs, you have to pass a dictionary::
+            activation_modifiers: A function or a dictionary of them (the key is input layer's
+                name). When the model has multiple inputs, you have to pass a dictionary::
 
                     activation_modifiers = {
                         'input_1': lambda x: ...,
@@ -166,14 +166,13 @@ class ActivationMaximization(ModelVisualization):
                         ...
                     }
 
-                This function will be executed before returning the result. Defaults to None.
+                This functions will be executed before returning the result. Defaults to None.
         Returns:
-            An np.ndarray when the model has a single input and `seed_input` is None
-            or not a list of np.ndarray.
-            A list of np.ndarray when otherwise.
+            An :obj:`numpy.ndarray` when the model has a single input.
+            When the model has multiple inputs, a list of :obj:`numpy.ndarray`.
 
         Raises:
-            ValueError: When any arguments are invalid.
+            :obj:`ValueError`: When there is any invalid arguments.
         """
         arguments = dict(
             (k, v) for k, v in locals().items() if k != 'self' and not k.startswith('_'))

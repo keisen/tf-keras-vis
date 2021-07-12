@@ -6,15 +6,11 @@ import tensorflow as tf
 
 class Regularizer(ABC):
     """Abstract class for defining a regularizer.
-
-    Attributes:
-        name (str): Instance name.
     """
     def __init__(self, name) -> None:
-        """Constructor.
-
+        """
         Args:
-            name (str): Instance name.
+            name: Instance name.
         """
         self.name = name
 
@@ -23,7 +19,7 @@ class Regularizer(ABC):
         """Implement regularization.
 
         Args:
-            input_value (tf.Tensor): An value to input to the model.
+            input_value: A tf.Tensor that indicates the value to input to the model.
 
         Returns:
             tf.Tensor: Regularization value with respect to the input value.
@@ -36,20 +32,14 @@ class Regularizer(ABC):
 
 class TotalVariation2D(Regularizer):
     """A regularizer that introduces Total Variation.
-
-    Attributes:
-        weight (float): This weight will be apply to TotalVariation values.
-        name (str): Instance name. Defaults to 'TotalVariation2D'.
-    Todo:
-        * Write examples
     """
     def __init__(self, weight=10.0, name='TotalVariation2D') -> None:
-        """Constructor.
-
+        """
         Args:
-            weight (float, optional): This value will be apply to TotalVariation values.
+            weight: This value will be apply to TotalVariation values.
                 Defaults to 10.0.
-            name (str, optional): Instance name.. Defaults to 'TotalVariation2D'.
+            name : Instance name.
+                Defaults to 'TotalVariation2D'.
         """
         super().__init__(name)
         self.weight = float(weight)
@@ -66,22 +56,14 @@ class TotalVariation2D(Regularizer):
 
 class Norm(Regularizer):
     """A regularizer that introduces Norm.
-
-    Attributes:
-        weight (float): This weight will be apply to TotalVariation values.
-        p  (int): Order of the norm.
-        name (str): Instance name. Defaults to 'Norm'.
-    Todo:
-        * Write examples
     """
     def __init__(self, weight=10., p=2, name='Norm') -> None:
-        """Constructor.
-
+        """
         Args:
-            weight (float, optional): This weight will be apply to TotalVariation values.
+            weight: This weight will be apply to TotalVariation values.
                 Defaults to 10.
-            p (int, optional): Order of the norm. Defaults to 2.
-            name (str, optional): Instance name. Defaults to 'Norm'. Defaults to 'Norm'.
+            p: Order of the norm. Defaults to 2.
+            name: Instance name. Defaults to 'Norm'. Defaults to 'Norm'.
         """
         super().__init__(name)
         self.weight = float(weight)

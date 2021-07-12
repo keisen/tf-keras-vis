@@ -10,10 +10,9 @@ class Score(ABC):
     """Abstract class for defining a score function.
     """
     def __init__(self, name=None) -> None:
-        """Constructor.
-
+        """
         Args:
-            name (name, optional): Instance name. Defaults to None.
+            name: Instance name. Defaults to None.
         """
         self.name = name
 
@@ -22,14 +21,13 @@ class Score(ABC):
         """Implement collecting scores that are used in visualization modules.
 
         Args:
-            output (tf.Tensor): a Model output value.
+            output: A tf.Tensor that indicates a model output value.
 
         Raises:
             NotImplementedError: This method must be overwritten.
 
         Returns:
-            Union[tf.Tensor, list[tf.Tensor], tuple[tf.Tensor]]:
-                Score values or a list or tuple of them.
+            Score values.
         """
         raise NotImplementedError()
 
@@ -39,13 +37,8 @@ class InactiveScore(Score):
 
     With a multiple output model, you can use this
     if you want a output to be excluded from targets of calculating gradients.
-
-    Todo:
-        * Write examples
     """
     def __init__(self) -> None:
-        """Constructor.
-        """
         super().__init__('InactiveScore')
 
     def __call__(self, output) -> tf.Tensor:
@@ -54,17 +47,12 @@ class InactiveScore(Score):
 
 class BinaryScore(Score):
     """A score function that collects the scores from model output
-        which is for binary classification.
-
-    Todo:
-        * Write examples
+    which is for binary classification.
     """
     def __init__(self, target_values) -> None:
-        """Constructor.
-
+        """
         Args:
-            target_values (bool,list[bool]): When the type of target_values is not bool,
-                they will be casted to bool.
+            target_values: A bool or a list of them.
 
         Raises:
             ValueError: When target_values is None or an empty list.
@@ -89,16 +77,12 @@ class BinaryScore(Score):
 
 class CategoricalScore(Score):
     """A score function that collects the scores from model output
-        which is for categorical classification.
-
-    Todo:
-        * Write examples
+    which is for categorical classification.
     """
     def __init__(self, indices) -> None:
-        """Constructor.
-
+        """
         Args:
-            indices (Union[int,list[int]]): An integer or a list of them.
+            indices: An integer or a list of them.
 
         Raises:
             ValueError: When indices is None or an empty list.
