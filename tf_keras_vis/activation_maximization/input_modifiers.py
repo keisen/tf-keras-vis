@@ -3,7 +3,7 @@ from typing import Union
 
 import numpy as np
 import tensorflow as tf
-from scipy.ndimage import rotate, zoom
+from scipy.ndimage.interpolation import rotate, zoom
 
 
 class InputModifier(ABC):
@@ -94,7 +94,7 @@ class Rotate2D(Rotate):
         Args:
             degree: The amount of rotation to apply. Defaults to 3.0.
         """
-        super().__init__((1, 2), degree)
+        super().__init__(axes=(1, 2), degree=degree)
 
 
 class Scale(InputModifier):

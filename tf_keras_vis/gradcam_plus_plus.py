@@ -20,7 +20,7 @@ class GradcamPlusPlus(ModelVisualization):
     def __call__(self,
                  score,
                  seed_input,
-                 penultimate_layer=-1,
+                 penultimate_layer=None,
                  seek_penultimate_conv_layer=True,
                  activation_modifier=lambda cam: K.relu(cam),
                  training=False,

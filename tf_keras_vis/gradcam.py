@@ -4,7 +4,7 @@ from typing import Union
 import numpy as np
 import tensorflow as tf
 import tensorflow.keras.backend as K
-from scipy.ndimage import zoom
+from scipy.ndimage.interpolation import zoom
 
 from . import ModelVisualization
 from .utils import is_mixed_precision, standardize, zoom_factor
