@@ -42,9 +42,10 @@ class TotalVariation2D(LegacyRegularizer):
         return self.weight * tv
 
 
-@deprecated(version='0.6.0',
-            reason="Please use `tf_keras_vis.activation_maximization.regularizers.TotalVariation2D`"
-            " class instead of this.")
+@deprecated(
+    version='0.6.0',
+    reason="Please use `tf_keras_vis.activation_maximization.regularizers.TotalVariation2D`"
+    " class instead of this.")
 class TotalVariation(TotalVariation2D):
     def __init__(self, weight=10.):
         super().__init__(weight=weight, name='TotalVariation')  # pragma: no cover

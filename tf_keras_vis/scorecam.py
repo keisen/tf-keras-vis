@@ -143,9 +143,8 @@ class Scorecam(ModelVisualization):
         masks = (np.tile(mask, (input_shape[-1], ) + (1, ) * len(map_shape)) for mask, input_shape,
                  map_shape in zip(normalized_activations, input_shapes, activation_shapes))
         # (c, samples, h, w, channels) -> (channels, samples, h, w, c)
-        masks = (np.transpose(mask,
-                              (len(mask.shape) - 1, ) + tuple(range(len(mask.shape)))[1:-1] + (0, ))
-                 for mask in masks)
+        masks = (np.transpose(mask, (len(mask.shape) - 1, ) + tuple(range(len(mask.shape)))[1:-1] +
+                              (0, )) for mask in masks)
         # Create masked inputs
         masked_seed_inputs = (np.multiply(input_template, mask)
                               for input_template, mask in zip(input_templates, masks))

@@ -30,13 +30,17 @@ class TestReplaceToLinear():
 
 class TestExtractIntermediateLayer():
     @pytest.mark.parametrize("model", [mock_conv_model(), mock_multiple_outputs_model()])
-    @pytest.mark.parametrize("layer,expected_error", [(None, TypeError), (1, NO_ERROR),
-                                                      ('conv_1', NO_ERROR)])
+    @pytest.mark.parametrize("layer,expected_error", [
+        (None, TypeError),
+        (1, NO_ERROR),
+        ('conv_1', NO_ERROR),
+    ])
     @pytest.mark.usefixtures("mixed_precision")
     def test__call__(self, model, layer, expected_error):
         assert model.outputs[0].shape.as_list() == [None, 2]
-        with assert_error(expected_error):
-            instance = ActivationMaximization(model, model_modifier=ExtractIntermediateLayer(layer))
+        with assert_raises(expected_error):
+            instance = ActivationMaximization(model,
+                                              model_modifier=ExtractIntermediateLayer(layer))
             assert instance.model != model
             assert instance.model.outputs[0].shape.as_list() == [None, 6, 6, 6]
             instance([CategoricalScore(0)])

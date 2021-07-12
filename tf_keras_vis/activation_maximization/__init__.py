@@ -272,7 +272,8 @@ class ActivationMaximization(ModelVisualization):
                              regularizations=regularization_values,
                              overall_score=regularized_score_values)
 
-        if len(self.model.inputs) == 1 and (seed_input is None or not isinstance(seed_input, list)):
+        if len(self.model.inputs) == 1 and (seed_input is None
+                                            or not isinstance(seed_input, list)):
             clipped_value = clipped_value[0]
         return clipped_value
 

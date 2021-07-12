@@ -46,7 +46,8 @@ def mixed_precision(request):
 
 @pytest.fixture(scope='function', params=_source_of_models())
 def dense_model(request, tmpdir):
-    return _save_and_load(mock_dense_model(), request.param, os.path.join(tmpdir, 'dense-model.h5'))
+    return _save_and_load(mock_dense_model(), request.param,
+                          os.path.join(tmpdir, 'dense-model.h5'))
 
 
 @pytest.fixture(scope='function', params=_source_of_models())
