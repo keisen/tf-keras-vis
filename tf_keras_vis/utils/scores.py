@@ -72,7 +72,7 @@ class BinaryScore(Score):
         target_values = self.target_values
         if len(target_values) == 1 and len(target_values) < output.shape[0]:
             target_values = target_values * output.shape[0]
-        return tf.math.abs(output - (1.0 - tf.constant(target_values, dtype=output.dtype)))
+        return (2 * tf.constant(target_values, dtype=output.dtype) - 1.0) * output
 
 
 class CategoricalScore(Score):

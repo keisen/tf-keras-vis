@@ -39,20 +39,20 @@ class TestBinaryScore():
             assert score.target_values == expected
 
     @pytest.mark.parametrize("target_values,output,expected,expected_error", [
-        (False, [[1, 1, 0], [1, 0, 1]], [0], ValueError),
-        (False, [[1]], [0], NO_ERROR),
-        (False, [[0]], [1], NO_ERROR),
+        (False, [[1, 1, 0], [1, 0, 1]], [-1], ValueError),
+        (False, [[1]], [-1], NO_ERROR),
+        (False, [[0]], [0], NO_ERROR),
         (True, [[1]], [1], NO_ERROR),
         (True, [[0]], [0], NO_ERROR),
         (True, [[0], [1], [0]], [0, 1, 0], NO_ERROR),
-        (False, [[0], [1], [0]], [1, 0, 1], NO_ERROR),
-        ([True, False, True], [[0], [1], [0]], [0, 0, 0], NO_ERROR),
-        ([False, True, False], [[0], [1], [0]], [1, 1, 1], NO_ERROR),
+        (False, [[0], [1], [0]], [0, -1, 0], NO_ERROR),
+        ([True, False, True], [[0], [1], [0]], [0, -1, 0], NO_ERROR),
+        ([False, True, False], [[0], [1], [0]], [0, 1, 0], NO_ERROR),
     ])
     def test__call__(self, target_values, output, expected, expected_error):
         output = tf.constant(output, tf.float32)
         score = BinaryScore(target_values)
-        with assert_error(expected_error):
+        with assert_raises(expected_error):
             score_value = score(output)
             assert tf.math.reduce_all(score_value == expected)
 
