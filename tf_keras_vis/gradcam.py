@@ -67,9 +67,9 @@ class Gradcam(ModelVisualization):
                 `lambda cam: K.relu(cam)`.
             training: A bool that indicates whether the model's training-mode on or off. Defaults
                 to False.
-            normalize_gradient (bool, optional): ![Note] This option is now disabled.
+            normalize_gradient (bool, optional): **Note!** This option is now disabled.
                 Defaults to None.
-            expand_cam: True to resize CAM to the same as input image size. **Notes!** When False,
+            expand_cam: True to resize CAM to the same as input image size. **Note!** When False,
                 even if the model has multiple inputs, return only a CAM. Defaults to True.
             standardize_cam: When True, CAM will be standardized. Defaults to True.
             unconnected_gradients: Specifies the gradient value returned when the given input

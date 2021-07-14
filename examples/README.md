@@ -1,4 +1,4 @@
-# Notes!
+# Note!
 
 All example notebooks were moved to [the document folder](../docs).
 
