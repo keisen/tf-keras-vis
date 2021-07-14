@@ -22,6 +22,7 @@ class GradcamPlusPlus(ModelVisualization):
                  seed_input,
                  penultimate_layer=None,
                  seek_penultimate_conv_layer=True,
+                 gradient_modifier=None,
                  activation_modifier=lambda cam: K.relu(cam),
                  training=False,
                  expand_cam=True,
@@ -59,6 +60,7 @@ class GradcamPlusPlus(ModelVisualization):
             seek_penultimate_conv_layer: A bool that indicates whether or not seeks a penultimate
                 layer when the layer specified by `penultimate_layer` is not `convolutional` layer.
                 Defaults to True.
+            gradient_modifier: A function to modify gradients. Defaults to None.
             activation_modifier: A function to modify the Class Activation Map (CAM). Defaults to
                 `lambda cam: K.relu(cam)`.
             training: A bool that indicates whether the model's training-mode on or off. Defaults
@@ -103,6 +105,8 @@ class GradcamPlusPlus(ModelVisualization):
         score_values = sum(tf.math.exp(o) for o in score_values)
         score_values = tf.reshape(score_values, score_values.shape + (1, ) * (grads.ndim - 1))
 
+        if gradient_modifier is not None:
+            grads = gradient_modifier(grads)
         first_derivative = score_values * grads
         second_derivative = first_derivative * grads
         third_derivative = second_derivative * grads
