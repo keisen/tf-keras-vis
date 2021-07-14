@@ -17,15 +17,16 @@ sys.path.insert(0, os.path.abspath('..'))
 
 # -- Project information -----------------------------------------------------
 
-project = 'tf-keras-vis documents (beta)'
-copyright = '2021, keisen(Yasuhiro Kubota)'
+project = 'tf-keras-vis'
 author = 'keisen(Yasuhiro Kubota)'
+copyright = f'2021, {author}'
 
 # The short X.Y version
-version = '0.7.0'
+with open("../VERSION") as f:
+    version = f.read().strip()
 
 # The full version, including alpha/beta/rc tags
-release = 'v0.7.0'
+release = f"v{version}"
 
 # -- General configuration ---------------------------------------------------
 

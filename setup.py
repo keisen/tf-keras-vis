@@ -1,11 +1,15 @@
 from setuptools import find_packages, setup
+from tf_keras_vis import __version__
 
 with open("README.md", "r") as f:
     long_description = f.read()
 
+with open("VERSION") as f:
+    version = f.read().strip()
+
 setup(
     name="tf-keras-vis",
-    version="0.7.2",
+    version=version,
     author="keisen (Yasuhiro Kubota)",
     author_email="k.keisen@gmail.com",
     description="Neural network visualization toolkit for tf.keras",
