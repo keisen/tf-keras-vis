@@ -1,5 +1,4 @@
 from setuptools import find_packages, setup
-from tf_keras_vis import __version__
 
 with open("README.md", "r") as f:
     long_description = f.read()
