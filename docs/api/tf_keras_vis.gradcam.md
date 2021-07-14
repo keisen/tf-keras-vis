@@ -1,9 +1,7 @@
 GradCAM
 =============================
 
-
-Classes
------------------
+![](../images/gradcam.png)
 
 ```{eval-rst}
 .. automodule:: tf_keras_vis.gradcam

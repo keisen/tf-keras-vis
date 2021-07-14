@@ -1,9 +1,7 @@
 ScoreCAM
 ==============================
 
-
-Classes
------------------
+![](../images/scorecam.png)
 
 ```{eval-rst}
 .. automodule:: tf_keras_vis.scorecam

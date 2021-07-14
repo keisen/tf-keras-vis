@@ -6,10 +6,39 @@ Welcome to tf-keras-vis!
 :end-before: <!-- ./sec.0 -->
 ```
 
-```{include} ../README.md
-:start-after: <!-- sec.3 -->
-:end-before: <!-- ./sec.3 -->
-```
+Gallery
+--------
+
+### Dense Units
+
+![](images/visualize-dense-layer.png)
+
+### Convolutional Filters
+
+![](images/visualize-filters.png)
+
+
+### GradCAM
+
+![](images/gradcam.png)
+
+### GradCAM++
+
+![](images/gradcam_plus_plus.png)
+
+### ScoreCAM
+
+![](images/scorecam.png)
+
+#### Vanilla Saliency
+
+![](images/vanilla-saliency.png)
+
+### SmoothGrad
+
+![](images/smoothgrad.png)
+
+
 
 What's tf-keras-vis
 --------------------
@@ -35,5 +64,4 @@ quick-start
 examples/index
 api/tf_keras_vis
 license
-change-log
 ```
