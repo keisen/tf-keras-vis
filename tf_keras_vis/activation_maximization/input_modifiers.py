@@ -5,6 +5,8 @@ import numpy as np
 import tensorflow as tf
 from scipy.ndimage.interpolation import rotate, zoom
 
+from ..utils import order
+
 
 class InputModifier(ABC):
     """Abstract class for defining an input modifier.
@@ -51,12 +53,15 @@ class Jitter(InputModifier):
 class Rotate(InputModifier):
     """An input modifier that introduces random rotation.
     """
-    def __init__(self, axes=(1, 2), degree=3.0) -> None:
+    def __init__(self, axes=(1, 2), degree=3.0, interpolation='bilinear') -> None:
         """
         Args:
             axes: The two axes that define the plane of rotation.
                 Defaults to (1, 2).
             degree: The amount of rotation to apply. Defaults to 3.0.
+            interpolation: An integer or string. When integer, `interpolation`'s specification is
+                the same as `order` option of scipy-ndimage API. When string, `interpolation` MUST
+                be one of `"nearest"`, `"bilinear"` and `"cubic"`. Defaults to `"bilinear"`.
 
         Raises:
             ValueError: When axes is not a tuple of two ints.
@@ -68,6 +73,7 @@ class Rotate(InputModifier):
         self.axes = axes
         self.degree = float(degree)
         self.random_generator = np.random.default_rng()
+        self.order = order(interpolation)
 
     def __call__(self, seed_input) -> np.ndarray:
         ndim = len(seed_input.shape)
@@ -80,7 +86,7 @@ class Rotate(InputModifier):
                             self.random_generator.uniform(-self.degree, self.degree),
                             axes=self.axes,
                             reshape=False,
-                            order=1,
+                            order=self.order,
                             mode='reflect',
                             prefilter=False)
         return seed_input
@@ -89,26 +95,33 @@ class Rotate(InputModifier):
 class Rotate2D(Rotate):
     """An input modifier for 2D that introduces random rotation.
     """
-    def __init__(self, degree=3.0) -> None:
+    def __init__(self, degree=3.0, interpolation='bilinear') -> None:
         """
         Args:
             degree: The amount of rotation to apply. Defaults to 3.0.
+            interpolation: An integer or string. When integer, `interpolation`'s specification is
+                the same as `order` option of scipy-ndimage API. When string, `interpolation` MUST
+                be one of `"nearest"`, `"bilinear"` and `"cubic"`. Defaults to `"bilinear"`.
         """
-        super().__init__(axes=(1, 2), degree=degree)
+        super().__init__(axes=(1, 2), degree=degree, interpolation=interpolation)
 
 
 class Scale(InputModifier):
     """An input modifier that introduces randam scaling.
     """
-    def __init__(self, low=0.9, high=1.1) -> None:
+    def __init__(self, low=0.9, high=1.1, interpolation='bilinear') -> None:
         """
         Args:
             low (float, optional): Lower boundary of the zoom factor. Defaults to 0.9.
             high (float, optional): Higher boundary of the zoom factor. Defaults to 1.1.
+            interpolation: An integer or string. When integer, `interpolation`'s specification is
+                the same as `order` option of scipy-ndimage API. When string, `interpolation` MUST
+                be one of `"nearest"`, `"bilinear"` and `"cubic"`. Defaults to `"bilinear"`.
         """
         self.low = low
         self.high = high
         self.random_generator = np.random.default_rng()
+        self.order = order(interpolation)
 
     def __call__(self, seed_input) -> np.ndarray:
         ndim = len(seed_input.shape)
@@ -121,7 +134,7 @@ class Scale(InputModifier):
         _factor = factor = self.random_generator.uniform(self.low, self.high)
         factor *= np.ones(ndim - 2)
         factor = (1, ) + tuple(factor) + (1, )
-        seed_input = zoom(seed_input, factor, order=1, mode='reflect', prefilter=False)
+        seed_input = zoom(seed_input, factor, order=self.order, mode='reflect', prefilter=False)
         if _factor > 1.0:
             indices = (self._central_crop_range(x, e) for x, e in zip(seed_input.shape, shape))
             indices = (slice(start, stop) for start, stop in indices)

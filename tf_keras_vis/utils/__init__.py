@@ -132,3 +132,18 @@ def lower_precision_dtype(model):
                (isinstance(layer, tf.keras.Model) and is_mixed_precision(layer)):
                 return layer.compute_dtype
     return model.dtype  # pragma: no cover
+
+
+def order(value):
+    if isinstance(value, int):
+        return value
+    if isinstance(value, str):
+        value = value.lower()
+        if value == 'nearest':
+            return 0
+        if value == 'bilinear':
+            return 1
+        if value == 'cubic':
+            return 3
+    raise ValueError(f"{value} is not supported. "
+                     "The value MUST be an integer or one of 'nearest', 'bilinear' or 'cubic'.")
