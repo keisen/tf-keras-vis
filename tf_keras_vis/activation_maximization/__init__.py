@@ -27,7 +27,6 @@ class ActivationMaximization(ModelVisualization):
                           Norm(weight=0.3, p=1)],
             steps=200,
             optimizer=None,  # When None, the default is tf.optimizers.RMSprop(1.0, 0.999)
-            normalize_gradient=None,  # Disabled option.
             gradient_modifier=None,
             callbacks=None,
             training=False,
@@ -176,11 +175,6 @@ class ActivationMaximization(ModelVisualization):
         """
         arguments = dict(
             (k, v) for k, v in locals().items() if k != 'self' and not k.startswith('_'))
-
-        if normalize_gradient is not None:
-            warnings.warn(
-                "`normalize_gradient` option of ActivationMaximization#__call__() is disabled.,"
-                " And this will be removed in future.", DeprecationWarning)
 
         # Check model
         mixed_precision_model = is_mixed_precision(self.model)
