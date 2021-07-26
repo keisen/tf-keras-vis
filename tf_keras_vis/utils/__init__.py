@@ -65,30 +65,25 @@ def listify(value, return_empty_list_if_none=True, convert_tuple_to_list=True) -
     return value
 
 
-def standardize(array, value_range=(1., 0.)) -> np.ndarray:
-    """Standardization.
+@deprecated(version='0.8.0', reason="Use `normalize()` instead.")
+def standardize(array, value_range=(1., 0.)):
+    return normalize(array, value_range=(1., 0.))
+
+
+def normalize(array, value_range=(1., 0.)) -> np.ndarray:
+    """Normalization.
 
     Args:
         array (np.ndarray): A tensor.
         value_range (tuple, optional): `array` will be scaled in this range. Defaults to (1., 0.).
 
     Returns:
-        np.ndarray: Standardized array.
+        np.ndarray: Normalize array.
     """
     max_value = np.max(array, axis=tuple(range(array.ndim)[1:]), keepdims=True)
     min_value = np.min(array, axis=tuple(range(array.ndim)[1:]), keepdims=True)
     normalized_array = (array - min_value) / (max_value - min_value + K.epsilon())
     return normalized_array
-
-
-@deprecated(version='0.6.0', reason="Inappropriate naming, Use `standardize()` instead.")
-def normalize(array, value_range=(1., 0.)):
-    if value_range is None:
-        return standardize(array)
-    else:
-        normalized_array = standardize(array)
-        high, low = value_range
-        return (high - low) * normalized_array + low
 
 
 def find_layer(model, condition, offset=None, reverse=True) -> tf.keras.layers.Layer:

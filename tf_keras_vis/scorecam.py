@@ -6,7 +6,7 @@ import tensorflow.keras.backend as K
 from scipy.ndimage.interpolation import zoom
 
 from . import ModelVisualization
-from .utils import get_num_of_steps_allowed, is_mixed_precision, listify, standardize, zoom_factor
+from .utils import get_num_of_steps_allowed, is_mixed_precision, listify, normalize, zoom_factor
 from .utils.model_modifiers import ExtractIntermediateLayerForGradcam as ModelModifier
 
 
@@ -28,7 +28,7 @@ class Scorecam(ModelVisualization):
                  max_N=None,
                  training=False,
                  expand_cam=True,
-                 standardize_cam=True) -> Union[np.ndarray, list]:
+                 normalize_cam=True) -> Union[np.ndarray, list]:
         """Generate score-weighted class activation maps (CAM) by using gradient-free
         visualization method.
 
@@ -71,7 +71,7 @@ class Scorecam(ModelVisualization):
                 to False.
             expand_cam: True to resize CAM to the same as input image size. **Note!** When False,
                 even if the model has multiple inputs, return only a CAM. Defaults to True.
-            standardize_cam: When True, CAM will be standardized. Defaults to True.
+            normalize_cam: When True, CAM will be normalized. Defaults to True.
             unconnected_gradients: Specifies the gradient value returned when the given input
                 tensors are unconnected. Defaults to tf.UnconnectedGradients.NONE.
 
@@ -177,15 +177,15 @@ class Scorecam(ModelVisualization):
             cam = activation_modifier(cam)
 
         if not expand_cam:
-            if standardize_cam:
-                cam = standardize(cam)
+            if normalize_cam:
+                cam = normalize(cam)
             return cam
 
         # Visualizing
         zoom_factors = (zoom_factor(cam.shape, X.shape) for X in seed_inputs)
         cam = [zoom(cam, factor, order=1) for factor in zoom_factors]
-        if standardize_cam:
-            cam = [standardize(x) for x in cam]
+        if normalize_cam:
+            cam = [normalize(x) for x in cam]
         if len(self.model.inputs) == 1 and not isinstance(seed_input, list):
             cam = cam[0]
         return cam
