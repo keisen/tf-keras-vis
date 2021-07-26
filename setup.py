@@ -44,6 +44,7 @@ setup(
         'deprecated',
         'imageio',
         'packaging',
+        'importlib-metadata; python_version < "3.8"',
     ],
     extras_require={
         'develop': [

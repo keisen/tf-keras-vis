@@ -6,6 +6,13 @@ import tensorflow as tf
 
 from .utils import listify
 
+try:
+    from importlib.metadata import version
+except ImportError:  # pragma: no cover
+    from importlib_metadata import version
+
+__version__ = version("tf-keras-vis")
+
 
 class ModelVisualization(ABC):
     """Visualization class that analyze the model for debugging.
