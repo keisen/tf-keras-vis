@@ -18,7 +18,6 @@ class ActivationMaximization(ActivationMaximizationBase):
                                Norm(weight=0.003, p=1)],
                  steps=200,
                  optimizer=None,
-                 normalize_gradient=None,
                  gradient_modifier=None,
                  callbacks=None,
                  training=False,

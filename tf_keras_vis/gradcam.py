@@ -1,4 +1,3 @@
-import warnings
 from typing import Union
 
 import numpy as np
@@ -19,18 +18,16 @@ class Gradcam(ModelVisualization):
           Visual Explanations from Deep Networks via Gradient-based Localization
           (https://arxiv.org/pdf/1610.02391v1.pdf)
     """
-    def __call__(
-            self,
-            score,
-            seed_input,
-            penultimate_layer=None,
-            seek_penultimate_conv_layer=True,
-            activation_modifier=lambda cam: K.relu(cam),
-            training=False,
-            normalize_gradient=None,  # Disabled option.
-            expand_cam=True,
-            standardize_cam=True,
-            unconnected_gradients=tf.UnconnectedGradients.NONE) -> Union[np.ndarray, list]:
+    def __call__(self,
+                 score,
+                 seed_input,
+                 penultimate_layer=None,
+                 seek_penultimate_conv_layer=True,
+                 activation_modifier=lambda cam: K.relu(cam),
+                 training=False,
+                 expand_cam=True,
+                 normalize_cam=True,
+                 unconnected_gradients=tf.UnconnectedGradients.NONE) -> Union[np.ndarray, list]:
         """Generate gradient based class activation maps (CAM) by using positive gradient of
         penultimate_layer with respect to score.
 
@@ -67,8 +64,6 @@ class Gradcam(ModelVisualization):
                 `lambda cam: K.relu(cam)`.
             training: A bool that indicates whether the model's training-mode on or off. Defaults
                 to False.
-            normalize_gradient (bool, optional): **Note!** This option is now disabled.
-                Defaults to None.
             expand_cam: True to resize CAM to the same as input image size. **Note!** When False,
                 even if the model has multiple inputs, return only a CAM. Defaults to True.
             standardize_cam: When True, CAM will be standardized. Defaults to True.
@@ -84,10 +79,6 @@ class Gradcam(ModelVisualization):
             :obj:`ValueError`: When there is any invalid arguments.
         """
 
-        if normalize_gradient is not None:
-            warnings.warn(
-                '`normalize_gradient` option is disabled.,'
-                ' And this will be removed in future.', DeprecationWarning)
         # Preparing
         scores = self._get_scores_for_multiple_outputs(score)
         seed_inputs = self._get_seed_inputs_for_multiple_inputs(seed_input)
