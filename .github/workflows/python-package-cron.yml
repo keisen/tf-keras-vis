@@ -1,13 +1,15 @@
 # This workflow will install Python dependencies, run tests and lint with a variety of Python versions
 # For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
 
-name: Python package
+name: Python package run by Cron
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master, develop ]
   pull_request:
     branches: [ master ]
+  schedule:
+    - cron: "30 1 * * *"
 
 env:
   TF_KERAS_VIS_MAX_STEPS: 3
@@ -18,16 +20,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.6, 3.7, 3.8]
-        tensorflow: [2.0.0, 2.1.0, 2.2.0, 2.3.0, 2.4.0, 2.5.0]
-        exclude:
-          - python-version: 3.8
-            tensorflow: 2.0.0
-          - python-version: 3.8
-            tensorflow: 2.1.0
-        include:
-          - python-version: 3.9
-            tensorflow: 2.5.0
+        python-version: [3.7, 3.8, 3.9]
+        tensorflow: [nightly, pre]
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python ${{ matrix.python-version }}
@@ -37,9 +31,14 @@ jobs:
     - name: Upgrade pip
       run: |
         python -m pip install --upgrade pip
-    - name: Install dependencies
+    - name: Install dependencies with pre-released Tensorflow
+      if: matrix.tensorflow == 'pre'
       run: |
-        pip install --upgrade -e .[develop,examples] tensorflow~=${{ matrix.tensorflow }}
+        pip install --upgrade -e .[develop,examples] --pre tensorflow
+    - name: Install dependencies
+      if: matrix.tensorflow == 'nightly'
+      run: |
+        pip install --upgrade -e .[develop,examples] -q tf-nightly
     - name: Test with pytest
       run: |
         pytest -n auto --dist loadscope

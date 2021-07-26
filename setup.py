@@ -39,7 +39,6 @@ setup(
     ],
     python_requires='>=3.6, <3.10',
     install_requires=[
-        'tensorflow',
         'scipy',
         'pillow',
         'deprecated',
