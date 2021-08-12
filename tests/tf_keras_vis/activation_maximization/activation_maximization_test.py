@@ -200,12 +200,6 @@ class TestActivationMaximization():
             assert result.shape == (1, 8, 8, 3)
 
     @pytest.mark.usefixtures("mixed_precision", "legacy")
-    def test__call__if_normalize_gradient_is_True(self, conv_model):
-        activation_maximization = ActivationMaximization(conv_model)
-        result = activation_maximization(CategoricalScore(0), normalize_gradient=True)
-        assert result.shape == (1, 8, 8, 3)
-
-    @pytest.mark.usefixtures("mixed_precision", "legacy")
     def test__call__with_gradient_modifier(self, conv_model):
         activation_maximization = ActivationMaximization(conv_model)
         result = activation_maximization(CategoricalScore(0), gradient_modifier=lambda x: x * 0.0)
