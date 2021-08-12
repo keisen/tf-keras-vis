@@ -39,7 +39,7 @@ jobs:
         python -m pip install --upgrade pip
     - name: Install dependencies
       run: |
-        pip install --upgrade -e .[develop,examples] tensorflow~=${{ matrix.tensorflow }}
+        python -m pip install --upgrade -e .[develop,examples] tensorflow~=${{ matrix.tensorflow }}
     - name: Test with pytest
       run: |
         pytest -n auto --dist loadscope
