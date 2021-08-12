@@ -22,7 +22,6 @@ jobs:
       matrix:
         python-version: [3.7, 3.8, 3.9]
         tensorflow: [current, pre, nightly]
-        keras: [current, pre, nightly]
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python ${{ matrix.python-version }}
@@ -32,30 +31,18 @@ jobs:
     - name: Upgrade pip
       run: |
         python -m pip install --upgrade pip
-    - name: Install current Keras
-      if: matrix.keras == 'current'
-      run: |
-        python -m pip install --upgrade keras
-    - name: Install pre-released Keras
-      if: matrix.keras == 'pre'
-      run: |
-        python -m pip install --upgrade --pre keras
-    - name: Install nightly Keras
-      if: matrix.keras == 'nightly'
-      run: |
-        python -m pip install --upgrade --quiet keras-nightly
     - name: Install current Tensorflow
       if: matrix.tensorflow == 'current'
       run: |
-        python -m pip install --upgrade tensorflow
+        python -m pip install --upgrade tensorflow keras
     - name: Install pre-released Tensorflow
       if: matrix.tensorflow == 'pre'
       run: |
-        python -m pip install --upgrade --pre tensorflow
+        python -m pip install --upgrade --pre tensorflow keras
     - name: Install nightly Tensorflow
       if: matrix.tensorflow == 'nightly'
       run: |
-        python -m pip install --upgrade --quiet tf-nightly
+        python -m pip install --upgrade --quiet tf-nightly keras-nightly
     - name: Install dependencies
       run: |
         python -m pip install --upgrade -e .[develop,examples]
