@@ -5,7 +5,7 @@ name: Python package run by Cron
 
 on:
   push:
-    branches: [ master, develop ]
+    branches: [ master ]
   pull_request:
     branches: [ master ]
   schedule:
@@ -21,7 +21,8 @@ jobs:
       fail-fast: false
       matrix:
         python-version: [3.7, 3.8, 3.9]
-        tensorflow: [nightly, pre]
+        tensorflow: [current, pre, nightly]
+        keras: [current, pre, nightly]
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python ${{ matrix.python-version }}
@@ -31,14 +32,33 @@ jobs:
     - name: Upgrade pip
       run: |
         python -m pip install --upgrade pip
-    - name: Install dependencies with pre-released Tensorflow
+    - name: Install current Keras
+      if: matrix.keras == 'current'
+      run: |
+        python -m pip pip install --upgrade keras
+    - name: Install pre-released Keras
+      if: matrix.keras == 'pre'
+      run: |
+        python -m pip pip install --upgrade --pre keras
+    - name: Install nightly Keras
+      if: matrix.keras == 'nightly'
+      run: |
+        python -m pip pip install --upgrade --quiet keras-nightly
+    - name: Install current Tensorflow
+      if: matrix.tensorflow == 'current'
+      run: |
+        python -m pip pip install --upgrade tensorflow
+    - name: Install pre-released Tensorflow
       if: matrix.tensorflow == 'pre'
       run: |
-        pip install --upgrade -e .[develop,examples] --pre tensorflow
-    - name: Install dependencies
+        python -m pip pip install --upgrade --pre tensorflow
+    - name: Install nightly Tensorflow
       if: matrix.tensorflow == 'nightly'
       run: |
-        pip install --upgrade -e .[develop,examples] -q tf-nightly
+        python -m pip pip install --upgrade --quiet tf-nightly
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade -e .[develop,examples]
     - name: Test with pytest
       run: |
         pytest -n auto --dist loadscope
