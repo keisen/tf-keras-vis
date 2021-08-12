@@ -6,6 +6,7 @@ from tensorflow.keras.models import load_model
 
 from tf_keras_vis.gradcam import Gradcam
 from tf_keras_vis.gradcam_plus_plus import GradcamPlusPlus
+from tf_keras_vis.layercam import Layercam
 from tf_keras_vis.saliency import Saliency
 from tf_keras_vis.scorecam import Scorecam
 from tf_keras_vis.utils.scores import BinaryScore, CategoricalScore
@@ -17,7 +18,7 @@ if version(tf.version.VERSION) >= version("2.4.0"):
     from tensorflow.keras.mixed_precision import set_global_policy
 
 
-@pytest.fixture(scope='function', params=[Gradcam, GradcamPlusPlus, Scorecam])
+@pytest.fixture(scope='function', params=[Gradcam, GradcamPlusPlus, Scorecam, Layercam])
 def xcam(request):
     global Xcam
     Xcam = request.param
