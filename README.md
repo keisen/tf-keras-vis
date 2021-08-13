@@ -3,7 +3,6 @@
 <!-- sec.0 -->
 
 [![Downloads](https://pepy.tech/badge/tf-keras-vis)](https://pepy.tech/project/tf-keras-vis)
-[![PyPI version](https://badge.fury.io/py/tf-keras-vis.svg)](https://badge.fury.io/py/tf-keras-vis)
 [![Python package](https://github.com/keisen/tf-keras-vis/actions/workflows/python-package.yml/badge.svg)](https://github.com/keisen/tf-keras-vis/actions/workflows/python-package.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
