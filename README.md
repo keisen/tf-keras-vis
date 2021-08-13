@@ -44,12 +44,13 @@ tf-keras-vis is a visualization toolkit for debugging `tf.keras.Model` in Tensor
 Currently supported methods for visualization include:
 
 * Feature Visualization
-   - ActivationMaximization ([web](https://distill.pub/2017/feature-visualization/),[github](https://github.com/raghakot/keras-vis))
+   - ActivationMaximization ([web](https://distill.pub/2017/feature-visualization/), [github](https://github.com/raghakot/keras-vis))
 * Class Activation Maps
    - GradCAM ([paper](https://arxiv.org/pdf/1610.02391v1.pdf))
    - GradCAM++ ([paper](https://arxiv.org/pdf/1710.11063.pdf))
-   - ScoreCAM ([paper](https://arxiv.org/pdf/1910.01279.pdf))
+   - ScoreCAM ([paper](https://arxiv.org/pdf/1910.01279.pdf), [github](https://github.com/haofanwang/Score-CAM))
    - Faster-ScoreCAM ([github](https://github.com/tabayashi0117/Score-CAM/blob/master/README.md#faster-score-cam))
+   - LayerCAM ([paper](http://mftp.mmcheng.net/Papers/21TIP_LayerCAM.pdf), [github](https://github.com/PengtaoJiang/LayerCAM)) :new::zap:
 * Saliency Maps
    - Vanilla Saliency ([paper](https://arxiv.org/pdf/1312.6034.pdf))
    - SmoothGrad ([paper](https://arxiv.org/pdf/1706.03825.pdf))

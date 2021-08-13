@@ -25,6 +25,7 @@ class Gradcam(ModelVisualization):
             seed_input,
             penultimate_layer=None,
             seek_penultimate_conv_layer=True,
+            gradient_modifier=None,
             activation_modifier=lambda cam: K.relu(cam),
             training=False,
             normalize_gradient=None,  # Disabled option.
@@ -69,6 +70,7 @@ class Gradcam(ModelVisualization):
                 to False.
             normalize_gradient (bool, optional): **Note!** This option is now disabled.
                 Defaults to None.
+            gradient_modifier: A function to modify gradients. Defaults to None.
             expand_cam: True to resize CAM to the same as input image size. **Note!** When False,
                 even if the model has multiple inputs, return only a CAM. Defaults to True.
             standardize_cam: When True, CAM will be standardized. Defaults to True.
@@ -109,6 +111,8 @@ class Gradcam(ModelVisualization):
             grads = tf.cast(grads, dtype=model.variable_dtype)
             penultimate_output = tf.cast(penultimate_output, dtype=model.variable_dtype)
 
+        if gradient_modifier is not None:
+            grads = gradient_modifier(grads)
         weights = K.mean(grads, axis=tuple(range(grads.ndim)[1:-1]), keepdims=True)
         cam = np.sum(np.multiply(penultimate_output, weights), axis=-1)
         if activation_modifier is not None:

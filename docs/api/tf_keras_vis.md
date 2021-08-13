@@ -28,6 +28,7 @@ tf_keras_vis.saliency
 tf_keras_vis.gradcam
 tf_keras_vis.gradcam_plus_plus
 tf_keras_vis.scorecam
+tf_keras_vis.layercam
 ```
 
 Utilities
