@@ -149,8 +149,7 @@ class ActivationMaximization(ModelVisualization):
             gradient_modifier: A function to modify gradients.
                 Defaults to None.
             callbacks: A :obj:`tf_keras_vis.activation_maximization.callbacks.Callback` instance
-                or a list of them.
-                Defaults to None.
+                or a list of them. Defaults to None.
             training: A bool that indicates whether the model's training-mode on or off.
                 Defaults to False.
             unconnected_gradients: Specifies the gradient value returned when the given input

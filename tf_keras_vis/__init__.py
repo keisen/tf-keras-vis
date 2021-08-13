@@ -20,7 +20,7 @@ class ModelVisualization(ABC):
     def __init__(self, model, model_modifier=None, clone=True) -> None:
         """
         Args:
-            model: A  `tf.keras.Model` instance. When `model_modifier` is NOT None, this model will
+            model: A `tf.keras.Model` instance. When `model_modifier` is NOT None, this model will
                 be cloned with `tf.keras.models.clone_model` function and then will be modified by
                 `model_modifier` according to needs.
             model_modifier: A :obj:`tf_keras_vis.utils.model_modifiers.ModelModifier` instance,

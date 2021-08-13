@@ -61,11 +61,11 @@ class Gradcam(ModelVisualization):
             seek_penultimate_conv_layer: A bool that indicates whether or not seeks a penultimate
                 layer when the layer specified by `penultimate_layer` is not `convolutional` layer.
                 Defaults to True.
+            gradient_modifier: A function to modify gradients. Defaults to None.
             activation_modifier: A function to modify the Class Activation Map (CAM). Defaults to
                 `lambda cam: K.relu(cam)`.
             training: A bool that indicates whether the model's training-mode on or off. Defaults
                 to False.
-            gradient_modifier: A function to modify gradients. Defaults to None.
             expand_cam: True to resize CAM to the same as input image size. **Note!** When False,
                 even if the model has multiple inputs, return only a CAM. Defaults to True.
             normalize_cam: When True, CAM will be normalized. Defaults to True.
