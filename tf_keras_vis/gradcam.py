@@ -1,4 +1,3 @@
-import warnings
 from typing import Union
 
 import numpy as np
@@ -7,7 +6,7 @@ import tensorflow.keras.backend as K
 from scipy.ndimage.interpolation import zoom
 
 from . import ModelVisualization
-from .utils import is_mixed_precision, standardize, zoom_factor
+from .utils import is_mixed_precision, normalize, zoom_factor
 from .utils.model_modifiers import ExtractIntermediateLayerForGradcam as ModelModifier
 
 
@@ -19,19 +18,17 @@ class Gradcam(ModelVisualization):
           Visual Explanations from Deep Networks via Gradient-based Localization
           (https://arxiv.org/pdf/1610.02391v1.pdf)
     """
-    def __call__(
-            self,
-            score,
-            seed_input,
-            penultimate_layer=None,
-            seek_penultimate_conv_layer=True,
-            gradient_modifier=None,
-            activation_modifier=lambda cam: K.relu(cam),
-            training=False,
-            normalize_gradient=None,  # Disabled option.
-            expand_cam=True,
-            standardize_cam=True,
-            unconnected_gradients=tf.UnconnectedGradients.NONE) -> Union[np.ndarray, list]:
+    def __call__(self,
+                 score,
+                 seed_input,
+                 penultimate_layer=None,
+                 seek_penultimate_conv_layer=True,
+                 gradient_modifier=None,
+                 activation_modifier=lambda cam: K.relu(cam),
+                 training=False,
+                 expand_cam=True,
+                 normalize_cam=True,
+                 unconnected_gradients=tf.UnconnectedGradients.NONE) -> Union[np.ndarray, list]:
         """Generate gradient based class activation maps (CAM) by using positive gradient of
         penultimate_layer with respect to score.
 
@@ -64,16 +61,14 @@ class Gradcam(ModelVisualization):
             seek_penultimate_conv_layer: A bool that indicates whether or not seeks a penultimate
                 layer when the layer specified by `penultimate_layer` is not `convolutional` layer.
                 Defaults to True.
+            gradient_modifier: A function to modify gradients. Defaults to None.
             activation_modifier: A function to modify the Class Activation Map (CAM). Defaults to
                 `lambda cam: K.relu(cam)`.
             training: A bool that indicates whether the model's training-mode on or off. Defaults
                 to False.
-            normalize_gradient (bool, optional): **Note!** This option is now disabled.
-                Defaults to None.
-            gradient_modifier: A function to modify gradients. Defaults to None.
             expand_cam: True to resize CAM to the same as input image size. **Note!** When False,
                 even if the model has multiple inputs, return only a CAM. Defaults to True.
-            standardize_cam: When True, CAM will be standardized. Defaults to True.
+            normalize_cam: When True, CAM will be normalized. Defaults to True.
             unconnected_gradients: Specifies the gradient value returned when the given input
                 tensors are unconnected. Defaults to tf.UnconnectedGradients.NONE.
 
@@ -86,10 +81,6 @@ class Gradcam(ModelVisualization):
             :obj:`ValueError`: When there is any invalid arguments.
         """
 
-        if normalize_gradient is not None:
-            warnings.warn(
-                '`normalize_gradient` option is disabled.,'
-                ' And this will be removed in future.', DeprecationWarning)
         # Preparing
         scores = self._get_scores_for_multiple_outputs(score)
         seed_inputs = self._get_seed_inputs_for_multiple_inputs(seed_input)
@@ -119,15 +110,15 @@ class Gradcam(ModelVisualization):
             cam = activation_modifier(cam)
 
         if not expand_cam:
-            if standardize_cam:
-                cam = standardize(cam)
+            if normalize_cam:
+                cam = normalize(cam)
             return cam
 
         # Visualizing
         factors = (zoom_factor(cam.shape, X.shape) for X in seed_inputs)
         cam = [zoom(cam, factor, order=1) for factor in factors]
-        if standardize_cam:
-            cam = [standardize(x) for x in cam]
+        if normalize_cam:
+            cam = [normalize(x) for x in cam]
         if len(self.model.inputs) == 1 and not isinstance(seed_input, list):
             cam = cam[0]
         return cam

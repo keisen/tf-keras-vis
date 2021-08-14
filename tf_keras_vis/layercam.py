@@ -23,7 +23,7 @@ class Layercam(Gradcam):
                  activation_modifier=lambda cam: K.relu(cam),
                  training=False,
                  expand_cam=True,
-                 standardize_cam=True,
+                 normalize_cam=True,
                  unconnected_gradients=tf.UnconnectedGradients.NONE) -> Union[np.ndarray, list]:
         """Generate gradient based class activation maps (CAM) by using positive gradient of
         penultimate_layer with respect to score.
@@ -65,7 +65,7 @@ class Layercam(Gradcam):
                 `lambda grads: tf.keras.backend.relu(grads)`.
             expand_cam: True to resize CAM to the same as input image size. **Note!** When False,
                 even if the model has multiple inputs, return only a CAM. Defaults to True.
-            standardize_cam: When True, CAM will be standardized. Defaults to True.
+            normalize_cam: When True, CAM will be normalized. Defaults to True.
             unconnected_gradients: Specifies the gradient value returned when the given input
                 tensors are unconnected. Defaults to tf.UnconnectedGradients.NONE.
 

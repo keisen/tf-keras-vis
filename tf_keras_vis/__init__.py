@@ -1,3 +1,10 @@
+try:
+    from importlib.metadata import version
+except ImportError:  # pragma: no cover
+    from importlib_metadata import version
+
+__version__ = version("tf-keras-vis")
+
 from abc import ABC, abstractmethod
 from typing import Union
 
@@ -6,13 +13,6 @@ import tensorflow as tf
 
 from .utils import listify
 
-try:
-    from importlib.metadata import version
-except ImportError:  # pragma: no cover
-    from importlib_metadata import version
-
-__version__ = version("tf-keras-vis")
-
 
 class ModelVisualization(ABC):
     """Visualization class that analyze the model for debugging.
@@ -20,7 +20,7 @@ class ModelVisualization(ABC):
     def __init__(self, model, model_modifier=None, clone=True) -> None:
         """
         Args:
-            model: A  `tf.keras.Model` instance. When `model_modifier` is NOT None, this model will
+            model: A `tf.keras.Model` instance. When `model_modifier` is NOT None, this model will
                 be cloned with `tf.keras.models.clone_model` function and then will be modified by
                 `model_modifier` according to needs.
             model_modifier: A :obj:`tf_keras_vis.utils.model_modifiers.ModelModifier` instance,
