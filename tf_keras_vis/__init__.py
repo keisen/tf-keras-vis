@@ -1,3 +1,10 @@
+try:
+    from importlib.metadata import version
+except ImportError:  # pragma: no cover
+    from importlib_metadata import version
+
+__version__ = version("tf-keras-vis")
+
 from abc import ABC, abstractmethod
 from typing import Union
 
@@ -5,13 +12,6 @@ import numpy as np
 import tensorflow as tf
 
 from .utils import listify
-
-try:
-    from importlib.metadata import version
-except ImportError:  # pragma: no cover
-    from importlib_metadata import version
-
-__version__ = version("tf-keras-vis")
 
 
 class ModelVisualization(ABC):
