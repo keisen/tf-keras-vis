@@ -215,7 +215,7 @@ $ pip install tf-keras-vis tensorflow
 ```bash
 $ git clone https://github.com/keisen/tf-keras-vis.git
 $ cd tf-keras-vis
-$ pip install -e .[develop]
+$ pip install -e .[develop] tensorflow
 ```
 
 <!-- ./sec.6 -->
