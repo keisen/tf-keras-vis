@@ -1,0 +1,22 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+  - family-names: Kubota
+    given-names: Yasuhiro
+    email: "k.keisen@gmail.com"
+title: "tf-keras-vis"
+repository: "https://github.com/keisen/tf-keras-vis"
+url: "https://keisen.github.io/tf-keras-vis-docs/"
+type: software
+version: 0.8.0
+date-released: "2021-08-14"
+license-url: "https://github.com/keisen/tf-keras-vis/blob/master/LICENSE"
+references:
+  - authors:
+      - family-names: Kotikalapudi
+        given-names: Raghavendra
+    title: "keras-vis"
+    repository: "https://github.com/raghakot/keras-vis"
+    url: "https://raghakot.github.io/keras-vis/"
+    type: software
+    version: 0.4.1
