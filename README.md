@@ -194,7 +194,7 @@ But please notice that tf-keras-vis APIs does NOT have compatibility with keras-
 
 <!-- sec.5 -->
 
-* Python 3.6-3.9
+* Python 3.7-3.10
 * tensorflow>=2.0.4
 
 

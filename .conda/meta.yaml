@@ -13,7 +13,7 @@ build:
 
 requirements:
   build:
-    - python >=3.6,<3.10
+    - python >=3.7,<3.11
     - setuptools
     {% for package in data['install_requires'] %}
     - {{ package.lower() }}

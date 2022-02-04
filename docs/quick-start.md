@@ -9,10 +9,6 @@ Requirements
 :end-before: <!-- ./sec.5 -->
 ```
 
-```{note}
-We will drop support for Python 3.6 at the end of year, because Community support for the one is ending on 23 December 2021. About Python, please see [the official page](https://devguide.python.org/#status-of-python-branches) for details.
-```
-
 
 Installation
 ------------

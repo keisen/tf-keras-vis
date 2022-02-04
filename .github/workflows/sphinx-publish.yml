@@ -10,16 +10,17 @@ on:
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   ACCESS_KEY: ${{ secrets.DOCUMENT_PUBLISHING }}
+  PYTHON_VERSION: 3.8
 
 jobs:
   build-and-publish:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - name: Set up Python
+    - name: Set up Python ${{ PYTHON_VERSION }}
       uses: actions/setup-python@v2
       with:
-        python-version: '3.x'
+        python-version: ${{ PYTHON_VERSION }}
     - name: Install pandoc
       run: |
         sudo apt update
