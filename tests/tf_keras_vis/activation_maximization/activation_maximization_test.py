@@ -252,12 +252,12 @@ class TestActivationMaximization():
 
     @pytest.mark.parametrize("activation_modifiers,modified,expected_error", [
         (None, False, NO_ERROR),
-        (lambda x: np.ones(x.shape, np.float), True, NO_ERROR),
+        (lambda x: np.ones(x.shape, np.float32), True, NO_ERROR),
         (dict(input_1=None), False, NO_ERROR),
-        (dict(input_1=lambda x: np.ones(x.shape, np.float)), True, NO_ERROR),
-        (dict(input_2=lambda x: np.ones(x.shape, np.float)), False, ValueError),
-        (dict(input_1=lambda x: np.ones(x.shape, np.float),
-              input_2=lambda x: np.ones(x.shape, np.float)), False, ValueError),
+        (dict(input_1=lambda x: np.ones(x.shape, np.float32)), True, NO_ERROR),
+        (dict(input_2=lambda x: np.ones(x.shape, np.float32)), False, ValueError),
+        (dict(input_1=lambda x: np.ones(x.shape, np.float32),
+              input_2=lambda x: np.ones(x.shape, np.float32)), False, ValueError),
     ])
     @pytest.mark.usefixtures("mixed_precision")
     def test__call__with_activation_modifiers(self, activation_modifiers, modified, expected_error,
@@ -464,18 +464,18 @@ class TestActivationMaximizationWithMultipleInputsModel():
 
     @pytest.mark.parametrize("activation_modifiers,modified_0,modified_1,expected_error", [
         (None, False, False, NO_ERROR),
-        (lambda x: np.ones(x.shape, np.float), True, False, NO_ERROR),
+        (lambda x: np.ones(x.shape, np.float32), True, False, NO_ERROR),
         (dict(input_1=None), False, False, NO_ERROR),
         (dict(input_2=None), False, False, NO_ERROR),
         (dict(input_1=None, input_2=None), False, False, NO_ERROR),
-        (dict(input_1=lambda x: np.ones(x.shape, np.float)), True, False, NO_ERROR),
-        (dict(input_2=lambda x: np.ones(x.shape, np.float)), False, True, NO_ERROR),
-        (dict(input_1=lambda x: np.ones(x.shape, np.float), input_2=None), True, False, NO_ERROR),
-        (dict(input_1=None, input_2=lambda x: np.ones(x.shape, np.float)), False, True, NO_ERROR),
-        (dict(input_1=lambda x: np.ones(x.shape, np.float),
-              input_2=lambda x: np.ones(x.shape, np.float)), True, True, NO_ERROR),
+        (dict(input_1=lambda x: np.ones(x.shape, np.float32)), True, False, NO_ERROR),
+        (dict(input_2=lambda x: np.ones(x.shape, np.float32)), False, True, NO_ERROR),
+        (dict(input_1=lambda x: np.ones(x.shape, np.float32), input_2=None), True, False, NO_ERROR),
+        (dict(input_1=None, input_2=lambda x: np.ones(x.shape, np.float32)), False, True, NO_ERROR),
+        (dict(input_1=lambda x: np.ones(x.shape, np.float32),
+              input_2=lambda x: np.ones(x.shape, np.float32)), True, True, NO_ERROR),
         (dict(input_1=None, input_2=None,
-              input_3=lambda x: np.ones(x.shape, np.float)), False, False, ValueError),
+              input_3=lambda x: np.ones(x.shape, np.float32)), False, False, ValueError),
     ])
     @pytest.mark.usefixtures("mixed_precision")
     def test__call__with_activation_modifiers(self, activation_modifiers, modified_0, modified_1,
@@ -738,18 +738,18 @@ class TestActivationMaximizationWithMultipleIOModel():
 
     @pytest.mark.parametrize("activation_modifiers,modified_0,modified_1,expected_error", [
         (None, False, False, NO_ERROR),
-        (lambda x: np.ones(x.shape, np.float), True, False, NO_ERROR),
+        (lambda x: np.ones(x.shape, np.float32), True, False, NO_ERROR),
         (dict(input_1=None), False, False, NO_ERROR),
         (dict(input_2=None), False, False, NO_ERROR),
         (dict(input_1=None, input_2=None), False, False, NO_ERROR),
-        (dict(input_1=lambda x: np.ones(x.shape, np.float)), True, False, NO_ERROR),
-        (dict(input_2=lambda x: np.ones(x.shape, np.float)), False, True, NO_ERROR),
-        (dict(input_1=lambda x: np.ones(x.shape, np.float), input_2=None), True, False, NO_ERROR),
-        (dict(input_1=None, input_2=lambda x: np.ones(x.shape, np.float)), False, True, NO_ERROR),
-        (dict(input_1=lambda x: np.ones(x.shape, np.float),
-              input_2=lambda x: np.ones(x.shape, np.float)), True, True, NO_ERROR),
+        (dict(input_1=lambda x: np.ones(x.shape, np.float32)), True, False, NO_ERROR),
+        (dict(input_2=lambda x: np.ones(x.shape, np.float32)), False, True, NO_ERROR),
+        (dict(input_1=lambda x: np.ones(x.shape, np.float32), input_2=None), True, False, NO_ERROR),
+        (dict(input_1=None, input_2=lambda x: np.ones(x.shape, np.float32)), False, True, NO_ERROR),
+        (dict(input_1=lambda x: np.ones(x.shape, np.float32),
+              input_2=lambda x: np.ones(x.shape, np.float32)), True, True, NO_ERROR),
         (dict(input_1=None, input_2=None,
-              input_3=lambda x: np.ones(x.shape, np.float)), False, False, ValueError),
+              input_3=lambda x: np.ones(x.shape, np.float32)), False, False, ValueError),
     ])
     @pytest.mark.usefixtures("mixed_precision")
     def test__call__with_activation_modifiers(self, activation_modifiers, modified_0, modified_1,
@@ -930,12 +930,12 @@ class TestActivationMaximizationWithDenseModel():
 
     @pytest.mark.parametrize("activation_modifiers,modified,expected_error", [
         (None, False, NO_ERROR),
-        (lambda x: np.ones(x.shape, np.float), True, NO_ERROR),
+        (lambda x: np.ones(x.shape, np.float32), True, NO_ERROR),
         (dict(input_1=None), False, NO_ERROR),
-        (dict(input_1=lambda x: np.ones(x.shape, np.float)), True, NO_ERROR),
-        (dict(input_2=lambda x: np.ones(x.shape, np.float)), False, ValueError),
-        (dict(input_1=lambda x: np.ones(x.shape, np.float),
-              input_2=lambda x: np.ones(x.shape, np.float)), False, ValueError),
+        (dict(input_1=lambda x: np.ones(x.shape, np.float32)), True, NO_ERROR),
+        (dict(input_2=lambda x: np.ones(x.shape, np.float32)), False, ValueError),
+        (dict(input_1=lambda x: np.ones(x.shape, np.float32),
+              input_2=lambda x: np.ones(x.shape, np.float32)), False, ValueError),
     ])
     @pytest.mark.usefixtures("mixed_precision")
     def test__call__with_activation_modifiers(self, activation_modifiers, modified, expected_error,

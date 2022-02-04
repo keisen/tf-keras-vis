@@ -18,6 +18,7 @@ class Scorecam(ModelVisualization):
           (https://arxiv.org/pdf/1910.01279.pdf)
         * Faster Score-CAM (https://github.com/tabayashi0117/Score-CAM#faster-score-cam)
     """
+
     def __call__(self,
                  score,
                  seed_input,

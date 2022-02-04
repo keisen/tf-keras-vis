@@ -17,6 +17,7 @@ from .regularizers import Norm, TotalVariation2D
 class ActivationMaximization(ModelVisualization):
     """ActivationMaximization.
     """
+
     def __call__(
             self,
             score,
@@ -447,7 +448,7 @@ class ActivationMaximization(ModelVisualization):
                         for (low, high), input_tensor in zip(input_ranges, self.model.inputs)]
         clipped_values = (np.array(K.clip(X, low, high))
                           for X, (low, high) in zip(seed_inputs, input_ranges))
-        clipped_values = (X.astype(np.int) if isinstance(t, int) else X.astype(np.float)
+        clipped_values = (X.astype(np.int) if isinstance(t, int) else X.astype(np.float32)
                           for X, (t, _) in zip(clipped_values, input_ranges))
         if activation_modifiers is not None:
             clipped_values = ((activation_modifiers[name], seed_input)

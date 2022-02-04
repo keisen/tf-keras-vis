@@ -7,6 +7,7 @@ import tensorflow as tf
 class Regularizer(ABC):
     """Abstract class for defining a regularizer.
     """
+
     def __init__(self, name) -> None:
         """
         Args:
@@ -33,6 +34,7 @@ class Regularizer(ABC):
 class TotalVariation2D(Regularizer):
     """A regularizer that introduces Total Variation.
     """
+
     def __init__(self, weight=10.0, name='TotalVariation2D') -> None:
         """
         Args:
@@ -49,7 +51,7 @@ class TotalVariation2D(Regularizer):
             raise ValueError("seed_input's shape must be (batch_size, height, width, channels), "
                              f"but was {input_value.shape}.")
         tv = tf.image.total_variation(input_value)
-        tv /= np.prod(input_value.shape[1:], dtype=np.float)
+        tv /= np.prod(input_value.shape[1:], dtype=np.float32)
         tv *= self.weight
         return tv
 
@@ -57,6 +59,7 @@ class TotalVariation2D(Regularizer):
 class Norm(Regularizer):
     """A regularizer that introduces Norm.
     """
+
     def __init__(self, weight=10., p=2, name='Norm') -> None:
         """
         Args:
