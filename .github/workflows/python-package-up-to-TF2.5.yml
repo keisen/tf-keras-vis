@@ -18,7 +18,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.6, 3.7, 3.8]
+        python-version: [3.7, 3.8]
         tensorflow: [2.0.0, 2.1.0, 2.2.0, 2.3.0, 2.4.0, 2.5.0]
         exclude:
           - python-version: 3.8
