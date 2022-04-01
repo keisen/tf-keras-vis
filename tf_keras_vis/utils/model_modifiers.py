@@ -2,12 +2,6 @@ from abc import ABC, abstractmethod
 from typing import Union
 
 import tensorflow as tf
-from packaging.version import parse as version
-
-if version(tf.version.VERSION) < version("2.6.0rc0"):
-    from tensorflow.python.keras.layers.convolutional import Conv
-else:
-    from keras.layers.convolutional import Conv
 
 from . import find_layer
 
@@ -107,10 +101,14 @@ class GuidedBackpropagation(ModelModifier):
 
 
 class ExtractIntermediateLayerForGradcam(ModelModifier):
-    def __init__(self, penultimate_layer=None, seek_conv_layer=True, include_model_outputs=True):
+    def __init__(self, penultimate_layer=None, seek_penultimate_layer=True, include_model_outputs=True):
         self.penultimate_layer = penultimate_layer
-        self.seek_conv_layer = seek_conv_layer
+        self.seek_penultimate_layer = seek_penultimate_layer
         self.include_model_outputs = include_model_outputs
+
+    @staticmethod
+    def _penultimate_layer_condition(layer):
+        return len(layer.output_shape) == 4 and layer.output_shape[1] > 1 and layer.output_shape[2] > 1
 
     def __call__(self, model):
         _layer = self.penultimate_layer
@@ -123,10 +121,10 @@ class ExtractIntermediateLayerForGradcam(ModelModifier):
                 _layer = find_layer(model, lambda l: l.name == _layer)
             else:
                 raise ValueError(f"Invalid argument. `penultimate_layer`={self.penultimate_layer}")
-        if _layer is not None and self.seek_conv_layer:
-            _layer = find_layer(model, lambda l: isinstance(l, Conv), offset=_layer)
+        if _layer is not None and self.seek_penultimate_layer:
+            _layer = find_layer(model, self._penultimate_layer_condition, offset=_layer)
         if _layer is None:
-            raise ValueError("Unable to determine penultimate `Conv` layer. "
+            raise ValueError("Unable to determine penultimate layer. "
                              f"`penultimate_layer`={self.penultimate_layer}")
         penultimate_output = _layer.output
         if len(penultimate_output.shape) < 3:
