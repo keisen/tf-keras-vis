@@ -101,14 +101,19 @@ class GuidedBackpropagation(ModelModifier):
 
 
 class ExtractIntermediateLayerForGradcam(ModelModifier):
-    def __init__(self, penultimate_layer=None, seek_penultimate_layer=True, include_model_outputs=True):
+    def __init__(self,
+                 penultimate_layer=None,
+                 seek_penultimate_layer=True,
+                 include_model_outputs=True):
         self.penultimate_layer = penultimate_layer
         self.seek_penultimate_layer = seek_penultimate_layer
         self.include_model_outputs = include_model_outputs
 
     @staticmethod
     def _penultimate_layer_condition(layer):
-        return len(layer.output_shape) == 4 and layer.output_shape[1] > 1 and layer.output_shape[2] > 1
+        return len(layer.output_shape) == 4 and \
+               layer.output_shape[1] > 1 and \
+               layer.output_shape[2] > 1
 
     def __call__(self, model):
         _layer = self.penultimate_layer
