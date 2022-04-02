@@ -3,7 +3,9 @@ import tensorflow as tf
 
 from tf_keras_vis.activation_maximization import ActivationMaximization
 from tf_keras_vis.saliency import Saliency
-from tf_keras_vis.utils.model_modifiers import (ExtractIntermediateLayer, GuidedBackpropagation,
+from tf_keras_vis.utils.model_modifiers import (ExtractIntermediateLayer,
+                                                ExtractIntermediateLayerForGradcam,
+                                                GuidedBackpropagation,
                                                 ReplaceToLinear)
 from tf_keras_vis.utils.scores import CategoricalScore
 from tf_keras_vis.utils.test import (NO_ERROR, assert_raises, dummy_sample, mock_conv_model,
@@ -47,7 +49,13 @@ class TestExtractIntermediateLayer():
 
 
 class TestExtractIntermediateLayerForGradcam():
-    pass
+    @pytest.mark.parametrize("model", [mock_conv_model(), mock_multiple_outputs_model()])
+    @pytest.mark.parametrize("layer", [None, -1, "conv_1"])
+    @pytest.mark.usefixtures("mixed_precision")
+    def test__call__(self, model, layer):
+        modified_model = ExtractIntermediateLayerForGradcam(layer)(model)
+        assert modified_model != model
+        assert modified_model.outputs[-1].shape.as_list() == [None, 6, 6, 6]
 
 
 class TestExtractGuidedBackpropagation():
