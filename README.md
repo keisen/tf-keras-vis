@@ -3,9 +3,11 @@
 <!-- sec.0 -->
 
 [![Downloads](https://pepy.tech/badge/tf-keras-vis)](https://pepy.tech/project/tf-keras-vis)
+[![Python](https://img.shields.io/pypi/pyversions/tf-keras-vis.svg?style=plastic)](https://badge.fury.io/py/tf-keras-vis)
 [![PyPI version](https://badge.fury.io/py/tf-keras-vis.svg)](https://badge.fury.io/py/tf-keras-vis)
 [![Python package](https://github.com/keisen/tf-keras-vis/actions/workflows/python-package.yml/badge.svg)](https://github.com/keisen/tf-keras-vis/actions/workflows/python-package.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Documentation](https://img.shields.io/badge/api-reference-blue.svg)](https://keisen.github.io/tf-keras-vis-docs/)
 
 <!-- ./sec.0 -->
 
