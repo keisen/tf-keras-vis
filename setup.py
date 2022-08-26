@@ -37,7 +37,7 @@ setup(
         "Topic :: Software Development :: Libraries",
         "Topic :: Software Development :: Libraries :: Python Modules",
     ],
-    python_requires='>=3.7, <3.11',
+    python_requires='>=3.7',
     install_requires=[
         'scipy',
         'pillow',
@@ -67,8 +67,7 @@ setup(
             'pandoc',
         ],
         'examples': [
-            'jupyterlab~=2.0',
-            'jedi~=0.17.0',
+            'jupyterlab',
             'matplotlib',
         ],
     },
