@@ -82,3 +82,11 @@ class Layercam(Gradcam):
         arguments = ((k, v) for k, v in arguments if not k.startswith('_'))
         arguments = dict(arguments)
         return super().__call__(**arguments)
+
+    def _calculate_cam(self, grads, penultimate_output, gradient_modifier, activation_modifier):
+        if gradient_modifier is not None:
+            grads = gradient_modifier(grads)
+        cam = np.sum(np.multiply(penultimate_output, grads), axis=-1)
+        if activation_modifier is not None:
+            cam = activation_modifier(cam)
+        return cam

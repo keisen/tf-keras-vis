@@ -102,13 +102,8 @@ class Gradcam(ModelVisualization):
             grads = tf.cast(grads, dtype=model.variable_dtype)
             penultimate_output = tf.cast(penultimate_output, dtype=model.variable_dtype)
 
-        if gradient_modifier is not None:
-            grads = gradient_modifier(grads)
-        weights = K.mean(grads, axis=tuple(range(grads.ndim)[1:-1]), keepdims=True)
-        cam = np.sum(np.multiply(penultimate_output, weights), axis=-1)
-        if activation_modifier is not None:
-            cam = activation_modifier(cam)
-
+        cam = self._calculate_cam(grads, penultimate_output, gradient_modifier,
+                                  activation_modifier)
         if not expand_cam:
             if normalize_cam:
                 cam = normalize(cam)
@@ -121,6 +116,15 @@ class Gradcam(ModelVisualization):
             cam = [normalize(x) for x in cam]
         if len(self.model.inputs) == 1 and not isinstance(seed_input, list):
             cam = cam[0]
+        return cam
+
+    def _calculate_cam(self, grads, penultimate_output, gradient_modifier, activation_modifier):
+        if gradient_modifier is not None:
+            grads = gradient_modifier(grads)
+        weights = K.mean(grads, axis=tuple(range(grads.ndim)[1:-1]), keepdims=True)
+        cam = np.sum(np.multiply(penultimate_output, weights), axis=-1)
+        if activation_modifier is not None:
+            cam = activation_modifier(cam)
         return cam
 
 
