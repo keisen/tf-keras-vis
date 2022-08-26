@@ -7,7 +7,6 @@ on:
   push:
     branches: [ master ]
   pull_request:
-    branches: [ master ]
 
 env:
   TF_KERAS_VIS_MAX_STEPS: 3
