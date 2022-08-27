@@ -11,25 +11,7 @@
 
 <!-- ./sec.0 -->
 
-## Note!
-
  <!-- sec.1 -->
-
-We've released `v0.7.0`! In this release, the gradient calculation of ActivationMaximization is changed for the sake of fixing a critical problem. Although the calculation result are now a bit different compared to the past versions, you could avoid it by using legacy implementation as follows:
-
-```python
-# from tf_keras_vis.activation_maximization import ActivationMaximization
-from tf_keras_vis.activation_maximization.legacy import ActivationMaximization
-```
-
-In addition to above, we've also fixed some problems related Regularizers. Although we newly provide `tf_keras_vis.activation_maximization.regularizers` module that includes the regularizers whose bugs are fixed, like ActivationMaximization, you could also use legacy implementation as follows:
-
-```python
-# from tf_keras_vis.activation_maximization.regularizers import Norm, TotalVariation2D 
-from tf_keras_vis.utils.regularizers import Norm, TotalVariation2D
-```
-
-Please see [the release note](https://github.com/keisen/tf-keras-vis/releases/tag/v0.7.0) for details. If you face any problem related to this release, please feel free to ask us in [Issues page](https://github.com/keisen/tf-keras-vis/issues)!
 
 <!-- ./sec.1 -->
 
