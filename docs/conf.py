@@ -19,7 +19,7 @@ sys.path.insert(0, os.path.abspath('..'))
 
 project = 'tf-keras-vis'
 author = 'keisen(Yasuhiro Kubota)'
-copyright = f'2021, {author}'
+copyright = f'2022, {author}'
 
 # The short X.Y version
 with open("../VERSION") as f:
