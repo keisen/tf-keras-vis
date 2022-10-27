@@ -32,9 +32,7 @@ class ActivationMaximization(ModelVisualization):
             callbacks=None,
             training=False,
             unconnected_gradients=tf.UnconnectedGradients.NONE,
-            activation_modifiers=None,
-            _compatible_mode=False,  # Hidden option.
-    ) -> Union[np.ndarray, list]:
+            activation_modifiers=None) -> Union[np.ndarray, list]:
         """Generate the model inputs that maximize the output of the given `score` functions.
 
         By default, this method is optimized to visualize `tf.keras.application.VGG16` model.
@@ -208,21 +206,12 @@ class ActivationMaximization(ModelVisualization):
                         input_values[i] = modifier(input_values[i])
 
                 # Copy input values to variables
-                if _compatible_mode:
-                    input_variables = [
-                        tf.Variable(tf.cast(X, tf.float16) if mixed_precision_model else X)
-                        for X in input_values
-                    ]
-                else:
-                    for V, X in zip(input_variables, input_values):
-                        V.assign(X)
+                for V, X in zip(input_variables, input_values):
+                    V.assign(X)
 
                 with tf.GradientTape(watch_accessed_variables=False) as tape:
                     tape.watch(input_variables)
-                    if _compatible_mode:
-                        input_values = input_variables
-                    else:
-                        input_values = [V.value() for V in input_variables]
+                    input_values = [V.value() for V in input_variables]
                     # Calculate scores
                     outputs = self.model(input_values, training=training)
                     outputs = listify(outputs)
@@ -249,8 +238,6 @@ class ActivationMaximization(ModelVisualization):
 
                 # Update input values
                 input_values = [V.value() for V in input_variables]
-                if _compatible_mode and mixed_precision_model:
-                    input_values = [tf.cast(X, tf.float32) for X in input_values]
 
                 # Calculate clipped values
                 clipped_value = self._clip_and_modify(input_values, input_ranges,
