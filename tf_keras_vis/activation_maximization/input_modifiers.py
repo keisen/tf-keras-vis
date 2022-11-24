@@ -3,7 +3,7 @@ from typing import Union
 
 import numpy as np
 import tensorflow as tf
-from scipy.ndimage.interpolation import rotate, zoom
+from scipy.ndimage import rotate, zoom
 
 
 class InputModifier(ABC):

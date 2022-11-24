@@ -122,11 +122,11 @@ class ExtractIntermediateLayerForGradcam(ModelModifier):
             if isinstance(_layer, int) and _layer < len(model.layers):
                 _layer = model.layers[_layer]
             elif isinstance(_layer, str):
-                _layer = find_layer(model, lambda l: l.name == _layer)
+                _layer = find_layer(model, lambda _l: _l.name == _layer)
             else:
                 raise ValueError(f"Invalid argument. `penultimate_layer`={self.penultimate_layer}")
         if _layer is not None and self.seek_conv_layer:
-            _layer = find_layer(model, lambda l: isinstance(l, Conv), offset=_layer)
+            _layer = find_layer(model, lambda _l: isinstance(_l, Conv), offset=_layer)
         if _layer is None:
             raise ValueError("Unable to determine penultimate `Conv` layer. "
                              f"`penultimate_layer`={self.penultimate_layer}")

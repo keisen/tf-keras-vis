@@ -65,7 +65,7 @@ class ActivationMaximization(ModelVisualization):
 
                     seed_input = tf.random.uniform((samples, ..., channels), low, high)
 
-                Farthermore, if the model has multiple inputs and you want multiple images,
+                Furthermore, if the model has multiple inputs and you want multiple images,
                 you have to do as follows::
 
                     seed_input = [
@@ -318,7 +318,7 @@ class ActivationMaximization(ModelVisualization):
                             for low, high in input_ranges)
             # Prepare input_shape
             input_shapes = (input_tensor.shape[1:] for input_tensor in self.model.inputs)
-            # Generae seed-inputs
+            # Generate seed-inputs
             seed_inputs = (tf.random.uniform(shape, low, high)
                            for (low, high), shape in zip(input_ranges, input_shapes))
         # Convert numpy to tf-tensor

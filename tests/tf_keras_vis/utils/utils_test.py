@@ -89,5 +89,5 @@ class TestUtils():
             tf.keras.layers.Dense(1),
         ])
         offset = conv_model.layers[-1] if offset_of_child_layer else None
-        actual = find_layer(model, lambda l: l.name == 'conv_1', offset=offset)
+        actual = find_layer(model, lambda _l: _l.name == 'conv_1', offset=offset)
         assert conv_model.get_layer(name='conv_1') == actual
