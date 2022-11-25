@@ -80,7 +80,7 @@ class Saliency(ModelVisualization):
         # Processing saliency
         if smooth_samples > 0:
             smooth_samples = get_num_of_steps_allowed(smooth_samples)
-            seed_inputs = (tf.tile(X, (smooth_samples, ) + tuple(np.ones(X.ndim - 1, np.int)))
+            seed_inputs = (tf.tile(X, (smooth_samples, ) + tuple(np.ones(X.ndim - 1, np.int32)))
                            for X in seed_inputs)
             seed_inputs = (tf.reshape(X, (smooth_samples, -1) + tuple(X.shape[1:]))
                            for X in seed_inputs)
