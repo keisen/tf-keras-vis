@@ -98,7 +98,8 @@ class GifGenerator2D(Callback):
         if self.data is None:
             self.data = [[] for _ in range(len(values))]
         for n, value in enumerate(values):
-            img = Image.fromarray(value[0].astype(np.uint8))  # 1st image in the batch
+            value = value[0].numpy() if tf.is_tensor(value[0]) else value[0]
+            img = Image.fromarray(value.astype(np.uint8))  # 1st image in the batch
             ImageDraw.Draw(img).text((10, 10), f"Step {i + 1}", font=ImageFont.load_default())
             self.data[n].append(np.asarray(img))
 

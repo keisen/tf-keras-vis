@@ -433,10 +433,10 @@ class ActivationMaximization(ModelVisualization):
         input_ranges = [(input_tensor.dtype.min if low is None else low,
                          input_tensor.dtype.max if high is None else high)
                         for (low, high), input_tensor in zip(input_ranges, self.model.inputs)]
-        clipped_values = (np.array(K.clip(X, low, high))
+        clipped_values = (K.clip(X, low, high)
                           for X, (low, high) in zip(seed_inputs, input_ranges))
-        clipped_values = (X.astype(np.int) if isinstance(t, int) else X.astype(np.float32)
-                          for X, (t, _) in zip(clipped_values, input_ranges))
+        clipped_values = (tf.cast(X, input_tensor.dtype)
+                          for X, input_tensor in zip(clipped_values, self.model.inputs))
         if activation_modifiers is not None:
             clipped_values = ((activation_modifiers[name], seed_input)
                               for name, seed_input in zip(self.model.input_names, clipped_values))
