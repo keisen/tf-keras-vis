@@ -162,7 +162,7 @@ class Scorecam(ModelVisualization):
                  for prediction in listify(preds))
 
         # Calculating weights
-        weights = ([score(K.softmax(p)) for p in prediction]
+        weights = ([score(K.softmax(tf.constant(p))) for p in prediction]
                    for score, prediction in zip(scores, preds))
         weights = ([self._validate_weight(s, nsamples) for s in w] for w in weights)
         weights = (np.array(w, dtype=np.float32) for w in weights)
