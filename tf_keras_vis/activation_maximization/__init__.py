@@ -299,7 +299,7 @@ class ActivationMaximization(ModelVisualization):
                     "The length of input range tuple must be 2 (Or it is just `None`, not tuple), "
                     f"but you passed {r} as `input_ranges[{i}]`.")
             a, b = r
-            if None not in r and type(a) != type(b):
+            if None not in r and type(a) is not type(b):
                 raise TypeError(
                     "The type of low and high values in the input range must be the same, "
                     f"but you passed {r} are {type(a)} and {type(b)} ")
@@ -408,7 +408,7 @@ class ActivationMaximization(ModelVisualization):
             callables = ((k, listify(v)) for k, v in callables.items())
         else:
             callables = listify(callables)
-            if len(callables) == 0 or len(list(filter(lambda x: type(x) == list, callables))) == 0:
+            if len(callables) == 0 or len(list(filter(lambda x: type(x) is list, callables))) == 0:
                 callables = [callables]
             if len(callables) <= len(keys):
                 callables = (listify(value_each_input) for value_each_input in callables)

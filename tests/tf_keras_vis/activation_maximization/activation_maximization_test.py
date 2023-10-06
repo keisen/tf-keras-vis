@@ -51,7 +51,7 @@ class TestActivationMaximization():
         activation_maximization = ActivationMaximization(conv_model)
         result = activation_maximization(CategoricalScore(0), seed_input=seed_input)
         if type(expected) is list:
-            assert type(result) == list
+            assert type(result) is list
             result = result[0]
             expected = expected[0]
         assert result.shape == expected
@@ -527,7 +527,7 @@ class TestActivationMaximizationWithMultipleOutputsModel():
         result = activation_maximization(
             [CategoricalScore(1), BinaryScore(False)], seed_input=seed_input)
         if type(expected) is list:
-            assert type(result) == list
+            assert type(result) is list
             result = result[0]
             expected = expected[0]
         assert result.shape == expected
@@ -876,7 +876,7 @@ class TestActivationMaximizationWithDenseModel():
                                          input_modifiers=None,
                                          regularizers=None)
         if type(expected) is list:
-            assert type(result) == list
+            assert type(result) is list
             result = result[0]
             expected = expected[0]
         assert result.shape == expected
