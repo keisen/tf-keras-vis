@@ -115,3 +115,5 @@ core*
 /docs/examples/Untitled.ipynb
 /dockerfiles/docker-compose.yml
 DraftReleaseNote.md
+/temp
+/.vscode
