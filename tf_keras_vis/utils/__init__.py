@@ -1,4 +1,5 @@
 import os
+from collections.abc import Iterable
 from typing import Tuple
 
 import numpy as np
@@ -39,26 +40,37 @@ def num_of_gpus() -> Tuple[int, int]:
         return 0, 0
 
 
-def listify(value, return_empty_list_if_none=True, convert_tuple_to_list=True) -> list:
-    """Ensures that the value is a list.
+def listify(value,
+            return_empty_list_if_none=True,
+            convert_tuple_to_list=True,
+            convert_iterable_to_list=False) -> list:
+    """Ensures that `value` is a list.
 
-    If it is not a list, it creates a new list with `value` as an item.
+    If `value` is not a list, this function creates an new list that includes `value`.
 
     Args:
         value (object): A list or something else.
-        return_empty_list_if_none (bool, optional): When True (default), None you passed as `value`
-            will be converted to a empty list (i.e., `[]`). When False, None will be converted to
-            a list that has an None (i.e., `[None]`). Defaults to True.
-        convert_tuple_to_list (bool, optional): When True (default), a tuple you passed as `value`
-            will be converted to a list. When False, a tuple will be unconverted
-            (i.e., returning a tuple object that was passed as `value`). Defaults to True.
+        return_empty_list_if_none (bool, optional): When True (default), `None` you passed as
+            `value` will be converted to a empty list (i.e., `[]`). When False, `None` will be
+            converted to a list that contains an `None` (i.e., `[None]`). Defaults to True.
+        convert_tuple_to_list (bool, optional):When True (default), a tuple object you
+            passed as `value` will be converted to a list. When False, a tuple object will be
+            unconverted (i.e., returning a list of a tuple object). Defaults to True.
+        convert_iterable_to_list (bool, optional): When True (default), an iterable object you
+            passed as `value` will be converted to a list. When False, an iterable object will be
+            unconverted (i.e., returning a list of an iterable object). Defaults to False.
     Returns:
-        list: A list. When `value` is a tuple and `convert_tuple_to_list` is False, a tuple.
+        list: A list
     """
     if not isinstance(value, list):
         if value is None and return_empty_list_if_none:
             value = []
         elif isinstance(value, tuple) and convert_tuple_to_list:
+            value = list(value)
+        elif isinstance(value, Iterable) and convert_iterable_to_list:
+            if not convert_tuple_to_list:
+                raise ValueError("When 'convert_tuple_to_list' option is False,"
+                                 "'convert_iterable_to_list' option should also be False.")
             value = list(value)
         else:
             value = [value]
@@ -132,3 +144,18 @@ def lower_precision_dtype(model):
                (isinstance(layer, tf.keras.Model) and is_mixed_precision(layer)):
                 return layer.compute_dtype
     return model.dtype  # pragma: no cover
+
+
+def order(value):
+    if isinstance(value, int):
+        return value
+    if isinstance(value, str):
+        value = value.lower()
+        if value == 'nearest':
+            return 0
+        if value == 'bilinear':
+            return 1
+        if value == 'cubic':
+            return 3
+    raise ValueError(f"{value} is not supported. "
+                     "The value MUST be an integer or one of 'nearest', 'bilinear' or 'cubic'.")
