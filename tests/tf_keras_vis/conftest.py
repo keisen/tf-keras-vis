@@ -23,6 +23,10 @@ def _source_of_models():
 def _save_and_load(model, source, path):
     if source is None:
         return model
+
+    if version(tf.version.VERSION) >= version("2.16.0rc0"):
+        path = path[:-3] + '.keras'
+
     if source == "mixed_float16":
         policy = tf.keras.mixed_precision.global_policy()
         tf.keras.mixed_precision.set_global_policy(source)

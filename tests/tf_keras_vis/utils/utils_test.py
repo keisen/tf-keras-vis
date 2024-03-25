@@ -82,6 +82,8 @@ class TestUtils():
         False,
         True,
     ])
+    @pytest.mark.skipif(version(tf.version.VERSION) >= version("2.16.0rc0"),
+                        reason="https://github.com/tensorflow/tensorflow/issues/64393")  # FIXME
     def test_find_layer(self, offset_of_child_layer, conv_model):
         model = tf.keras.Sequential([
             tf.keras.layers.Conv2D(3, 3, padding='same', input_shape=(8, 8, 3)),

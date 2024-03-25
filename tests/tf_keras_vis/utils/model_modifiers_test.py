@@ -37,12 +37,12 @@ class TestExtractIntermediateLayer():
     ])
     @pytest.mark.usefixtures("mixed_precision")
     def test__call__(self, model, layer, expected_error):
-        assert model.outputs[0].shape.as_list() == [None, 2]
+        assert model.outputs[0].shape == (None, 2)
         with assert_raises(expected_error):
             instance = ActivationMaximization(model,
                                               model_modifier=ExtractIntermediateLayer(layer))
             assert instance.model != model
-            assert instance.model.outputs[0].shape.as_list() == [None, 6, 6, 6]
+            assert instance.model.outputs[0].shape == (None, 6, 6, 6)
             instance([CategoricalScore(0)])
 
 
