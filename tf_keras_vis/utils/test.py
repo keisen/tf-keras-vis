@@ -4,7 +4,8 @@ import numpy as np
 import pytest
 import tensorflow as tf
 from tensorflow.keras import backend as K
-from tensorflow.keras.layers import Activation, Conv2D, Dense, GlobalAveragePooling2D, Input
+from tensorflow.keras.layers import (Activation, Concatenate, Conv2D, Dense,
+                                     GlobalAveragePooling2D, Input)
 from tensorflow.keras.models import Model
 
 from ..activation_maximization.callbacks import Callback
@@ -41,7 +42,7 @@ def mock_multiple_inputs_model():
     input_2 = Input((10, 10, 3), name='input_2')
     x1 = Conv2D(6, 3, padding='same', activation='relu', name='conv_1')(input_1)
     x2 = Conv2D(6, 3, activation='relu', name='conv_2')(input_2)
-    x = K.concatenate([x1, x2], axis=-1)
+    x = Concatenate(axis=-1)([x1, x2])
     x = GlobalAveragePooling2D()(x)
     x = Dense(2, name='dense_1')(x)
     x = Activation('softmax', dtype=tf.float32, name='output_1')(x)
@@ -64,7 +65,7 @@ def mock_multiple_io_model():
     input_2 = Input((10, 10, 3), name='input_2')
     x1 = Conv2D(6, 3, padding='same', activation='relu', name='conv_1')(input_1)
     x2 = Conv2D(6, 3, activation='relu', name='conv_2')(input_2)
-    x = K.concatenate([x1, x2], axis=-1)
+    x = Concatenate(axis=-1)([x1, x2])
     x = GlobalAveragePooling2D()(x)
     x1 = Dense(2, name='dense_1')(x)
     x2 = Dense(1, name='dense_2')(x)
