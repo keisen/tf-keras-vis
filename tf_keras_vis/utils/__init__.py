@@ -132,3 +132,7 @@ def lower_precision_dtype(model):
                (isinstance(layer, tf.keras.Model) and is_mixed_precision(layer)):
                 return layer.compute_dtype
     return model.dtype  # pragma: no cover
+
+
+def get_input_names(model):
+    return [input.name for input in model.inputs]

@@ -7,7 +7,7 @@ import tensorflow as tf
 import tensorflow.keras.backend as K
 
 from .. import ModelVisualization
-from ..utils import get_num_of_steps_allowed, is_mixed_precision, listify
+from ..utils import get_input_names, get_num_of_steps_allowed, is_mixed_precision, listify
 from ..utils.regularizers import LegacyRegularizer
 from .callbacks import managed_callbacks
 from .input_modifiers import Jitter, Rotate2D
@@ -201,7 +201,7 @@ class ActivationMaximization(ModelVisualization):
             input_variables = [tf.Variable(X) for X in input_values]
             for step in range(get_num_of_steps_allowed(steps)):
                 # Modify input values
-                for i, name in enumerate(self.model.input_names):
+                for i, name in enumerate(get_input_names(self.model)):
                     for modifier in input_modifiers[name]:
                         input_values[i] = modifier(input_values[i])
 
@@ -263,10 +263,10 @@ class ActivationMaximization(ModelVisualization):
             regularization_values = [(regularizer.name, regularizer(seed_inputs))
                                      for regularizer in regularizers]
         else:
-            regularization_values = ([
-                (name, regularizer(seed_inputs[i]))
-                for name, regularizer in regularizers[input_layer_name].items()
-            ] for i, input_layer_name in enumerate(self.model.input_names))
+            regularization_values = (
+                [(name, regularizer(seed_inputs[i]))
+                 for name, regularizer in regularizers[input_layer_name].items()]
+                for i, input_layer_name in enumerate(get_input_names(self.model)))
             regularization_values = sum(regularization_values, [])
         regularized_score_values = [-1.0 * score_value for score_value in score_values]
         regularized_score_values += [value for _, value in regularization_values]
@@ -357,7 +357,7 @@ class ActivationMaximization(ModelVisualization):
                         for i, regularizer in enumerate(regularizers))
         regularizers = (((regularizer.name if hasattr(regularizer, 'name') else name), regularizer)
                         for name, regularizer in regularizers)
-        if len(self.model.input_names) > 1:
+        if len(get_input_names(self.model)) > 1:
             regularizers = ((f"{name}({input_layer_name})", regularizer)
                             for name, regularizer in regularizers)
         return defaultdict(list, regularizers)
@@ -398,7 +398,7 @@ class ActivationMaximization(ModelVisualization):
         return None
 
     def _get_callables_to_apply_to_each_input(self, callables, object_name):
-        keys = self.model.input_names
+        keys = get_input_names(self.model)
         if isinstance(callables, dict):
             non_existent_keys = set(callables.keys()) - set(keys)
             if len(non_existent_keys) > 0:
@@ -420,26 +420,28 @@ class ActivationMaximization(ModelVisualization):
 
     def _get_activation_modifiers(self, activation_modifiers):
         if isinstance(activation_modifiers, dict):
-            non_existent_names = set(activation_modifiers.keys()) - set(self.model.input_names)
+            non_existent_names = set(activation_modifiers.keys()) - set(get_input_names(
+                self.model))
             if len(non_existent_names) > 0:
-                raise ValueError(f"The model inputs are `{self.model.input_names}`. "
+                raise ValueError(f"The model inputs are `{get_input_names(self.model)}`. "
                                  "However the activation modifiers you passed have "
                                  f"non existent input names: `{non_existent_names}`")
         else:
-            activation_modifiers = {self.model.input_names[0]: activation_modifiers}
+            activation_modifiers = {get_input_names(self.model)[0]: activation_modifiers}
         return defaultdict(lambda: None, activation_modifiers)
 
     def _clip_and_modify(self, seed_inputs, input_ranges, activation_modifiers):
-        input_ranges = [(input_tensor.dtype.min if low is None else low,
-                         input_tensor.dtype.max if high is None else high)
+        input_ranges = [(tf.as_dtype(input_tensor.dtype).min if low is None else low,
+                         tf.as_dtype(input_tensor.dtype).max if high is None else high)
                         for (low, high), input_tensor in zip(input_ranges, self.model.inputs)]
         clipped_values = (K.clip(X, low, high)
                           for X, (low, high) in zip(seed_inputs, input_ranges))
         clipped_values = (tf.cast(X, input_tensor.dtype)
                           for X, input_tensor in zip(clipped_values, self.model.inputs))
         if activation_modifiers is not None:
-            clipped_values = ((activation_modifiers[name], seed_input)
-                              for name, seed_input in zip(self.model.input_names, clipped_values))
+            clipped_values = (
+                (activation_modifiers[name], seed_input)
+                for name, seed_input in zip(get_input_names(self.model), clipped_values))
             clipped_values = (seed_input if modifier is None else modifier(seed_input)
                               for modifier, seed_input in clipped_values)
         return list(clipped_values)
