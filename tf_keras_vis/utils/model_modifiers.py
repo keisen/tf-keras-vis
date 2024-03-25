@@ -4,7 +4,9 @@ from typing import Union
 import tensorflow as tf
 from packaging.version import parse as version
 
-if version(tf.version.VERSION) >= version("2.13.0rc0"):
+if version(tf.version.VERSION) >= version("2.16.0rc0"):
+    from keras.src.layers.convolutional.base_conv import BaseConv as Conv
+elif version(tf.version.VERSION) >= version("2.13.0rc0"):
     from keras.src.layers.convolutional.base_conv import Conv
 elif version(tf.version.VERSION) >= version("2.9.0rc0"):
     from keras.layers.convolutional.base_conv import Conv
