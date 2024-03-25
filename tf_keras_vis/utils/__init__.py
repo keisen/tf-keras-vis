@@ -135,4 +135,8 @@ def lower_precision_dtype(model):
 
 
 def get_input_names(model):
-    return [input.name for input in model.inputs]
+    if version(tf.version.VERSION) >= version("2.4.0"):
+        names = [input.name for input in model.inputs]
+    else:
+        names = model.input_names
+    return names
