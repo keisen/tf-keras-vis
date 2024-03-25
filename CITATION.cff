@@ -8,8 +8,8 @@ title: "tf-keras-vis"
 repository: "https://github.com/keisen/tf-keras-vis"
 url: "https://keisen.github.io/tf-keras-vis-docs/"
 type: software
-version: 0.8.6
-date-released: "2023-10-07"
+version: 0.8.7
+date-released: "2024-03-25"
 license-url: "https://github.com/keisen/tf-keras-vis/blob/master/LICENSE"
 references:
   - authors:
