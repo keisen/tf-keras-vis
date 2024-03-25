@@ -279,6 +279,13 @@ class ActivationMaximization(ModelVisualization):
             try:
                 # Wrap optimizer
                 optimizer = tf.keras.mixed_precision.LossScaleOptimizer(optimizer)
+                # XXX https://github.com/tensorflow/tensorflow/issues/64124
+                # FIXME Because it needs a patch to fix this issue by tensorflow team,
+                #       for now, we're going round this problem by the code below...
+                if 'get_scaled_loss' not in dir(optimizer):
+                    optimizer.get_scaled_loss = lambda x: x
+                if 'get_unscaled_gradients' not in dir(optimizer):
+                    optimizer.get_unscaled_gradients = lambda x: x
             except ValueError as e:
                 raise ValueError(
                     "The same `optimizer` instance should be NOT used twice or more."
