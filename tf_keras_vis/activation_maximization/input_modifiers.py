@@ -76,6 +76,8 @@ class Rotate(InputModifier):
                              f"(batch_size, ..., channels), but was {ndim}.")
         if tf.is_tensor(seed_input):
             seed_input = seed_input.numpy()
+        _dtype = seed_input.dtype
+        seed_input = seed_input.astype(np.float32)
         seed_input = rotate(seed_input,
                             self.random_generator.uniform(-self.degree, self.degree),
                             axes=self.axes,
@@ -83,6 +85,7 @@ class Rotate(InputModifier):
                             order=1,
                             mode='reflect',
                             prefilter=False)
+        seed_input = seed_input.astype(_dtype)
         return seed_input
 
 
@@ -118,6 +121,8 @@ class Scale(InputModifier):
         if tf.is_tensor(seed_input):
             seed_input = seed_input.numpy()
         shape = seed_input.shape
+        _dtype = seed_input.dtype
+        seed_input = seed_input.astype(np.float32)
         _factor = factor = self.random_generator.uniform(self.low, self.high)
         factor *= np.ones(ndim - 2)
         factor = (1, ) + tuple(factor) + (1, )
@@ -129,6 +134,7 @@ class Scale(InputModifier):
         if _factor < 1.0:
             pad_width = [self._pad_width(x, e) for x, e in zip(seed_input.shape, shape)]
             seed_input = np.pad(seed_input, pad_width, 'mean')
+        seed_input = seed_input.astype(_dtype)
         return seed_input
 
     def _central_crop_range(self, x, e):
