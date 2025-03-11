@@ -1,7 +1,7 @@
 # This workflow will install Python dependencies, run tests and lint with a variety of Python versions
 # For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
 
-name: Python package for py312
+name: Python package for py38
 
 on:
   push:
@@ -17,10 +17,27 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.9', '3.10', '3.11', '3.12']
-        tensorflow: ['2.18.0']
-        keras: ['keras1x', 'keras2x']
-        numpy: ['numpy1x', numpy2x]
+        python-version: ['3.8', '3.9', '3.10', '3.11']
+        tensorflow: ['2.6.0', '2.7.0', '2.8.0', '2.9.0', '2.10.0', '2.11.0', '2.12.0', '2.13.0', '2.14.0', '2.15.0']
+      include:
+        - python-version: '3.11'
+          tensorflow: '2.12.0'
+        - python-version: '3.11'
+          tensorflow: '2.13.0'
+        - python-version: '3.11'
+          tensorflow: '2.14.0'
+        - python-version: '3.11'
+          tensorflow: '2.15.0'
+      exclude:
+        - python-version: '3.8'
+          tensorflow: '2.14.0'
+        - python-version: '3.8'
+          tensorflow: '2.15.0'
+        - python-version: '3.10'
+          tensorflow: '2.6.0'
+        - python-version: '3.10'
+          tensorflow: '2.7.0'
+          
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
@@ -32,7 +49,7 @@ jobs:
         python -m pip install --upgrade pip
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade -e .[develop,examples,${{matrix.keras}},${{matrix.numpy}}] tensorflow~=${{ matrix.tensorflow }}
+        python -m pip install --upgrade -e .[develop,examples] tensorflow~=${{ matrix.tensorflow }}
     - name: Test with pytest
       run: |
         pytest -n auto --dist loadscope

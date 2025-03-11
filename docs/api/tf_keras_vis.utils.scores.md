@@ -131,7 +131,7 @@ For example, suppose the target value is 0.0, the score function should be as fo
 
 ```python
 def score_function(output):
-    return tf.math.abs(1.0 / (output[:, 0] + tf.keras.backend.epsilon()))
+    return tf.math.abs(1.0 / (output[:, 0] + keras.backend.epsilon()))
 ```
 
 
