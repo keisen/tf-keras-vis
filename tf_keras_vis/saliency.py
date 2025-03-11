@@ -2,9 +2,8 @@ from typing import Union
 
 import numpy as np
 import tensorflow as tf
-import tensorflow.keras.backend as K
 
-from . import ModelVisualization
+from . import ModelVisualization, keras
 from .utils import get_num_of_steps_allowed, listify, normalize
 
 
@@ -22,7 +21,7 @@ class Saliency(ModelVisualization):
                  smooth_samples=0,
                  smooth_noise=0.20,
                  keepdims=False,
-                 gradient_modifier=lambda grads: K.abs(grads),
+                 gradient_modifier=lambda grads: tf.abs(grads),
                  training=False,
                  normalize_map=True,
                  unconnected_gradients=tf.UnconnectedGradients.NONE) -> Union[np.ndarray, list]:
@@ -80,10 +79,10 @@ class Saliency(ModelVisualization):
         # Processing saliency
         if smooth_samples > 0:
             smooth_samples = get_num_of_steps_allowed(smooth_samples)
-            seed_inputs = (tf.tile(X, (smooth_samples, ) + tuple(np.ones(X.ndim - 1, np.int32)))
+            seed_inputs = (tf.tile(X, (smooth_samples,) + tuple(np.ones(X.ndim - 1, np.int32)))
                            for X in seed_inputs)
-            seed_inputs = (tf.reshape(X, (smooth_samples, -1) + tuple(X.shape[1:]))
-                           for X in seed_inputs)
+            seed_inputs = (
+                tf.reshape(X, (smooth_samples, -1) + tuple(X.shape[1:])) for X in seed_inputs)
             seed_inputs = ((X, tuple(range(X.ndim)[2:])) for X in seed_inputs)
             seed_inputs = ((X, smooth_noise * (tf.math.reduce_max(X, axis=axis, keepdims=True) -
                                                tf.math.reduce_min(X, axis=axis, keepdims=True)))

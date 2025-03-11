@@ -5,6 +5,8 @@ import numpy as np
 import tensorflow as tf
 from deprecated import deprecated
 
+from .. import keras
+
 warnings.warn(('`tf_keras_vis.utils.regularizers` module is deprecated. '
                'Please use `tf_keras_vis.activation_maximization.regularizers` instead.'),
               DeprecationWarning)

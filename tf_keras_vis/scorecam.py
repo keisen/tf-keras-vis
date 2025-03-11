@@ -2,10 +2,9 @@ from typing import Union
 
 import numpy as np
 import tensorflow as tf
-import tensorflow.keras.backend as K
 from scipy.ndimage.interpolation import zoom
 
-from . import ModelVisualization
+from . import ModelVisualization, keras
 from .utils import get_num_of_steps_allowed, is_mixed_precision, listify, normalize, zoom_factor
 from .utils.model_modifiers import ExtractIntermediateLayerForGradcam as ModelModifier
 
@@ -18,13 +17,12 @@ class Scorecam(ModelVisualization):
           (https://arxiv.org/pdf/1910.01279.pdf)
         * Faster Score-CAM (https://github.com/tabayashi0117/Score-CAM#faster-score-cam)
     """
-
     def __call__(self,
                  score,
                  seed_input,
                  penultimate_layer=None,
                  seek_penultimate_conv_layer=True,
-                 activation_modifier=lambda cam: K.relu(cam),
+                 activation_modifier=lambda cam: keras.activations.relu(cam),
                  batch_size=32,
                  max_N=None,
                  training=False,
@@ -55,7 +53,7 @@ class Scorecam(ModelVisualization):
 
             seed_input: A tf.Tensor, :obj:`numpy.ndarray` or a list of them to input in the model.
                 That's when the model has multiple inputs, you MUST pass a list of tensors.
-            penultimate_layer: An index or name of the layer, or the tf.keras.layers.Layer
+            penultimate_layer: An index or name of the layer, or the keras.layers.Layer
                 instance itself. When None, it means the same with `-1`. If the layer specified by
                 this option is not `convolutional` layer, `penultimate_layer` will work as the
                 offset to seek `convolutional` layer. Defaults to None.
@@ -63,7 +61,7 @@ class Scorecam(ModelVisualization):
                 layer when the layer specified by `penultimate_layer` is not `convolutional` layer.
                 Defaults to True.
             activation_modifier: A function to modify the Class Activation Map (CAM). Defaults to
-                `lambda cam: K.relu(cam)`.
+                `lambda cam: keras.activations.relu(cam)`.
             batch_size: The number of samples per batch. Defaults to 32.
             max_N: When None or under Zero, run as ScoreCAM. When not None and over Zero of
                 Integer, run as Faster-ScoreCAM. Set larger number (or None), need more time to
@@ -111,7 +109,7 @@ class Scorecam(ModelVisualization):
                                                         range(penultimate_output.ndim)[1:-1]),
                                                     keepdims=True)
             _, top_k_indices = tf.math.top_k(activation_map_std, max_N)
-            top_k_indices, _ = tf.unique(tf.reshape(top_k_indices, (-1, )))
+            top_k_indices, _ = tf.unique(tf.reshape(top_k_indices, (-1,)))
             penultimate_output = tf.gather(penultimate_output, top_k_indices, axis=-1)
         nsamples = penultimate_output.shape[0]
         channels = penultimate_output.shape[-1]
@@ -120,7 +118,7 @@ class Scorecam(ModelVisualization):
         input_shapes = [seed_input.shape for seed_input in seed_inputs]
         zoom_factors = (zoom_factor(penultimate_output.shape[1:-1], input_shape[1:-1])
                         for input_shape in input_shapes)
-        zoom_factors = ((1, ) + factor + (1, ) for factor in zoom_factors)
+        zoom_factors = ((1,) + factor + (1,) for factor in zoom_factors)
         upsampled_activations = [
             zoom(penultimate_output, factor, order=1, mode='nearest') for factor in zoom_factors
         ]
@@ -134,24 +132,25 @@ class Scorecam(ModelVisualization):
                                   axis=tuple(range(activation.ndim)[1:-1]),
                                   keepdims=True) for activation in upsampled_activations)
         normalized_activations = zip(upsampled_activations, min_activations, max_activations)
-        normalized_activations = ((activation - _min) / (_max - _min + K.epsilon())
+        normalized_activations = ((activation - _min) / (_max - _min + keras.backend.epsilon())
                                   for activation, _min, _max in normalized_activations)
 
         # (samples, h, w, c) -> (channels, samples, h, w, c)
-        input_templates = (np.tile(seed_input, (channels, ) + (1, ) * len(seed_input.shape))
+        input_templates = (np.tile(seed_input, (channels,) + (1,) * len(seed_input.shape))
                            for seed_input in seed_inputs)
         # (samples, h, w, channels) -> (c, samples, h, w, channels)
-        masks = (np.tile(mask, (input_shape[-1], ) + (1, ) * len(map_shape)) for mask, input_shape,
+        masks = (np.tile(mask, (input_shape[-1],) + (1,) * len(map_shape)) for mask, input_shape,
                  map_shape in zip(normalized_activations, input_shapes, activation_shapes))
         # (c, samples, h, w, channels) -> (channels, samples, h, w, c)
-        masks = (np.transpose(mask, (len(mask.shape) - 1, ) + tuple(range(len(mask.shape)))[1:-1] +
-                              (0, )) for mask in masks)
+        masks = (np.transpose(mask,
+                              (len(mask.shape) - 1,) + tuple(range(len(mask.shape)))[1:-1] + (0,))
+                 for mask in masks)
         # Create masked inputs
         masked_seed_inputs = (np.multiply(input_template, mask)
                               for input_template, mask in zip(input_templates, masks))
         # (channels, samples, h, w, c) -> (channels * samples, h, w, c)
         masked_seed_inputs = [
-            np.reshape(seed_input, (-1, ) + seed_input.shape[2:])
+            np.reshape(seed_input, (-1,) + seed_input.shape[2:])
             for seed_input in masked_seed_inputs
         ]
 
@@ -162,7 +161,8 @@ class Scorecam(ModelVisualization):
                  for prediction in listify(preds))
 
         # Calculating weights
-        weights = ([score(K.softmax(tf.constant(p))) for p in prediction]
+        weights = ([score(keras.activations.softmax(tf.constant(p)))
+                    for p in prediction]
                    for score, prediction in zip(scores, preds))
         weights = ([self._validate_weight(s, nsamples) for s in w] for w in weights)
         weights = (np.array(w, dtype=np.float32) for w in weights)
@@ -173,9 +173,11 @@ class Scorecam(ModelVisualization):
         weights = np.sum(weights, axis=0)
 
         # Generate cam
-        cam = K.batch_dot(penultimate_output, weights)
+        # cam = K.batch_dot(penultimate_output, weights)
+        cam = keras.layers.Dot(axes=-1)([penultimate_output, weights])
         if activation_modifier is not None:
             cam = activation_modifier(cam)
+        cam = cam.numpy()
 
         if not expand_cam:
             if normalize_cam:
@@ -184,7 +186,7 @@ class Scorecam(ModelVisualization):
 
         # Visualizing
         zoom_factors = (zoom_factor(cam.shape, X.shape) for X in seed_inputs)
-        cam = [zoom(cam, factor, order=1) for factor in zoom_factors]
+        cam = [zoom(cam.astype(np.float32), factor, order=1) for factor in zoom_factors]
         if normalize_cam:
             cam = [normalize(x) for x in cam]
         if len(self.model.inputs) == 1 and not isinstance(seed_input, list):

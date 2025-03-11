@@ -125,7 +125,7 @@ class Scale(InputModifier):
         seed_input = seed_input.astype(np.float32)
         _factor = factor = self.random_generator.uniform(self.low, self.high)
         factor *= np.ones(ndim - 2)
-        factor = (1, ) + tuple(factor) + (1, )
+        factor = (1,) + tuple(factor) + (1,)
         seed_input = zoom(seed_input, factor, order=1, mode='reflect', prefilter=False)
         if _factor > 1.0:
             indices = (self._central_crop_range(x, e) for x, e in zip(seed_input.shape, shape))

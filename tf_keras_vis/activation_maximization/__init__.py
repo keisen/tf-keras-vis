@@ -4,9 +4,8 @@ from typing import Union
 
 import numpy as np
 import tensorflow as tf
-import tensorflow.keras.backend as K
 
-from .. import ModelVisualization
+from .. import ModelVisualization, keras
 from ..utils import get_input_names, get_num_of_steps_allowed, is_mixed_precision, listify
 from ..utils.regularizers import LegacyRegularizer
 from .callbacks import managed_callbacks
@@ -17,7 +16,6 @@ from .regularizers import Norm, TotalVariation2D
 class ActivationMaximization(ModelVisualization):
     """ActivationMaximization.
     """
-
     def __call__(
             self,
             score,
@@ -35,7 +33,7 @@ class ActivationMaximization(ModelVisualization):
             activation_modifiers=None) -> Union[np.ndarray, list]:
         """Generate the model inputs that maximize the output of the given `score` functions.
 
-        By default, this method is optimized to visualize `tf.keras.application.VGG16` model.
+        By default, this method is optimized to visualize `keras.application.VGG16` model.
         So if you want to visualize other models, you have to tune the parameters of this method.
 
         Args:
@@ -221,16 +219,22 @@ class ActivationMaximization(ModelVisualization):
                         self._calculate_regularization(regularizers, input_values, score_values)
                     # Scale loss
                     if mixed_precision_model:
-                        regularized_score_values = [
-                            optimizer.get_scaled_loss(score_value)
-                            for score_value in regularized_score_values
-                        ]
+                        if 'get_scaled_loss' in dir(optimizer):
+                            regularized_score_values = [
+                                optimizer.get_scaled_loss(score_value)
+                                for score_value in regularized_score_values
+                            ]
+                        else:
+                            regularized_score_values = [
+                                optimizer.scale_loss(score_value)
+                                for score_value in regularized_score_values
+                            ]
                 # Calculate gradients and Update variables
                 grads = tape.gradient(regularized_score_values,
                                       input_variables,
                                       unconnected_gradients=unconnected_gradients)
                 grads = listify(grads)
-                if mixed_precision_model:
+                if mixed_precision_model and 'get_unscaled_gradients' in dir(optimizer):
                     grads = optimizer.get_unscaled_gradients(grads)
                 if gradient_modifier is not None:
                     grads = [gradient_modifier(g) for g in grads]
@@ -260,8 +264,9 @@ class ActivationMaximization(ModelVisualization):
 
     def _calculate_regularization(self, regularizers, seed_inputs, score_values):
         if isinstance(regularizers, list):
-            regularization_values = [(regularizer.name, regularizer(seed_inputs))
-                                     for regularizer in regularizers]
+            regularization_values = [
+                (regularizer.name, regularizer(seed_inputs)) for regularizer in regularizers
+            ]
         else:
             regularization_values = (
                 [(name, regularizer(seed_inputs[i]))
@@ -278,14 +283,7 @@ class ActivationMaximization(ModelVisualization):
         if mixed_precision_model:
             try:
                 # Wrap optimizer
-                optimizer = tf.keras.mixed_precision.LossScaleOptimizer(optimizer)
-                # XXX https://github.com/tensorflow/tensorflow/issues/64124
-                # FIXME Because it needs a patch to fix this issue by tensorflow team,
-                #       for now, we're going round this problem by the code below...
-                if 'get_scaled_loss' not in dir(optimizer):
-                    optimizer.get_scaled_loss = lambda x: x
-                if 'get_unscaled_gradients' not in dir(optimizer):
-                    optimizer.get_unscaled_gradients = lambda x: x
+                optimizer = keras.mixed_precision.LossScaleOptimizer(optimizer)
             except ValueError as e:
                 raise ValueError(
                     "The same `optimizer` instance should be NOT used twice or more."
@@ -360,13 +358,13 @@ class ActivationMaximization(ModelVisualization):
             return defaultdict(dict, regularizers)
 
     def _define_regularizer_names(self, regularizers, input_layer_name):
-        regularizers = ((f"regularizer-{i}", regularizer)
-                        for i, regularizer in enumerate(regularizers))
+        regularizers = (
+            (f"regularizer-{i}", regularizer) for i, regularizer in enumerate(regularizers))
         regularizers = (((regularizer.name if hasattr(regularizer, 'name') else name), regularizer)
                         for name, regularizer in regularizers)
         if len(get_input_names(self.model)) > 1:
-            regularizers = ((f"{name}({input_layer_name})", regularizer)
-                            for name, regularizer in regularizers)
+            regularizers = (
+                (f"{name}({input_layer_name})", regularizer) for name, regularizer in regularizers)
         return defaultdict(list, regularizers)
 
     def _get_legacy_regularizers(self, regularizer):
@@ -376,7 +374,8 @@ class ActivationMaximization(ModelVisualization):
             _regularizer = regularizer
         if isinstance(_regularizer, (tuple, list)):
             if any(isinstance(r, (tuple, list)) for r in _regularizer):
-                has_legacy = ((isinstance(r, LegacyRegularizer) for r in listify(_regularizers))
+                has_legacy = ((isinstance(r, LegacyRegularizer)
+                               for r in listify(_regularizers))
                               for _regularizers in _regularizer)
                 has_legacy = (any(_legacy) for _legacy in has_legacy)
                 if any(has_legacy):
@@ -441,9 +440,13 @@ class ActivationMaximization(ModelVisualization):
         input_ranges = [(tf.as_dtype(input_tensor.dtype).min if low is None else low,
                          tf.as_dtype(input_tensor.dtype).max if high is None else high)
                         for (low, high), input_tensor in zip(input_ranges, self.model.inputs)]
-        clipped_values = (K.clip(X, low, high)
-                          for X, (low, high) in zip(seed_inputs, input_ranges))
-        clipped_values = (tf.cast(X, input_tensor.dtype)
+        if 'clip' in dir(keras.backend):
+            clipped_values = (keras.backend.clip(X, low, high)
+                              for X, (low, high) in zip(seed_inputs, input_ranges))
+        else:
+            clipped_values = (
+                keras.ops.clip(X, low, high) for X, (low, high) in zip(seed_inputs, input_ranges))
+        clipped_values = (tf.cast(X, input_tensor.dtype).numpy()
                           for X, input_tensor in zip(clipped_values, self.model.inputs))
         if activation_modifiers is not None:
             clipped_values = (

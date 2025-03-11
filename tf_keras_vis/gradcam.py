@@ -2,10 +2,9 @@ from typing import Union
 
 import numpy as np
 import tensorflow as tf
-import tensorflow.keras.backend as K
 from scipy.ndimage.interpolation import zoom
 
-from . import ModelVisualization
+from . import ModelVisualization, keras
 from .utils import is_mixed_precision, normalize, zoom_factor
 from .utils.model_modifiers import ExtractIntermediateLayerForGradcam as ModelModifier
 
@@ -24,7 +23,7 @@ class Gradcam(ModelVisualization):
                  penultimate_layer=None,
                  seek_penultimate_conv_layer=True,
                  gradient_modifier=None,
-                 activation_modifier=lambda cam: K.relu(cam),
+                 activation_modifier=lambda cam: keras.activations.relu(cam),
                  training=False,
                  expand_cam=True,
                  normalize_cam=True,
@@ -54,7 +53,7 @@ class Gradcam(ModelVisualization):
 
             seed_input: A tf.Tensor, :obj:`numpy.ndarray` or a list of them to input in the model.
                 That's when the model has multiple inputs, you MUST pass a list of tensors.
-            penultimate_layer: An index or name of the layer, or the tf.keras.layers.Layer
+            penultimate_layer: An index or name of the layer, or the keras.layers.Layer
                 instance itself. When None, it means the same with `-1`. If the layer specified by
                 this option is not `convolutional` layer, `penultimate_layer` will work as the
                 offset to seek `convolutional` layer. Defaults to None.
@@ -63,7 +62,7 @@ class Gradcam(ModelVisualization):
                 Defaults to True.
             gradient_modifier: A function to modify gradients. Defaults to None.
             activation_modifier: A function to modify the Class Activation Map (CAM). Defaults to
-                `lambda cam: K.relu(cam)`.
+                `lambda cam: keras.activations.relu(cam)`.
             training: A bool that indicates whether the model's training-mode on or off. Defaults
                 to False.
             expand_cam: True to resize CAM to the same as input image size. **Note!** When False,
@@ -121,7 +120,7 @@ class Gradcam(ModelVisualization):
     def _calculate_cam(self, grads, penultimate_output, gradient_modifier, activation_modifier):
         if gradient_modifier is not None:
             grads = gradient_modifier(grads)
-        weights = K.mean(grads, axis=tuple(range(grads.ndim)[1:-1]), keepdims=True)
+        weights = tf.math.reduce_mean(grads, axis=tuple(range(grads.ndim)[1:-1]), keepdims=True)
         cam = np.sum(np.multiply(penultimate_output, weights), axis=-1)
         if activation_modifier is not None:
             cam = activation_modifier(cam)

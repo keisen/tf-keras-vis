@@ -1,15 +1,27 @@
 try:
-    from importlib.metadata import version
+    from importlib.metadata import version as _version
 except ImportError:  # pragma: no cover
-    from importlib_metadata import version
+    from importlib_metadata import version as _version
 
-__version__ = version("tf-keras-vis")
+__version__ = _version("tf-keras-vis")
+
+import os
+
+if "KERAS_BACKEND" not in os.environ:
+    os.environ["KERAS_BACKEND"] = "tensorflow"
+
+import tensorflow as tf
+from packaging.version import parse as version
+
+if version(tf.version.VERSION) < version('2.16.0'):
+    import tensorflow.keras as keras
+else:
+    import keras
 
 from abc import ABC, abstractmethod
 from typing import Union
 
 import numpy as np
-import tensorflow as tf
 
 from .utils import listify
 
@@ -20,8 +32,8 @@ class ModelVisualization(ABC):
     def __init__(self, model, model_modifier=None, clone=True) -> None:
         """
         Args:
-            model: A `tf.keras.Model` instance. When `model_modifier` is NOT None, this model will
-                be cloned with `tf.keras.models.clone_model` function and then will be modified by
+            model: A `keras.Model` instance. When `model_modifier` is NOT None, this model will
+                be cloned with `keras.models.clone_model` function and then will be modified by
                 `model_modifier` according to needs.
             model_modifier: A :obj:`tf_keras_vis.utils.model_modifiers.ModelModifier` instance,
                 a function or a list of them. We recommend to apply
@@ -36,7 +48,7 @@ class ModelVisualization(ABC):
         model_modifiers = listify(model_modifier)
         if len(model_modifiers) > 0:
             if clone:
-                self.model = tf.keras.models.clone_model(self.model)
+                self.model = keras.models.clone_model(self.model)
                 self.model.set_weights(model.get_weights())
             for modifier in model_modifiers:
                 new_model = modifier(self.model)

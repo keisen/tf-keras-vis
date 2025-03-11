@@ -9,6 +9,7 @@ import tensorflow as tf
 from deprecated import deprecated
 from PIL import Image, ImageDraw, ImageFont
 
+from .. import keras
 from ..utils import listify
 
 
@@ -115,7 +116,7 @@ class Progress(Callback):
     """Callback to print values during optimization.
     """
     def on_begin(self, steps=None, **kwargs) -> None:
-        self.progbar = tf.keras.utils.Progbar(steps)
+        self.progbar = keras.utils.Progbar(steps)
 
     def __call__(self, i, values, grads, scores, model_outputs, regularizations, **kwargs) -> None:
         if len(scores) > 1:

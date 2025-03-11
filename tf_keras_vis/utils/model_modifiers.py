@@ -4,6 +4,8 @@ from typing import Union
 import tensorflow as tf
 from packaging.version import parse as version
 
+from .. import keras
+
 if version(tf.version.VERSION) >= version("2.16.0rc0"):
     from keras.src.layers.convolutional.base_conv import BaseConv as Conv
 elif version(tf.version.VERSION) >= version("2.13.0rc0"):
@@ -22,7 +24,7 @@ class ModelModifier(ABC):
     """Abstract class for defining a model modifier.
     """
     @abstractmethod
-    def __call__(self, model) -> Union[None, tf.keras.Model]:
+    def __call__(self, model) -> Union[None, keras.Model]:
         """Implement modification to the model before processing gradient descent.
 
         Args:
@@ -38,7 +40,7 @@ class ModelModifier(ABC):
 
 class ReplaceToLinear(ModelModifier):
     """A model modifier that replaces the activation functions of all output layers to
-    `tf.keras.activations.linear`.
+    `keras.activations.linear`.
 
     Please note that this modifier must be set the end of modifiers list
     that is passed to `ModelVisualization#__init__()`. For example::
@@ -51,7 +53,7 @@ class ReplaceToLinear(ModelModifier):
     def __call__(self, model) -> None:
         layers = (model.get_layer(name=name) for name in model.output_names)
         for layer in layers:
-            layer.activation = tf.keras.activations.linear
+            layer.activation = keras.activations.linear
 
 
 class ExtractIntermediateLayer(ModelModifier):
@@ -66,12 +68,12 @@ class ExtractIntermediateLayer(ModelModifier):
                             f"index_or_name: {index_or_name}")
         self.index_or_name = index_or_name
 
-    def __call__(self, model) -> tf.keras.Model:
+    def __call__(self, model) -> keras.Model:
         if isinstance(self.index_or_name, int):
             target_layer = model.get_layer(index=self.index_or_name)
         if isinstance(self.index_or_name, str):
             target_layer = model.get_layer(name=self.index_or_name)
-        return tf.keras.Model(inputs=model.inputs, outputs=target_layer.output)
+        return keras.Model(inputs=model.inputs, outputs=target_layer.output)
 
 
 class GuidedBackpropagation(ModelModifier):
@@ -93,7 +95,7 @@ class GuidedBackpropagation(ModelModifier):
         * Guided Grad-CAM is Broken! Sanity Checks for Saliency Maps
           (https://glassboxmedicine.com/2019/10/12/guided-grad-cam-is-broken-sanity-checks-for-saliency-maps/)
     """
-    def __init__(self, target_activations=[tf.keras.activations.relu]) -> None:
+    def __init__(self, target_activations=[keras.activations.relu]) -> None:
         self.target_activations = target_activations
 
     def _get_guided_activation(self, activation):
@@ -120,7 +122,7 @@ class ExtractIntermediateLayerForGradcam(ModelModifier):
 
     def __call__(self, model):
         _layer = self.penultimate_layer
-        if not isinstance(_layer, tf.keras.layers.Layer):
+        if not isinstance(_layer, keras.layers.Layer):
             if _layer is None:
                 _layer = -1
             if isinstance(_layer, int) and _layer < len(model.layers):
@@ -142,4 +144,4 @@ class ExtractIntermediateLayerForGradcam(ModelModifier):
         outputs = [penultimate_output]
         if self.include_model_outputs:
             outputs = model.outputs + outputs
-        return tf.keras.Model(inputs=model.inputs, outputs=outputs)
+        return keras.Model(inputs=model.inputs, outputs=outputs)

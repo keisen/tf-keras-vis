@@ -2,8 +2,8 @@ from typing import Union
 
 import numpy as np
 import tensorflow as tf
-import tensorflow.keras.backend as K
 
+from . import keras
 from .gradcam import Gradcam
 
 
@@ -19,8 +19,8 @@ class Layercam(Gradcam):
                  seed_input,
                  penultimate_layer=None,
                  seek_penultimate_conv_layer=True,
-                 gradient_modifier=lambda grads: K.relu(grads),
-                 activation_modifier=lambda cam: K.relu(cam),
+                 gradient_modifier=lambda grads: keras.activations.relu(grads),
+                 activation_modifier=lambda cam: keras.activations.relu(cam),
                  training=False,
                  expand_cam=True,
                  normalize_cam=True,
@@ -50,7 +50,7 @@ class Layercam(Gradcam):
 
             seed_input: A tf.Tensor, :obj:`numpy.ndarray` or a list of them to input in the model.
                 That's when the model has multiple inputs, you MUST pass a list of tensors.
-            penultimate_layer: An index or name of the layer, or the tf.keras.layers.Layer
+            penultimate_layer: An index or name of the layer, or the keras.layers.Layer
                 instance itself. When None, it means the same with `-1`. If the layer specified by
                 this option is not `convolutional` layer, `penultimate_layer` will work as the
                 offset to seek `convolutional` layer. Defaults to None.
@@ -58,11 +58,11 @@ class Layercam(Gradcam):
                 layer when the layer specified by `penultimate_layer` is not `convolutional` layer.
                 Defaults to True.
             activation_modifier: A function to modify the Class Activation Map (CAM). Defaults to
-                `lambda cam: K.relu(cam)`.
+                `lambda cam: keras.activations.relu(cam)`.
             training: A bool that indicates whether the model's training-mode on or off. Defaults
                 to False.
             gradient_modifier: A function to modify gradients. Defaults to
-                `lambda grads: tf.keras.backend.relu(grads)`.
+                `lambda grads: keras.activations.relu(grads)`.
             expand_cam: True to resize CAM to the same as input image size. **Note!** When False,
                 even if the model has multiple inputs, return only a CAM. Defaults to True.
             normalize_cam: When True, CAM will be normalized. Defaults to True.

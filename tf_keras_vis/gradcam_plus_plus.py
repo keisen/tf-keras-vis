@@ -2,10 +2,9 @@ from typing import Union
 
 import numpy as np
 import tensorflow as tf
-import tensorflow.keras.backend as K
 from scipy.ndimage.interpolation import zoom
 
-from . import ModelVisualization
+from . import ModelVisualization, keras
 from .utils import is_mixed_precision, normalize, zoom_factor
 from .utils.model_modifiers import ExtractIntermediateLayerForGradcam as ModelModifier
 
@@ -23,7 +22,7 @@ class GradcamPlusPlus(ModelVisualization):
                  penultimate_layer=None,
                  seek_penultimate_conv_layer=True,
                  gradient_modifier=None,
-                 activation_modifier=lambda cam: K.relu(cam),
+                 activation_modifier=lambda cam: keras.activations.relu(cam),
                  training=False,
                  expand_cam=True,
                  normalize_cam=True,
@@ -53,7 +52,7 @@ class GradcamPlusPlus(ModelVisualization):
 
             seed_input: A tf.Tensor, :obj:`numpy.ndarray` or a list of them to input in the model.
                 That's when the model has multiple inputs, you MUST pass a list of tensors.
-            penultimate_layer: An index or name of the layer, or the tf.keras.layers.Layer
+            penultimate_layer: An index or name of the layer, or the keras.layers.Layer
                 instance itself. When None, it means the same with `-1`. If the layer specified by
                 this option is not `convolutional` layer, `penultimate_layer` will work as the
                 offset to seek `convolutional` layer. Defaults to None.
@@ -62,7 +61,7 @@ class GradcamPlusPlus(ModelVisualization):
                 Defaults to True.
             gradient_modifier: A function to modify gradients. Defaults to None.
             activation_modifier: A function to modify the Class Activation Map (CAM). Defaults to
-                `lambda cam: K.relu(cam)`.
+                `lambda cam: keras.activations.relu(cam)`.
             training: A bool that indicates whether the model's training-mode on or off. Defaults
                 to False.
             expand_cam: True to resize CAM to the same as input image size. **Note!** When False,
@@ -103,7 +102,7 @@ class GradcamPlusPlus(ModelVisualization):
             score_values = [tf.cast(v, dtype=model.variable_dtype) for v in score_values]
 
         score_values = sum(tf.math.exp(o) for o in score_values)
-        score_values = tf.reshape(score_values, score_values.shape + (1, ) * (grads.ndim - 1))
+        score_values = tf.reshape(score_values, score_values.shape + (1,) * (grads.ndim - 1))
 
         if gradient_modifier is not None:
             grads = gradient_modifier(grads)
@@ -111,17 +110,18 @@ class GradcamPlusPlus(ModelVisualization):
         second_derivative = first_derivative * grads
         third_derivative = second_derivative * grads
 
-        global_sum = K.sum(penultimate_output,
-                           axis=tuple(np.arange(len(penultimate_output.shape))[1:-1]),
-                           keepdims=True)
+        global_sum = tf.math.reduce_sum(penultimate_output,
+                                        axis=tuple(np.arange(len(penultimate_output.shape))[1:-1]),
+                                        keepdims=True)
 
         alpha_denom = second_derivative * 2.0 + third_derivative * global_sum
         alpha_denom = alpha_denom + tf.cast((second_derivative == 0.0), second_derivative.dtype)
         alphas = second_derivative / alpha_denom
 
-        alpha_normalization_constant = K.sum(alphas,
-                                             axis=tuple(np.arange(len(alphas.shape))[1:-1]),
-                                             keepdims=True)
+        alpha_normalization_constant = tf.math.reduce_sum(alphas,
+                                                          axis=tuple(
+                                                              np.arange(len(alphas.shape))[1:-1]),
+                                                          keepdims=True)
         alpha_normalization_constant = alpha_normalization_constant + tf.cast(
             (alpha_normalization_constant == 0.0), alpha_normalization_constant.dtype)
         alphas = alphas / alpha_normalization_constant
@@ -131,12 +131,12 @@ class GradcamPlusPlus(ModelVisualization):
         else:
             weights = activation_modifier(first_derivative)
         deep_linearization_weights = weights * alphas
-        deep_linearization_weights = K.sum(
+        deep_linearization_weights = tf.math.reduce_sum(
             deep_linearization_weights,
             axis=tuple(np.arange(len(deep_linearization_weights.shape))[1:-1]),
             keepdims=True)
 
-        cam = K.sum(deep_linearization_weights * penultimate_output, axis=-1)
+        cam = tf.math.reduce_sum(deep_linearization_weights * penultimate_output, axis=-1)
         if activation_modifier is not None:
             cam = activation_modifier(cam)
 

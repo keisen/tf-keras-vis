@@ -68,7 +68,7 @@ class BinaryScore(Score):
     def __call__(self, output) -> tf.Tensor:
         if not (output.ndim == 2 and output.shape[1] == 1):
             raise ValueError(f"`output` shape must be (batch_size, 1), but was {output.shape}")
-        output = tf.reshape(output, (-1, ))
+        output = tf.reshape(output, (-1,))
         target_values = self.target_values
         if len(target_values) == 1 and len(target_values) < output.shape[0]:
             target_values = target_values * output.shape[0]

@@ -3,9 +3,10 @@ from typing import Tuple
 
 import numpy as np
 import tensorflow as tf
-import tensorflow.keras.backend as K
 from deprecated import deprecated
 from packaging.version import parse as version
+
+from .. import keras
 
 MAX_STEPS = 'TF_KERAS_VIS_MAX_STEPS'
 
@@ -82,18 +83,18 @@ def normalize(array, value_range=(1., 0.)) -> np.ndarray:
     """
     max_value = np.max(array, axis=tuple(range(array.ndim)[1:]), keepdims=True)
     min_value = np.min(array, axis=tuple(range(array.ndim)[1:]), keepdims=True)
-    normalized_array = (array - min_value) / (max_value - min_value + K.epsilon())
+    normalized_array = (array - min_value) / (max_value - min_value + keras.backend.epsilon())
     return normalized_array
 
 
-def find_layer(model, condition, offset=None, reverse=True) -> tf.keras.layers.Layer:
+def find_layer(model, condition, offset=None, reverse=True) -> keras.layers.Layer:
     found_offset = offset is None
     for layer in reversed(model.layers):
         if not found_offset:
             found_offset = (layer == offset)
         if condition(layer) and found_offset:
             return layer
-        if isinstance(layer, tf.keras.Model):
+        if isinstance(layer, keras.Model):
             if found_offset:
                 result = find_layer(layer, condition, offset=None, reverse=reverse)
             else:
@@ -111,7 +112,7 @@ def is_mixed_precision(model) -> bool:
     """Check whether the model has any lower precision variable or not.
 
     Args:
-        model (tf.keras.Model): A model instance.
+        model (keras.Model): A model instance.
 
     Returns:
         bool: When the model has any lower precision variable, True.
@@ -119,7 +120,7 @@ def is_mixed_precision(model) -> bool:
     if version(tf.version.VERSION) >= version("2.4.0"):
         for layer in model.layers:
             if (layer.compute_dtype == tf.float16) or \
-               (isinstance(layer, tf.keras.Model) and is_mixed_precision(layer)):
+               (isinstance(layer, keras.Model) and is_mixed_precision(layer)):
                 return True
     return False
 
@@ -129,7 +130,7 @@ def lower_precision_dtype(model):
     if version(tf.version.VERSION) >= version("2.4.0"):
         for layer in model.layers:
             if (layer.compute_dtype in [tf.float16, tf.bfloat16]) or \
-               (isinstance(layer, tf.keras.Model) and is_mixed_precision(layer)):
+               (isinstance(layer, keras.Model) and is_mixed_precision(layer)):
                 return layer.compute_dtype
     return model.dtype  # pragma: no cover
 
