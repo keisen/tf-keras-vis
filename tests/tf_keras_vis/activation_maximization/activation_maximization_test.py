@@ -2,8 +2,8 @@ import numpy as np
 import pytest
 import tensorflow as tf
 from packaging.version import parse as version
-from tensorflow.keras.models import load_model
 
+from tf_keras_vis import keras
 from tf_keras_vis.activation_maximization import ActivationMaximization  # noqa: E501
 from tf_keras_vis.activation_maximization.input_modifiers import Jitter, Rotate, Scale
 from tf_keras_vis.activation_maximization.regularizers import Norm, TotalVariation2D
@@ -19,7 +19,6 @@ from tf_keras_vis.utils.test import (NO_ERROR, MockCallback, MockLegacyCallback,
 
 
 class TestActivationMaximization():
-
     @pytest.mark.parametrize("scores,expected_error", [
         (None, ValueError),
         (score_with_tuple, NO_ERROR),
@@ -177,7 +176,8 @@ class TestActivationMaximization():
         if regularizer_container is dict:
             regularizers = zip(['input_1', 'input_2'], regularizers)
             regularizers = dict(regularizers)
-            has_legacy = ((isinstance(r, LegacyRegularizer) for r in listify(_regularizers))
+            has_legacy = ((isinstance(r, LegacyRegularizer)
+                           for r in listify(_regularizers))
                           for _regularizers in regularizers.values())
             if any((any(f) for f in has_legacy)):
                 expected_error = ValueError
@@ -264,7 +264,6 @@ class TestActivationMaximization():
 
 
 class TestActivationMaximizationWithMultipleInputsModel():
-
     @pytest.mark.parametrize("scores,expected_error", [
         (None, ValueError),
         (score_with_tuple, NO_ERROR),
@@ -440,7 +439,8 @@ class TestActivationMaximizationWithMultipleInputsModel():
         if regularizer_container is dict:
             regularizers = zip(['input_1', 'input_2', 'input_3'], regularizers)
             regularizers = dict(regularizers)
-            has_legacy = ((isinstance(r, LegacyRegularizer) for r in listify(_regularizers))
+            has_legacy = ((isinstance(r, LegacyRegularizer)
+                           for r in listify(_regularizers))
                           for _regularizers in regularizers.values())
             if any((any(f) for f in has_legacy)):
                 expected_error = ValueError
@@ -490,7 +490,6 @@ class TestActivationMaximizationWithMultipleInputsModel():
 
 
 class TestActivationMaximizationWithMultipleOutputsModel():
-
     @pytest.mark.parametrize("scores,expected_error", [
         (None, ValueError),
         (score_with_tuple, ValueError),
@@ -534,7 +533,6 @@ class TestActivationMaximizationWithMultipleOutputsModel():
 
 
 class TestActivationMaximizationWithMultipleIOModel():
-
     @pytest.mark.parametrize("scores,expected_error", [
         (None, ValueError),
         (score_with_tuple, ValueError),
@@ -717,7 +715,8 @@ class TestActivationMaximizationWithMultipleIOModel():
         if regularizer_container is dict:
             regularizers = zip(['input_1', 'input_2', 'input_3'], regularizers)
             regularizers = dict(regularizers)
-            has_legacy = ((isinstance(r, LegacyRegularizer) for r in listify(_regularizers))
+            has_legacy = ((isinstance(r, LegacyRegularizer)
+                           for r in listify(_regularizers))
                           for _regularizers in regularizers.values())
             if any((any(f) for f in has_legacy)):
                 expected_error = ValueError
@@ -772,35 +771,34 @@ class TestActivationMaximizationWithMultipleIOModel():
 @pytest.mark.skipif(version(tf.version.VERSION) < version("2.4.0"),
                     reason="This test is enabled only when tensorflow version is 2.4.0+.")
 class TestMixedPrecision():
-
     def test__call__with_single_io(self, tmpdir):
         # Create and save lower precision model
-        tf.keras.mixed_precision.set_global_policy('mixed_float16')
+        keras.mixed_precision.set_global_policy('mixed_float16')
         model = mock_conv_model()
         self._test_for_single_io(model)
-        path = tmpdir.mkdir("tf-keras-vis").join("single_io.h5")
+        path = str(tmpdir.mkdir("tf-keras-vis").join("single_io.keras"))
         model.save(path)
         # Load and test lower precision model on lower precision environment
-        model = load_model(path)
+        model = keras.models.load_model(path)
         self._test_for_single_io(model)
         # Load and test lower precision model on full precision environment
-        tf.keras.mixed_precision.set_global_policy('float32')
-        model = load_model(path)
+        keras.mixed_precision.set_global_policy('float32')
+        model = keras.models.load_model(path)
         self._test_for_single_io(model)
 
     def test__call__with_float32_output_model(self, tmpdir):
         # Create and save lower precision model
-        tf.keras.mixed_precision.set_global_policy('mixed_float16')
+        keras.mixed_precision.set_global_policy('mixed_float16')
         model = mock_conv_model_with_float32_output()
         self._test_for_single_io(model)
-        path = tmpdir.mkdir("tf-keras-vis").join("float32_output.h5")
+        path = str(tmpdir.mkdir("tf-keras-vis").join("float32_output.keras"))
         model.save(path)
         # Load and test lower precision model on lower precision environment
-        model = load_model(path)
+        model = keras.models.load_model(path)
         self._test_for_single_io(model)
-        tf.keras.mixed_precision.set_global_policy('float32')
+        keras.mixed_precision.set_global_policy('float32')
         # Load and test lower precision model on full precision environment
-        model = load_model(path)
+        model = keras.models.load_model(path)
         self._test_for_single_io(model)
 
     def _test_for_single_io(self, model):
@@ -810,17 +808,17 @@ class TestMixedPrecision():
 
     def test__call__with_multiple_io(self, tmpdir):
         # Create and save lower precision model
-        tf.keras.mixed_precision.set_global_policy('mixed_float16')
+        keras.mixed_precision.set_global_policy('mixed_float16')
         model = mock_multiple_io_model()
         self._test_for_multiple_io(model)
-        path = tmpdir.mkdir("tf-keras-vis").join("multiple_io.h5")
+        path = str(tmpdir.mkdir("tf-keras-vis").join("multiple_io.keras"))
         model.save(path)
         # Load and test lower precision model on lower precision environment
-        model = load_model(path)
+        model = keras.models.load_model(path)
         self._test_for_multiple_io(model)
         # Load and test lower precision model on full precision environment
-        tf.keras.mixed_precision.set_global_policy('float32')
-        model = load_model(path)
+        keras.mixed_precision.set_global_policy('float32')
+        model = keras.models.load_model(path)
         self._test_for_multiple_io(model)
 
     def _test_for_multiple_io(self, model):
@@ -830,8 +828,8 @@ class TestMixedPrecision():
         assert result[1].shape == (1, 10, 10, 3)
 
     def test__call__when_reuse_optimizer(self):
-        tf.keras.mixed_precision.set_global_policy('mixed_float16')
-        optimizer = tf.keras.optimizers.RMSprop()
+        keras.mixed_precision.set_global_policy('mixed_float16')
+        optimizer = keras.optimizers.RMSprop()
         model = mock_conv_model()
         activation_maximization = ActivationMaximization(model)
         with assert_raises(NO_ERROR):
@@ -843,7 +841,6 @@ class TestMixedPrecision():
 
 
 class TestActivationMaximizationWithDenseModel():
-
     @pytest.mark.parametrize("scores,expected_error", [
         (None, ValueError),
         (CategoricalScore(0), NO_ERROR),
@@ -863,8 +860,8 @@ class TestActivationMaximizationWithDenseModel():
 
     @pytest.mark.parametrize("seed_input,expected", [
         (None, (1, 8)),
-        (dummy_sample((8, )), (1, 8)),
-        ([dummy_sample((8, ))], [(1, 8)]),
+        (dummy_sample((8,)), (1, 8)),
+        ([dummy_sample((8,))], [(1, 8)]),
         (dummy_sample((1, 8)), (1, 8)),
         ([dummy_sample((1, 8))], [(1, 8)]),
     ])

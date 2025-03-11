@@ -2,6 +2,7 @@ import pytest
 import tensorflow as tf
 from packaging.version import parse as version
 
+from tf_keras_vis import keras
 from tf_keras_vis.activation_maximization import ActivationMaximization
 from tf_keras_vis.saliency import Saliency
 from tf_keras_vis.utils.model_modifiers import (ExtractIntermediateLayer, GuidedBackpropagation,
@@ -15,15 +16,14 @@ class TestReplaceToLinear():
     @pytest.mark.parametrize("model", [mock_conv_model(), mock_multiple_outputs_model()])
     @pytest.mark.usefixtures("mixed_precision")
     def test__call__(self, model):
-        assert model.get_layer(name='output_1').activation != tf.keras.activations.linear
+        assert model.get_layer(name='output_1').activation != keras.activations.linear
         if len(model.outputs) > 1:
-            assert model.get_layer(name='output_2').activation != tf.keras.activations.linear
+            assert model.get_layer(name='output_2').activation != keras.activations.linear
         instance = ActivationMaximization(model, model_modifier=ReplaceToLinear())
         assert instance.model != model
-        assert instance.model.get_layer(name='output_1').activation == tf.keras.activations.linear
+        assert instance.model.get_layer(name='output_1').activation == keras.activations.linear
         if len(model.outputs) > 1:
-            assert instance.model.get_layer(
-                name='output_2').activation == tf.keras.activations.linear
+            assert instance.model.get_layer(name='output_2').activation == keras.activations.linear
             instance([CategoricalScore(0), CategoricalScore(0)])
         else:
             instance([CategoricalScore(0)])

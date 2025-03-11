@@ -1,8 +1,9 @@
 import numpy as np
 import pytest
 import tensorflow as tf
+from packaging.version import parse as version
 
-from tf_keras_vis import ModelVisualization
+from tf_keras_vis import ModelVisualization, keras
 from tf_keras_vis.utils.model_modifiers import ReplaceToLinear
 from tf_keras_vis.utils.test import dummy_sample
 
@@ -14,12 +15,12 @@ class MockVisualizer(ModelVisualization):
 
 class TestModelVisualization():
     @pytest.mark.parametrize("modifier,clone,expected_same,expected_activation", [
-        (None, False, True, tf.keras.activations.softmax),
-        (None, True, True, tf.keras.activations.softmax),
-        ('not-return', False, True, tf.keras.activations.linear),
-        ('not-return', True, False, tf.keras.activations.linear),
-        ('return', False, True, tf.keras.activations.linear),
-        ('return', True, False, tf.keras.activations.linear),
+        (None, False, True, keras.activations.softmax),
+        (None, True, True, keras.activations.softmax),
+        ('not-return', False, True, keras.activations.linear),
+        ('not-return', True, False, keras.activations.linear),
+        ('return', False, True, keras.activations.linear),
+        ('return', True, False, keras.activations.linear),
     ])
     @pytest.mark.usefixtures("mixed_precision")
     def test__init__(self, modifier, clone, expected_same, expected_activation, conv_model):
@@ -34,13 +35,13 @@ class TestModelVisualization():
         assert np.array_equal(mock.model.get_weights()[0], conv_model.get_weights()[0])
 
     @pytest.mark.parametrize("score,expected_shape", [
-        (dummy_sample((2, 32, 32, 3)), (2, )),
-        ((dummy_sample((32, 32, 3)), dummy_sample((32, 32, 3))), (2, )),
-        ([dummy_sample((32, 32, 3)), dummy_sample((32, 32, 3))], (2, )),
-        (tf.constant(dummy_sample((2, 32, 32, 3))), (2, )),
-        ((tf.constant(dummy_sample((32, 32, 3))), tf.constant(dummy_sample((32, 32, 3)))), (2, )),
+        (dummy_sample((2, 32, 32, 3)), (2,)),
+        ((dummy_sample((32, 32, 3)), dummy_sample((32, 32, 3))), (2,)),
+        ([dummy_sample((32, 32, 3)), dummy_sample((32, 32, 3))], (2,)),
+        (tf.constant(dummy_sample((2, 32, 32, 3))), (2,)),
+        ((tf.constant(dummy_sample((32, 32, 3))), tf.constant(dummy_sample((32, 32, 3)))), (2,)),
         ([tf.constant(dummy_sample((32, 32, 3))),
-          tf.constant(dummy_sample((32, 32, 3)))], (2, )),
+          tf.constant(dummy_sample((32, 32, 3)))], (2,)),
     ])
     @pytest.mark.usefixtures("mixed_precision")
     def test_mean_score_value(self, score, expected_shape, conv_model):

@@ -2,8 +2,8 @@ import numpy as np
 import pytest
 import tensorflow as tf
 from packaging.version import parse as version
-from tensorflow.keras.models import load_model
 
+from tf_keras_vis import keras
 from tf_keras_vis.gradcam import Gradcam
 from tf_keras_vis.gradcam_plus_plus import GradcamPlusPlus
 from tf_keras_vis.layercam import Layercam
@@ -13,9 +13,6 @@ from tf_keras_vis.utils.scores import BinaryScore, CategoricalScore
 from tf_keras_vis.utils.test import (NO_ERROR, assert_raises, dummy_sample, mock_conv_model,
                                      mock_conv_model_with_float32_output, mock_multiple_io_model,
                                      score_with_list, score_with_tensor, score_with_tuple)
-
-if version(tf.version.VERSION) >= version("2.4.0"):
-    from tensorflow.keras.mixed_precision import set_global_policy
 
 
 @pytest.fixture(scope='function', params=[Gradcam, GradcamPlusPlus, Scorecam, Layercam])
@@ -56,7 +53,7 @@ class TestXcam():
 
     @pytest.mark.parametrize("seed_input,expected,expected_error", [
         (None, None, ValueError),
-        (dummy_sample((8, )), None, ValueError),
+        (dummy_sample((8,)), None, ValueError),
         (dummy_sample((8, 8, 3)), (1, 8, 8), NO_ERROR),
         ([dummy_sample((8, 8, 3))], [(1, 8, 8)], NO_ERROR),
         (dummy_sample((1, 8, 8, 3)), (1, 8, 8), NO_ERROR),
@@ -114,7 +111,7 @@ class TestXcam():
         # Release v.0.6.0@dev(May 22 2021):
         #   Add this case to test Scorecam with CAM class.
         def model_modifier(model):
-            model.layers[-1].activation = tf.keras.activations.linear
+            model.layers[-1].activation = keras.activations.linear
 
         if score_class is BinaryScore:
             model = conv_sigmoid_model
@@ -126,7 +123,7 @@ class TestXcam():
 
         seed_input_shape = (8, 8, 3)
         if batch_size > 0:
-            seed_input_shape = (batch_size, ) + seed_input_shape
+            seed_input_shape = (batch_size,) + seed_input_shape
         seed_input = dummy_sample(seed_input_shape)
 
         cam = Xcam(model,
@@ -221,7 +218,7 @@ class TestXcamWithMultipleOutputsModel():
 
     @pytest.mark.parametrize("seed_input,expected,expected_error", [
         (None, None, ValueError),
-        (dummy_sample((8, )), None, ValueError),
+        (dummy_sample((8,)), None, ValueError),
         (dummy_sample((8, 8, 3)), (1, 8, 8), NO_ERROR),
         ([dummy_sample((8, 8, 3))], [(1, 8, 8)], NO_ERROR),
         (dummy_sample((1, 8, 8, 3)), (1, 8, 8), NO_ERROR),
@@ -316,33 +313,33 @@ class TestMixedPrecision():
     @pytest.mark.usefixtures("xcam", "saliency")
     def test__call__with_single_io(self, tmpdir):
         # Create and save lower precision model
-        set_global_policy('mixed_float16')
+        keras.mixed_precision.set_global_policy('mixed_float16')
         model = mock_conv_model()
         self._test_for_single_io(model)
-        path = tmpdir.mkdir("tf-keras-vis").join("single_io.h5")
+        path = str(tmpdir.mkdir("tf-keras-vis").join("single_io.keras"))
         model.save(path)
         # Load and test lower precision model on lower precision environment
-        model = load_model(path)
+        model = keras.models.load_model(path)
         self._test_for_single_io(model)
         # Load and test lower precision model on full precision environment
-        set_global_policy('float32')
-        model = load_model(path)
+        keras.mixed_precision.set_global_policy('float32')
+        model = keras.models.load_model(path)
         self._test_for_single_io(model)
 
     @pytest.mark.usefixtures("xcam", "saliency")
     def test__call__with_float32_output_model(self, tmpdir):
         # Create and save lower precision model
-        set_global_policy('mixed_float16')
+        keras.mixed_precision.set_global_policy('mixed_float16')
         model = mock_conv_model_with_float32_output()
         self._test_for_single_io(model)
-        path = tmpdir.mkdir("tf-keras-vis").join("float32_output.h5")
+        path = str(tmpdir.mkdir("tf-keras-vis").join("float32_output.keras"))
         model.save(path)
         # Load and test lower precision model on lower precision environment
-        model = load_model(path)
+        model = keras.models.load_model(path)
         self._test_for_single_io(model)
         # Load and test lower precision model on full precision environment
-        set_global_policy('float32')
-        model = load_model(path)
+        keras.mixed_precision.set_global_policy('float32')
+        model = keras.models.load_model(path)
         self._test_for_single_io(model)
 
     def _test_for_single_io(self, model):
@@ -353,17 +350,17 @@ class TestMixedPrecision():
     @pytest.mark.usefixtures("xcam", "saliency")
     def test__call__with_multiple_io(self, tmpdir):
         # Create and save lower precision model
-        set_global_policy('mixed_float16')
+        keras.mixed_precision.set_global_policy('mixed_float16')
         model = mock_multiple_io_model()
         self._test_for_multiple_io(model)
-        path = tmpdir.mkdir("tf-keras-vis").join("multiple_io.h5")
+        path = str(tmpdir.mkdir("tf-keras-vis").join("multiple_io.keras"))
         model.save(path)
         # Load and test lower precision model on lower precision environment
-        model = load_model(path)
+        model = keras.models.load_model(path)
         self._test_for_multiple_io(model)
         # Load and test lower precision model on full precision environment
-        set_global_policy('float32')
-        model = load_model(path)
+        keras.mixed_precision.set_global_policy('float32')
+        model = keras.models.load_model(path)
         self._test_for_multiple_io(model)
 
     def _test_for_multiple_io(self, model):

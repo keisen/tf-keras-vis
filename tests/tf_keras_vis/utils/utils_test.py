@@ -2,6 +2,7 @@ import os
 
 import pytest
 import tensorflow as tf
+from tf_keras_vis import keras
 from packaging.version import parse as version
 
 from tf_keras_vis.utils import MAX_STEPS, find_layer, get_num_of_steps_allowed, num_of_gpus
@@ -82,13 +83,13 @@ class TestUtils():
         False,
         True,
     ])
-    @pytest.mark.skipif(version(tf.version.VERSION) >= version("2.16.0rc0"),
-                        reason="https://github.com/tensorflow/tensorflow/issues/64393")  # FIXME
+    # @pytest.mark.skipif(version(tf.version.VERSION) >= version("2.16.0rc0"),
+    #                     reason="https://github.com/tensorflow/tensorflow/issues/64393")  # FIXME
     def test_find_layer(self, offset_of_child_layer, conv_model):
-        model = tf.keras.Sequential([
-            tf.keras.layers.Conv2D(3, 3, padding='same', input_shape=(8, 8, 3)),
+        model = keras.Sequential([
+            keras.layers.Conv2D(3, 3, padding='same', input_shape=(8, 8, 3)),
             conv_model,
-            tf.keras.layers.Dense(1),
+            keras.layers.Dense(1),
         ])
         offset = conv_model.layers[-1] if offset_of_child_layer else None
         actual = find_layer(model, lambda _l: _l.name == 'conv_1', offset=offset)

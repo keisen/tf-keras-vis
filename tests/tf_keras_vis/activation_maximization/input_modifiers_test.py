@@ -1,6 +1,7 @@
 import pytest
 import tensorflow as tf
 
+from tf_keras_vis import keras
 from tf_keras_vis.activation_maximization.input_modifiers import Rotate, Rotate2D, Scale
 from tf_keras_vis.utils.test import NO_ERROR, assert_raises, dummy_sample
 
@@ -9,8 +10,8 @@ class TestRotate():
     @pytest.mark.parametrize("degree", [0, 1, 3, 0.0, 1.0, 3.0])
     @pytest.mark.parametrize("axes,expected_error", [
         (None, NO_ERROR),
-        ((None, ), ValueError),
-        ((0, ), ValueError),
+        ((None,), ValueError),
+        ((0,), ValueError),
         ((0, 1), NO_ERROR),
         ([0, 1], NO_ERROR),
         ((0.0, 1.0), TypeError),

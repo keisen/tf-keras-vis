@@ -1,8 +1,8 @@
 import pytest
 import tensorflow as tf
 from packaging.version import parse as version
-from tensorflow.keras.models import load_model
 
+from tf_keras_vis import keras
 from tf_keras_vis.saliency import Saliency
 from tf_keras_vis.utils.scores import BinaryScore, CategoricalScore
 from tf_keras_vis.utils.test import (dummy_sample, mock_conv_model,
@@ -35,7 +35,7 @@ class TestSaliency():
     @pytest.mark.usefixtures("mixed_precision")
     def test__call__if_model_has_only_dense_layers(self, dense_model):
         saliency = Saliency(dense_model)
-        result = saliency(CategoricalScore(0), dummy_sample((8, )), keepdims=True)
+        result = saliency(CategoricalScore(0), dummy_sample((8,)), keepdims=True)
         assert result.shape == (1, 8)
 
 
@@ -81,32 +81,32 @@ class TestSaliencyWithMultipleIOModel():
 class TestMixedPrecision():
     def test__call__with_single_io(self, tmpdir):
         # Create and save lower precision model
-        set_global_policy('mixed_float16')
+        keras.mixed_precision.set_global_policy('mixed_float16')
         model = mock_conv_model()
         self._test_for_single_io(model)
-        path = tmpdir.mkdir("tf-keras-vis").join("single_io.h5")
+        path = str(tmpdir.mkdir("tf-keras-vis").join("single_io.keras"))
         model.save(path)
         # Load and test lower precision model on lower precision environment
-        model = load_model(path)
+        model = keras.models.load_model(path)
         self._test_for_single_io(model)
         # Load and test lower precision model on full precision environment
-        set_global_policy('float32')
-        model = load_model(path)
+        keras.mixed_precision.set_global_policy('float32')
+        model = keras.models.load_model(path)
         self._test_for_single_io(model)
 
     def test__call__with_float32_output_model(self, tmpdir):
         # Create and save lower precision model
-        set_global_policy('mixed_float16')
+        keras.mixed_precision.set_global_policy('mixed_float16')
         model = mock_conv_model_with_float32_output()
         self._test_for_single_io(model)
-        path = tmpdir.mkdir("tf-keras-vis").join("float32_output.h5")
+        path = str(tmpdir.mkdir("tf-keras-vis").join("float32_output.keras"))
         model.save(path)
         # Load and test lower precision model on lower precision environment
-        model = load_model(path)
+        model = keras.models.load_model(path)
         self._test_for_single_io(model)
         # Load and test lower precision model on full precision environment
-        set_global_policy('float32')
-        model = load_model(path)
+        keras.mixed_precision.set_global_policy('float32')
+        model = keras.models.load_model(path)
         self._test_for_single_io(model)
 
     def _test_for_single_io(self, model):
@@ -116,17 +116,17 @@ class TestMixedPrecision():
 
     def test__call__with_multiple_io(self, tmpdir):
         # Create and save lower precision model
-        set_global_policy('mixed_float16')
+        keras.mixed_precision.set_global_policy('mixed_float16')
         model = mock_multiple_io_model()
         self._test_for_multiple_io(model)
-        path = tmpdir.mkdir("tf-keras-vis").join("multiple_io.h5")
+        path = str(tmpdir.mkdir("tf-keras-vis").join("multiple_io.keras"))
         model.save(path)
         # Load and test lower precision model on lower precision environment
-        model = load_model(path)
+        model = keras.models.load_model(path)
         self._test_for_multiple_io(model)
         # Load and test lower precision model on full precision environment
-        set_global_policy('float32')
-        model = load_model(path)
+        keras.mixed_precision.set_global_policy('float32')
+        model = keras.models.load_model(path)
         self._test_for_multiple_io(model)
 
     def _test_for_multiple_io(self, model):
