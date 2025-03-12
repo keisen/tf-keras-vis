@@ -18,8 +18,7 @@ jobs:
       fail-fast: false
       matrix:
         python-version: ['3.9', '3.10', '3.11', '3.12']
-        tensorflow: ['2.18.0']
-        keras: ['keras1x', 'keras2x']
+        tensorflow: ['2.18.0', '2.19.0']
         numpy: ['numpy1x', numpy2x]
     steps:
     - uses: actions/checkout@v4
@@ -32,7 +31,7 @@ jobs:
         python -m pip install --upgrade pip
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade -e .[develop,examples,${{matrix.keras}},${{matrix.numpy}}] tensorflow~=${{ matrix.tensorflow }}
+        python -m pip install --upgrade -e .[develop,examples,${{matrix.numpy}}] tensorflow~=${{ matrix.tensorflow }}
     - name: Test with pytest
       run: |
         pytest -n auto --dist loadscope

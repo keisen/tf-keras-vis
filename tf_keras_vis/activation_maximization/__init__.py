@@ -257,6 +257,7 @@ class ActivationMaximization(ModelVisualization):
                              regularizations=regularization_values,
                              overall_score=regularized_score_values)
 
+        clipped_value = [x if isinstance(x, np.ndarray) else x.numpy() for x in clipped_value]
         if len(self.model.inputs) == 1 and (seed_input is None
                                             or not isinstance(seed_input, list)):
             clipped_value = clipped_value[0]
@@ -446,7 +447,7 @@ class ActivationMaximization(ModelVisualization):
         else:
             clipped_values = (
                 keras.ops.clip(X, low, high) for X, (low, high) in zip(seed_inputs, input_ranges))
-        clipped_values = (tf.cast(X, input_tensor.dtype).numpy()
+        clipped_values = (tf.cast(X, input_tensor.dtype)
                           for X, input_tensor in zip(clipped_values, self.model.inputs))
         if activation_modifiers is not None:
             clipped_values = (

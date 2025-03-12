@@ -74,8 +74,6 @@ setup(
             'matplotlib',
         ],
         'protobuf3': ['protobuf~=3.20.0'],
-        'keras2x': ['keras~=2.0'],
-        'keras3x': ['keras~=3.0'],
         'numpy1x': ['numpy~=1.0'],
         'numpy2x': ['numpy~=2.0'],
     },
